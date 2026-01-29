@@ -1,0 +1,41 @@
+{
+  // Disable markdown validation for agent files (tools: frontmatter causes false positives)
+  "markdownlint.config": {
+    "MD041": false  // First line heading rule (agents have YAML frontmatter)
+  },
+  
+  // Exclude agent files from markdown link validation
+  "markdown.validate.enabled": true,
+  "markdown.validate.ignoredLinks": [
+    "**/agents/*.agent.md",
+    "../specs/SPEC-*.md",
+    "ADR-*.md",
+    "docs/adr/ADR-*.md",
+    "docs/specs/**",
+    "docs/architecture/**",
+    "../../docs/specs/SPEC-*.md"
+  ],
+  
+  // File associations - treat .agent.md as markdown
+  "files.associations": {
+    "*.agent.md": "markdown"
+  },
+  
+  // Exclude validation for files with template placeholders
+  "markdown.validate.fileLinks.enabled": "warning",
+  
+  // GitHub Copilot agent files use custom frontmatter
+  "[markdown]": {
+    "editor.wordWrap": "on"
+  },
+
+  // GitHub Actions - disable expression validation (hashFiles() not recognized by extension)
+  "github-actions.workflows.pinned.refresh.enabled": false,
+  "github-actions.expression-validation.enabled": false,
+  
+  // YAML validation - use GitHub Actions schema
+  "yaml.validate": true,
+  "yaml.schemas": {
+    "https://json.schemastore.org/github-workflow.json": ".github/workflows/*.yml"
+  }
+}
