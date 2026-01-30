@@ -7,15 +7,15 @@ Usage:
     context-md dashboard
 """
 
-import click
 import json
-import subprocess
+from datetime import datetime, timezone
 from pathlib import Path
-from datetime import datetime, timedelta
-from typing import Optional, List, Dict, Any
+from typing import Any, Dict
 
-from context_md.state import State
+import click
+
 from context_md.config import Config
+from context_md.state import State
 
 
 @click.command("status")
@@ -34,10 +34,10 @@ def status_cmd(ctx: click.Context, as_json: bool, watch: bool) -> None:
     repo_root = ctx.obj.get("repo_root")
     if not repo_root:
         raise click.ClickException("Not in a Git repository.")
-    
+
     state = ctx.obj.get("state")
     config = ctx.obj.get("config")
-    
+
     if not state:
         state_file = repo_root / ".agent-context" / "state.json"
         if not state_file.exists():
@@ -46,17 +46,17 @@ def status_cmd(ctx: click.Context, as_json: bool, watch: bool) -> None:
             return
         state = State(repo_root)
         config = Config(repo_root)
-    
+
     if watch:
         _watch_status(repo_root, state, config)
         return
-    
+
     status_data = _collect_status(repo_root, state, config)
-    
+
     if as_json:
         click.echo(json.dumps(status_data, indent=2, default=str))
         return
-    
+
     _display_status(status_data, config)
 
 
@@ -64,26 +64,26 @@ def _collect_status(repo_root: Path, state: State, config: Config) -> Dict[str, 
     """Collect all status information."""
     worktrees = state.worktrees
     branches = state.get_issue_branches()
-    
+
     # Analyze worktrees
     worktree_info = []
     stuck_issues = []
-    
+
     for wt in worktrees:
         last_commit = state.get_last_commit_time(wt.branch)
         metadata = state.get_branch_note(wt.branch) or {}
-        
+
         # Calculate hours since last activity
         hours_inactive = 0
         if last_commit:
-            delta = datetime.utcnow() - last_commit.replace(tzinfo=None)
+            delta = datetime.now(timezone.utc) - last_commit.replace(tzinfo=timezone.utc)
             hours_inactive = delta.total_seconds() / 3600
-        
+
         # Check if stuck
         issue_type = metadata.get("type", "story")
         threshold = config.get_stuck_threshold(issue_type)
         is_stuck = hours_inactive > threshold
-        
+
         info = {
             "issue": wt.issue,
             "branch": wt.branch,
@@ -96,22 +96,22 @@ def _collect_status(repo_root: Path, state: State, config: Config) -> Dict[str, 
             "is_stuck": is_stuck
         }
         worktree_info.append(info)
-        
+
         if is_stuck:
             stuck_issues.append(info)
-    
+
     # Count by role
     by_role = {}
     for wt in worktree_info:
         role = wt["role"]
         by_role[role] = by_role.get(role, 0) + 1
-    
+
     # Count by status
     by_status = {}
     for wt in worktree_info:
         status = wt["status"]
         by_status[status] = by_status.get(status, 0) + 1
-    
+
     return {
         "mode": state.mode,
         "initialized": state.is_initialized(),
@@ -123,7 +123,7 @@ def _collect_status(repo_root: Path, state: State, config: Config) -> Dict[str, 
         "by_status": by_status,
         "worktrees": worktree_info,
         "stuck": stuck_issues,
-        "timestamp": datetime.utcnow().isoformat() + "Z"
+        "timestamp": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
     }
 
 
@@ -135,36 +135,36 @@ def _display_status(data: Dict[str, Any], config: Config) -> None:
     click.secho("│ Context.md Status                                        │", fg="cyan")
     click.secho("└─────────────────────────────────────────────────────────┘", fg="cyan")
     click.echo("")
-    
+
     # Mode and summary
     mode_color = {"local": "yellow", "github": "green", "hybrid": "blue"}.get(data["mode"], "white")
-    click.echo(f"  Mode: ", nl=False)
+    click.echo("  Mode: ", nl=False)
     click.secho(data["mode"], fg=mode_color)
     click.echo(f"  Issue Branches: {data['total_branches']}")
     click.echo(f"  Active SubAgents: {data['active_subagents']}")
-    
+
     if data["stuck_issues"] > 0:
-        click.secho(f"  ⚠️  Stuck Issues: {data['stuck_issues']}", fg="red")
-    
+        click.secho(f"  [!] Stuck Issues: {data['stuck_issues']}", fg="red")
+
     click.echo("")
-    
+
     # SubAgents
     if data["worktrees"]:
         click.secho("  Active SubAgents:", bold=True)
         click.echo("")
-        
+
         for wt in data["worktrees"]:
             # Status indicator
             if wt["is_stuck"]:
-                status_icon = "🔴"
+                status_icon = "[!]"
                 status_color = "red"
             elif wt["status"] == "spawned":
-                status_icon = "🟡"
+                status_icon = "[-]"
                 status_color = "yellow"
             else:
-                status_icon = "🟢"
+                status_icon = "[+]"
                 status_color = "green"
-            
+
             # Format time ago
             if wt["hours_inactive"] < 1:
                 time_ago = "< 1h ago"
@@ -172,7 +172,7 @@ def _display_status(data: Dict[str, Any], config: Config) -> None:
                 time_ago = f"{int(wt['hours_inactive'])}h ago"
             else:
                 time_ago = f"{int(wt['hours_inactive'] / 24)}d ago"
-            
+
             click.echo(f"  {status_icon} ", nl=False)
             click.secho(f"Issue #{wt['issue']}", fg=status_color, bold=True, nl=False)
             click.echo(f" ({wt['role']})")
@@ -184,47 +184,47 @@ def _display_status(data: Dict[str, Any], config: Config) -> None:
         click.echo("  No active SubAgents.")
         click.echo("")
         click.echo("  Create one with: context-md subagent spawn <issue> --role <role>")
-    
+
     click.echo("")
-    
+
     # Summary by role
     if data["by_role"]:
         click.echo("  By Role: ", nl=False)
         parts = [f"{role}: {count}" for role, count in data["by_role"].items()]
         click.echo(" | ".join(parts))
-    
+
     # Stuck issues warning
     if data["stuck"]:
         click.echo("")
-        click.secho("  ⚠️  Stuck Issues (no activity):", fg="red", bold=True)
+        click.secho("  [!] Stuck Issues (no activity):", fg="red", bold=True)
         for stuck in data["stuck"]:
             click.echo(f"      • #{stuck['issue']} - {stuck['hours_inactive']:.0f}h inactive")
-    
+
     click.echo("")
 
 
 def _watch_status(repo_root: Path, state: State, config: Config) -> None:
     """Watch mode - continuously update status."""
     import time
-    
+
     click.echo("Watching status (Ctrl+C to stop)...")
     click.echo("")
-    
+
     try:
         while True:
             # Clear screen
             click.clear()
-            
-            # Reload state
-            state._load()
-            
+
+            # Reload state by creating new State object
+            state = State(repo_root)
+
             # Collect and display
             data = _collect_status(repo_root, state, config)
             _display_status(data, config)
-            
+
             click.echo(f"  Updated: {data['timestamp']}")
             click.echo("  (refreshing every 5s, Ctrl+C to stop)")
-            
+
             time.sleep(5)
     except KeyboardInterrupt:
         click.echo("")

@@ -7,9 +7,10 @@ Usage:
     context-md config --list
 """
 
-import click
 import json
 from typing import Optional
+
+import click
 
 from context_md.config import Config
 
@@ -20,7 +21,7 @@ from context_md.config import Config
 @click.option("--list", "-l", "list_all", is_flag=True, help="List all configuration")
 @click.option("--json", "as_json", is_flag=True, help="Output as JSON")
 @click.pass_context
-def config_cmd(ctx: click.Context, key: Optional[str], value: Optional[str], 
+def config_cmd(ctx: click.Context, key: Optional[str], value: Optional[str],
                list_all: bool, as_json: bool) -> None:
     """View or modify Context.md configuration.
     
@@ -35,11 +36,11 @@ def config_cmd(ctx: click.Context, key: Optional[str], value: Optional[str],
     repo_root = ctx.obj.get("repo_root")
     if not repo_root:
         raise click.ClickException("Not in a Git repository with Context.md initialized.")
-    
+
     config = ctx.obj.get("config")
     if not config:
         config = Config(repo_root)
-    
+
     # List all configuration
     if list_all:
         if as_json:
@@ -47,7 +48,7 @@ def config_cmd(ctx: click.Context, key: Optional[str], value: Optional[str],
         else:
             _print_config(config.to_dict())
         return
-    
+
     # No key provided - show mode
     if not key:
         click.echo(f"Mode: {config.mode}")
@@ -55,7 +56,7 @@ def config_cmd(ctx: click.Context, key: Optional[str], value: Optional[str],
         click.echo("Use 'context-md config --list' to see all settings")
         click.echo("Use 'context-md config <key> <value>' to change a setting")
         return
-    
+
     # Handle mode specially
     if key == "mode":
         if value:
@@ -63,7 +64,7 @@ def config_cmd(ctx: click.Context, key: Optional[str], value: Optional[str],
             try:
                 config.mode = value
                 config.save()
-                click.secho(f"✅ Mode set to: {value}", fg="green")
+                click.secho(f"[OK] Mode set to: {value}", fg="green")
             except ValueError as e:
                 raise click.ClickException(str(e))
         else:
@@ -73,14 +74,14 @@ def config_cmd(ctx: click.Context, key: Optional[str], value: Optional[str],
             else:
                 click.echo(f"Mode: {config.mode}")
         return
-    
+
     # Get or set arbitrary key
     if value:
         # Set value (attempt type conversion)
         converted_value = _convert_value(value)
         config.set(key, converted_value)
         config.save()
-        click.secho(f"✅ Set {key} = {converted_value}", fg="green")
+        click.secho(f"[OK] Set {key} = {converted_value}", fg="green")
     else:
         # Get value
         result = config.get(key)
@@ -102,23 +103,23 @@ def _convert_value(value: str):
         return True
     if value.lower() in ("false", "no", "0", "off"):
         return False
-    
+
     # Integer
     try:
         return int(value)
     except ValueError:
         pass
-    
+
     # Float
     try:
         return float(value)
     except ValueError:
         pass
-    
+
     # List (comma-separated)
     if "," in value:
         return [v.strip() for v in value.split(",")]
-    
+
     # String
     return value
 

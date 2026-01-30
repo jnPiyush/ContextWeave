@@ -1,0 +1,85 @@
+{
+  "version": "1.0",
+  "mode": "local",
+  "worktree_base": "../worktrees",
+  "skill_routing": {
+    "api": [
+      "#09",
+      "#04",
+      "#02",
+      "#11"
+    ],
+    "database": [
+      "#06",
+      "#04",
+      "#02"
+    ],
+    "security": [
+      "#04",
+      "#10",
+      "#02",
+      "#13",
+      "#15"
+    ],
+    "frontend": [
+      "#21",
+      "#22",
+      "#02",
+      "#11"
+    ],
+    "bug": [
+      "#03",
+      "#02",
+      "#15"
+    ],
+    "performance": [
+      "#05",
+      "#06",
+      "#02",
+      "#15"
+    ],
+    "ai": [
+      "#17",
+      "#04"
+    ],
+    "default": [
+      "#02",
+      "#04",
+      "#11"
+    ]
+  },
+  "validation": {
+    "stuck_threshold_hours": {
+      "bug": 12,
+      "story": 24,
+      "feature": 48,
+      "epic": 72
+    },
+    "required_fields": {
+      "story": [
+        "references",
+        "acceptance_criteria"
+      ],
+      "bug": [
+        "steps_to_reproduce",
+        "expected_behavior"
+      ],
+      "feature": [
+        "documentation",
+        "acceptance_criteria"
+      ]
+    }
+  },
+  "hooks": {
+    "prepare_commit_msg": true,
+    "pre_commit": true,
+    "post_commit": true,
+    "pre_push": true,
+    "post_merge": true
+  },
+  "github": {
+    "auto_sync": false,
+    "create_pr_on_push": true,
+    "sync_notes": true
+  }
+}

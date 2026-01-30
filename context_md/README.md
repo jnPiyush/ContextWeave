@@ -219,7 +219,7 @@ Context.md installs these Git hooks for automation:
 
 ## 🔗 Integration with AgentX
 
-Context.md is designed to work with the [AgentX](https://github.com/jnPiyush/AgentX) multi-agent workflow:
+Context.md is designed to work with the [ContextMD](https://github.com/jnPiyush/ContextMD) multi-agent workflow:
 
 1. **PM Agent** creates Epic → PRD
 2. **Architect Agent** designs → ADR + Spec

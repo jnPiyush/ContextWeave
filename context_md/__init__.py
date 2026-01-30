@@ -12,7 +12,7 @@ Achieves >95% success rate in production code generation through:
 __version__ = "0.1.0"
 __author__ = "Context.md Team"
 
-from context_md.state import State
 from context_md.config import Config
+from context_md.state import State
 
 __all__ = ["State", "Config", "__version__"]
