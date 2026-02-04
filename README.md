@@ -10,12 +10,14 @@
 
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Tests](https://img.shields.io/badge/tests-214%20passing-brightgreen.svg)](./tests)
+[![Tests](https://img.shields.io/badge/tests-233%20passing-brightgreen.svg)](./tests)
 [![Coverage](https://img.shields.io/badge/coverage-68%25-yellowgreen.svg)](./htmlcov)
+[![Automation](https://img.shields.io/badge/automation-10%20layers-blue.svg)](./.github/workflows)
 
 [Installation](#-installation) •
 [Quick Start](#-quick-start) •
 [Architecture](#%EF%B8%8F-architecture) •
+[Automation](#-automation-features) •
 [Commands](#-cli-commands) •
 [Contributing](#-contributing)
 
@@ -146,6 +148,102 @@ Context.md implements a **4-Layer AI Context Architecture** that provides struct
 │                                                                             │
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
+
+---
+
+## 🤖 Automation Features
+
+Context.md implements a **10-Layer Orchestration System** that automates quality monitoring, learning, and validation:
+
+### Layer 1: Backlog Management
+- **Task Creation Validation** - Enforces "standalone task principle"
+  - ✅ Validates references field (code files)
+  - ✅ Validates documentation field (design docs)
+  - ✅ Runs "stranger test" (no implicit knowledge)
+  - Script: `.github/scripts/validate-task-creation.sh`
+
+### Layer 2: Context Optimization
+- **Dynamic Context Generation** - Task-specific skill loading
+- **Smart Label Routing** - API → Security + Testing skills
+- **Prompt Enhancement** - Automatic success criteria + approach hints
+
+### Layer 3: Planning & Validation
+- **Pre-Flight Planning** - Execution plans with risks/rollback
+  - Template: `.github/templates/PLAN-TEMPLATE.md`
+- **Alignment Validation** - PRD → Spec → Code traceability
+  - Script: `.github/scripts/validate-alignment.sh`
+- **DoD Checklists** - Role-specific Definition of Done validation
+
+### Layer 4: Quality Monitoring (Automated)
+- **Stuck Issue Detection** - Every 30 minutes via GitHub Actions
+  - ⏱️ Detects issues inactive >24h (configurable by type)
+  - 🚨 Auto-escalates with `needs:help` label
+  - Workflow: `.github/workflows/health-monitoring.yml`
+  
+- **Crash Recovery** - Every 15 minutes
+  - ♻️ Auto-retries failed workflows once
+  - 🚨 Escalates after 2nd failure
+  - Workflow: `.github/workflows/crash-recovery.yml`
+
+### Layer 5: Learning Loop (Self-Healing)
+- **Pattern Analysis** - Monthly analysis of closed issues
+  - 📊 Identifies common failure types
+  - 🎯 Tracks success rates by role
+  - Script: `.github/scripts/analyze-learning.py`
+  
+- **Automatic Instruction Updates** - Generates PRs with improvements
+  - 📝 Updates agent instructions based on patterns
+  - ✅ Requires human approval before merge
+  - Workflow: `.github/workflows/learning-loop.yml`
+
+### Layer 6: Visibility
+- **CLI Dashboard** - Real-time status (`context-md status --watch`)
+- **Web Dashboard** - GitHub Pages with charts
+  - 📈 Success rate trends (30 days)
+  - 🎯 Issues by role/status
+  - Location: `.github/pages/`
+  
+- **Bottleneck Detection** - Weekly workflow analysis
+  - 🔍 Detects queue buildup
+  - ⚠️ Identifies slow stages
+  - Script: `.github/scripts/detect-bottlenecks.py`
+
+### Layer 7: SubAgent Orchestration
+- **Worktree Isolation** - Each task gets separate directory
+- **Context per Task** - No cross-contamination
+- **Lifecycle Management** - spawn → execute → complete → cleanup
+
+### Layer 8: Code Inspection
+- **DebugMCP Integration** - Runtime inspection (scaffolding)
+  - Module: `context_md/debugmcp.py`
+- **Static Analysis** - Basic code quality checks
+  - Detects: Bare excepts, TODOs, complexity issues
+
+### Layer 9: Local Fallback
+- **Offline Operation** - Full functionality without GitHub
+- **Local Issue Management** - `context-md issue` commands
+- **Auto-sync** - Reconnects and syncs when GitHub available
+
+### Layer 10: Completion Traceability
+- **Completion Certificates** - Generated on merge
+  - Hook: `.github/hooks/post-merge`
+  - Stored: `.agent-context/certificates/`
+- **Audit Trail** - Immutable Git commit history
+- **Metrics Tracking** - Success rates, resolution times
+
+### Automation Summary
+
+| Feature | Frequency | Automated | Manual |
+|---------|-----------|-----------|--------|
+| Stuck Detection | Every 30 min | ✅ | - |
+| Crash Recovery | Every 15 min | ✅ | - |
+| Learning Analysis | Monthly | ✅ | Approval only |
+| Bottleneck Detection | Weekly | ✅ | - |
+| Task Validation | On creation | ✅ | - |
+| DoD Validation | Pre-push | ✅ | - |
+| Completion Certificates | On merge | ✅ | - |
+
+---
 
 ### Prompt Engineering Pipeline
 

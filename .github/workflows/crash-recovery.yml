@@ -1,0 +1,148 @@
+name: Crash Recovery
+
+on:
+  schedule:
+    # Run every 15 minutes
+    - cron: '*/15 * * * *'
+  workflow_dispatch:
+
+permissions:
+  actions: write
+  issues: write
+  contents: read
+
+jobs:
+  recover-failed-workflows:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      
+      - name: Check Failed Workflows
+        id: check
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            
+            // Get recent workflow runs (last 24 hours)
+            const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+            const runs = await github.rest.actions.listWorkflowRunsForRepo({
+              owner,
+              repo,
+              status: 'failure',
+              created: `>=${since}`,
+              per_page: 100
+            });
+            
+            const failedWithIssues = [];
+            
+            for (const run of runs.data.workflow_runs) {
+              // Extract issue number from run name or commit message
+              const issueMatch = run.head_commit?.message?.match(/#(\d+)/) || 
+                                run.display_title?.match(/#(\d+)/);
+              
+              if (!issueMatch) continue;
+              
+              const issueNum = parseInt(issueMatch[1]);
+              
+              // Check retry count from run attempts
+              const retryCount = run.run_attempt || 1;
+              
+              if (retryCount < 2) {
+                // Haven't retried yet - safe to retry
+                failedWithIssues.push({
+                  run_id: run.id,
+                  workflow_name: run.name,
+                  issue: issueNum,
+                  retry_count: retryCount,
+                  html_url: run.html_url
+                });
+              } else {
+                // Already retried - escalate
+                console.log(`⚠️  Issue #${issueNum}: Already retried, escalating...`);
+                
+                try {
+                  const issue = await github.rest.issues.get({
+                    owner,
+                    repo,
+                    issue_number: issueNum
+                  });
+                  
+                  // Add needs:help label
+                  await github.rest.issues.addLabels({
+                    owner,
+                    repo,
+                    issue_number: issueNum,
+                    labels: ['needs:help']
+                  });
+                  
+                  // Add comment
+                  await github.rest.issues.createComment({
+                    owner,
+                    repo,
+                    issue_number: issueNum,
+                    body: `🚨 **Workflow Failure - Manual Intervention Required**
+            
+            Workflow **${run.name}** has failed twice:
+            - Run: ${run.html_url}
+            - Retry count: ${retryCount}
+            
+            **Action Required:**
+            1. Review workflow logs
+            2. Fix underlying issue
+            3. Manually re-run workflow
+            
+            ---
+            *Automated by Context.md Crash Recovery*`
+                  });
+                } catch (error) {
+                  console.log(`Error escalating issue #${issueNum}: ${error.message}`);
+                }
+              }
+            }
+            
+            return failedWithIssues;
+      
+      - name: Retry Failed Workflows
+        if: steps.check.outputs.result != '[]'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const failed = ${{ steps.check.outputs.result }};
+            const { owner, repo } = context.repo;
+            
+            for (const item of failed) {
+              try {
+                console.log(`♻️  Retrying workflow for issue #${item.issue}...`);
+                
+                await github.rest.actions.reRunWorkflowFailedJobs({
+                  owner,
+                  repo,
+                  run_id: item.run_id
+                });
+                
+                // Add comment to issue
+                await github.rest.issues.createComment({
+                  owner,
+                  repo,
+                  issue_number: item.issue,
+                  body: `♻️ **Workflow Auto-Retry**
+            
+            Workflow **${item.workflow_name}** failed and has been automatically restarted.
+            
+            - Original run: ${item.html_url}
+            - Retry count: ${item.retry_count + 1}
+            
+            If this retry fails, manual intervention will be required.
+            
+            ---
+            *Automated by Context.md Crash Recovery*`
+                });
+                
+                console.log(`✅ Retried issue #${item.issue}`);
+              } catch (error) {
+                console.log(`❌ Failed to retry issue #${item.issue}: ${error.message}`);
+              }
+            }

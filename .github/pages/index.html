@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Context.md - Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        header {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 30px;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: #666;
+            font-size: 1.1rem;
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .metric-card {
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s;
+        }
+
+        .metric-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .metric-value {
+            font-size: 3rem;
+            font-weight: bold;
+            color: #667eea;
+            margin: 10px 0;
+        }
+
+        .metric-label {
+            color: #666;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .metric-trend {
+            font-size: 0.9rem;
+            margin-top: 10px;
+        }
+
+        .trend-up {
+            color: #10b981;
+        }
+
+        .trend-down {
+            color: #ef4444;
+        }
+
+        .chart-container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 30px;
+        }
+
+        .chart-title {
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        canvas {
+            max-width: 100%;
+        }
+
+        .issue-list {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .issue-item {
+            padding: 15px;
+            border-bottom: 1px solid #e5e7eb;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .issue-item:last-child {
+            border-bottom: none;
+        }
+
+        .issue-title {
+            font-weight: 500;
+            color: #333;
+        }
+
+        .issue-meta {
+            display: flex;
+            gap: 15px;
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        .badge-success {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .badge-warning {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .badge-danger {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        footer {
+            text-align: center;
+            color: white;
+            margin-top: 50px;
+            padding: 20px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📊 Context.md Dashboard</h1>
+            <p class="subtitle">Real-time AI Agent Quality Metrics & Monitoring</p>
+        </header>
+
+        <div class="metrics-grid">
+            <div class="metric-card">
+                <div class="metric-label">Success Rate</div>
+                <div class="metric-value" id="successRate">-</div>
+                <div class="metric-trend trend-up" id="successTrend">Loading...</div>
+            </div>
+
+            <div class="metric-card">
+                <div class="metric-label">Active Issues</div>
+                <div class="metric-value" id="activeIssues">-</div>
+                <div class="metric-trend" id="activeTrend">Loading...</div>
+            </div>
+
+            <div class="metric-card">
+                <div class="metric-label">Avg Resolution Time</div>
+                <div class="metric-value" id="avgTime">-</div>
+                <div class="metric-trend" id="timeTrend">Loading...</div>
+            </div>
+
+            <div class="metric-card">
+                <div class="metric-label">Quality Gate Pass</div>
+                <div class="metric-value" id="qualityPass">-</div>
+                <div class="metric-trend trend-up" id="qualityTrend">Loading...</div>
+            </div>
+        </div>
+
+        <div class="chart-container">
+            <h2 class="chart-title">Success Rate Trend (30 Days)</h2>
+            <canvas id="successChart"></canvas>
+        </div>
+
+        <div class="chart-container">
+            <h2 class="chart-title">Issues by Role</h2>
+            <canvas id="roleChart"></canvas>
+        </div>
+
+        <div class="issue-list">
+            <h2 class="chart-title">Recent Activity</h2>
+            <div id="issueList">
+                <div class="loading">Loading recent issues...</div>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <p>Context.md v1.0 | Last updated: <span id="lastUpdate">-</span></p>
+        <p>Auto-refreshes every 30 seconds</p>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
+    <script src="dashboard.js"></script>
+</body>
+</html>

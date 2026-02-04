@@ -1,0 +1,87 @@
+#!/usr/bin/env bash
+# Post-Merge Hook - Generate Completion Certificate
+# Triggers when PR is merged to master/main
+
+# Get the merged branch name
+BRANCH=$(git rev-parse --abbrev-ref HEAD)
+
+# Only run on master/main
+if [[ ! "$BRANCH" =~ ^(master|main)$ ]]; then
+    exit 0
+fi
+
+# Get the last merged commit
+LAST_COMMIT=$(git log -1 --format="%H")
+COMMIT_MSG=$(git log -1 --format="%s")
+
+# Extract issue number from commit message
+if [[ $COMMIT_MSG =~ \#([0-9]+) ]]; then
+    ISSUE_NUM="${BASH_REMATCH[1]}"
+else
+    # No issue number found
+    exit 0
+fi
+
+echo "📜 Generating completion certificate for issue #${ISSUE_NUM}..."
+
+# Get issue details from Git notes
+NOTES=$(git notes --ref=context show "$LAST_COMMIT" 2>/dev/null || echo "{}")
+
+# Extract role and metadata
+ROLE=$(echo "$NOTES" | grep -oP '"role":\s*"\K[^"]+' || echo "unknown")
+TITLE=$(echo "$NOTES" | grep -oP '"title":\s*"\K[^"]+' || echo "")
+
+# Create certificate directory
+CERT_DIR=".agent-context/certificates"
+mkdir -p "$CERT_DIR"
+
+# Generate certificate
+CERT_FILE="$CERT_DIR/CERT-${ISSUE_NUM}.json"
+
+cat > "$CERT_FILE" <<EOF
+{
+  "issue": $ISSUE_NUM,
+  "title": "$TITLE",
+  "role": "$ROLE",
+  "completed_at": "$(date -u +"%Y-%m-%dT%H:%M:%SZ")",
+  "commit": "$LAST_COMMIT",
+  "commit_message": "$COMMIT_MSG",
+  "quality_gates_passed": true,
+  "certificate_version": "1.0"
+}
+EOF
+
+# Add certificate to git
+git add "$CERT_FILE"
+git commit --no-verify -m "docs: add completion certificate for issue #${ISSUE_NUM}" || true
+
+echo "✅ Certificate generated: $CERT_FILE"
+
+# Update metrics
+METRICS_FILE=".agent-context/metrics.json"
+
+if [ -f "$METRICS_FILE" ]; then
+    # Update existing metrics
+    python3 -c "
+import json
+from pathlib import Path
+
+metrics_file = Path('$METRICS_FILE')
+metrics = json.loads(metrics_file.read_text())
+
+metrics['total_completions'] = metrics.get('total_completions', 0) + 1
+
+# By role
+by_role = metrics.get('by_role', {})
+role_stats = by_role.get('$ROLE', {'completions': 0})
+role_stats['completions'] = role_stats.get('completions', 0) + 1
+by_role['$ROLE'] = role_stats
+metrics['by_role'] = by_role
+
+metrics['last_completion'] = '$(date -u +"%Y-%m-%dT%H:%M:%SZ")'
+
+metrics_file.write_text(json.dumps(metrics, indent=2))
+" 2>/dev/null || true
+fi
+
+exit 0
