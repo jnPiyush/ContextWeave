@@ -19,7 +19,7 @@ from typing import Dict, List, Tuple
 try:
     from github import Github
 except ImportError:
-    print("❌ PyGithub not installed. Run: pip install PyGithub")
+    print("[ERROR] PyGithub not installed. Run: pip install PyGithub")
     sys.exit(1)
 
 
@@ -212,12 +212,12 @@ def main() -> int:
     """Main entry point."""
     token = os.environ.get("GITHUB_TOKEN")
     if not token:
-        print("❌ GITHUB_TOKEN environment variable not set")
+        print("[ERROR] GITHUB_TOKEN environment variable not set")
         return 1
     
     repo_name = os.environ.get("GITHUB_REPOSITORY", "jnPiyush/ContextMD")
     
-    print(f"🔍 Detecting workflow bottlenecks in {repo_name}...")
+    print(f"[INFO] Detecting workflow bottlenecks in {repo_name}...")
     
     try:
         analysis = detect_bottlenecks(repo_name, token)
@@ -237,14 +237,14 @@ def main() -> int:
         text_file = report_dir / f"bottleneck-{datetime.now().strftime('%Y-%m-%d')}.txt"
         text_file.write_text(report_text, encoding='utf-8')
         
-        print(f"\n✅ Bottleneck analysis complete")
+        print(f"\n[SUCCESS] Bottleneck analysis complete")
         print(f"   JSON: {report_file}")
         print(f"   Report: {text_file}")
         
         return 0
         
     except Exception as e:
-        print(f"❌ Error: {e}")
+        print(f"[ERROR] {e}")
         import traceback
         traceback.print_exc()
         return 1

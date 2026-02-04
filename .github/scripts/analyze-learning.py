@@ -19,7 +19,7 @@ from typing import Dict, List, Optional
 try:
     from github import Github
 except ImportError:
-    print("❌ PyGithub not installed. Run: pip install PyGithub")
+    print("[ERROR] PyGithub not installed. Run: pip install PyGithub")
     sys.exit(1)
 
 
@@ -167,12 +167,12 @@ def main() -> int:
     """Main entry point."""
     token = os.environ.get("GITHUB_TOKEN")
     if not token:
-        print("❌ GITHUB_TOKEN environment variable not set")
+        print("[ERROR] GITHUB_TOKEN environment variable not set")
         return 1
     
     repo_name = os.environ.get("GITHUB_REPOSITORY", "jnPiyush/ContextMD")
     
-    print(f"📊 Analyzing closed issues in {repo_name}...")
+    print(f"[INFO] Analyzing closed issues in {repo_name}...")
     
     try:
         analysis = analyze_closed_issues(repo_name, token, days=30)
@@ -184,7 +184,7 @@ def main() -> int:
         report_file = report_dir / f"learning-{datetime.now().strftime('%Y-%m')}.json"
         report_file.write_text(json.dumps(analysis, indent=2, default=str))
         
-        print(f"✅ Analysis complete: {report_file}")
+        print(f"[SUCCESS] Analysis complete: {report_file}")
         print(f"   Total issues: {analysis['total_issues']}")
         print(f"   Success rate: {analysis['success_rate']:.1f}%")
         
@@ -194,15 +194,15 @@ def main() -> int:
         if updates:
             updates_file = report_dir / "instruction-updates.json"
             updates_file.write_text(json.dumps(updates, indent=2))
-            print(f"✅ Generated {len(updates)} instruction update recommendations")
+            print(f"[SUCCESS] Generated {len(updates)} instruction update recommendations")
             print(f"   See: {updates_file}")
         else:
-            print("✅ No instruction updates needed - system performing well")
+            print("[SUCCESS] No instruction updates needed - system performing well")
         
         return 0
         
     except Exception as e:
-        print(f"❌ Error: {e}")
+        print(f"[ERROR] {e}")
         import traceback
         traceback.print_exc()
         return 1

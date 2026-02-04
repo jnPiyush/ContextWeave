@@ -55,7 +55,7 @@ EOF
 git add "$CERT_FILE"
 git commit --no-verify -m "docs: add completion certificate for issue #${ISSUE_NUM}" || true
 
-echo "✅ Certificate generated: $CERT_FILE"
+echo "[SUCCESS] Certificate generated: $CERT_FILE"
 
 # Update metrics
 METRICS_FILE=".agent-context/metrics.json"

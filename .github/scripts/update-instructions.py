@@ -21,7 +21,7 @@ def load_instruction_updates() -> List[Dict]:
     updates_file = Path(".agent-context/instruction-updates.json")
     
     if not updates_file.exists():
-        print("ℹ️  No instruction updates found")
+        print("[INFO] No instruction updates found")
         return []
     
     return json.loads(updates_file.read_text())
@@ -43,7 +43,7 @@ def generate_update_content(update: Dict) -> str:
 
 **Action**: {action}
 
-> ⚠️ This section was auto-generated based on failure pattern analysis.
+> [WARNING] This section was auto-generated based on failure pattern analysis.
 > Review and adjust as needed.
 """
     elif "story.yml" in file:
@@ -76,11 +76,11 @@ def create_update_branch(updates: List[Dict]) -> str:
             capture_output=True
         )
         
-        print(f"✅ Created branch: {branch_name}")
+        print(f"[SUCCESS] Created branch: {branch_name}")
         return branch_name
         
     except subprocess.CalledProcessError as e:
-        print(f"❌ Failed to create branch: {e}")
+        print(f"[ERROR] Failed to create branch: {e}")
         sys.exit(1)
 
 
@@ -92,7 +92,7 @@ def apply_updates(updates: List[Dict]) -> List[str]:
         file_path = Path(update["file"])
         
         if not file_path.exists():
-            print(f"⚠️  File not found: {file_path}")
+            print(f"[WARNING] File not found: {file_path}")
             continue
         
         # Read current content
@@ -108,7 +108,7 @@ def apply_updates(updates: List[Dict]) -> List[str]:
         file_path.write_text(updated_content)
         
         modified_files.append(str(file_path))
-        print(f"✅ Updated: {file_path}")
+        print(f"[SUCCESS] Updated: {file_path}")
     
     return modified_files
 
@@ -139,10 +139,10 @@ def commit_and_push(branch: str, modified_files: List[str]) -> None:
             capture_output=True
         )
         
-        print(f"✅ Pushed changes to {branch}")
+        print(f"[SUCCESS] Pushed changes to {branch}")
         
     except subprocess.CalledProcessError as e:
-        print(f"❌ Failed to commit/push: {e}")
+        print(f"[ERROR] Failed to commit/push: {e}")
         sys.exit(1)
 
 
@@ -151,15 +151,15 @@ def create_pull_request(branch: str, updates: List[Dict]) -> None:
     try:
         from github import Github
     except ImportError:
-        print("⚠️  PyGithub not installed - skipping PR creation")
-        print(f"   Manually create PR from branch: {branch}")
+        print("[WARNING] PyGithub not installed - skipping PR creation")
+        print("   Install with: pip install PyGithub")
         return
     
     token = os.environ.get("GITHUB_TOKEN")
     repo_name = os.environ.get("GITHUB_REPOSITORY")
     
     if not token or not repo_name:
-        print("⚠️  GITHUB_TOKEN or GITHUB_REPOSITORY not set")
+        print("[WARNING] GITHUB_TOKEN or GITHUB_REPOSITORY not set")
         return
     
     try:
@@ -201,21 +201,21 @@ These updates were automatically generated based on failure pattern analysis.
         # Add label
         pr.add_to_labels("learning-loop")
         
-        print(f"✅ Created PR: {pr.html_url}")
+        print(f"[SUCCESS] Created PR: {pr.html_url}")
         
     except Exception as e:
-        print(f"⚠️  Failed to create PR: {e}")
+        print(f"[WARNING] Failed to create PR: {e}")
         print(f"   Manually create PR from branch: {branch}")
 
 
 def main() -> int:
     """Main entry point."""
-    print("📝 Generating instruction updates...")
+    print("[INFO] Generating instruction updates...")
     
     updates = load_instruction_updates()
     
     if not updates:
-        print("✅ No updates needed")
+        print("[SUCCESS] No updates needed")
         return 0
     
     print(f"Found {len(updates)} recommended updates")
@@ -227,7 +227,7 @@ def main() -> int:
     modified_files = apply_updates(updates)
     
     if not modified_files:
-        print("⚠️  No files were modified")
+        print("[WARNING] No files were modified")
         return 1
     
     # Commit and push
@@ -236,7 +236,7 @@ def main() -> int:
     # Create PR
     create_pull_request(branch, updates)
     
-    print("✅ Instruction update PR created")
+    print("[SUCCESS] Instruction update PR created")
     print("   Review and merge when ready")
     
     return 0

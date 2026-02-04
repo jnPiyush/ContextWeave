@@ -38,12 +38,12 @@ foreach ($file in $stagedFiles) {
 }
 
 if ($foundSecrets) {
-    Write-Host "❌ FAILED" -ForegroundColor Red
+    Write-Host "[X] FAILED" -ForegroundColor Red
     Write-Host "  Found potential secrets in staged files!" -ForegroundColor Red
     Write-Host "  Use environment variables instead."
     $script:Failed = $true
 } else {
-    Write-Host "✅ PASSED" -ForegroundColor Green
+    Write-Host "[OK] PASSED" -ForegroundColor Green
 }
 
 # Check 2: No large files (>1MB)
@@ -59,17 +59,17 @@ foreach ($file in $stagedFiles) {
 }
 
 if ($largeFiles.Count -gt 0) {
-    Write-Host "⚠️  WARNING" -ForegroundColor Yellow
+    Write-Host "[WARN]  WARNING" -ForegroundColor Yellow
     Write-Host "  Large files detected (>1MB):"
     $largeFiles | ForEach-Object { Write-Host "    $_" }
 } else {
-    Write-Host "✅ PASSED" -ForegroundColor Green
+    Write-Host "[OK] PASSED" -ForegroundColor Green
 }
 
 # Check 3: Warn on direct master/main commits
 $branch = git symbolic-ref --short HEAD 2>$null
 if ($branch -eq "main" -or $branch -eq "master") {
-    Write-Host "⚠️  WARNING: Committing directly to $branch" -ForegroundColor Yellow
+    Write-Host "[WARN]  WARNING: Committing directly to $branch" -ForegroundColor Yellow
 }
 
 # Check 4: C# formatting (if dotnet available)
@@ -79,9 +79,9 @@ if (Get-Command dotnet -ErrorAction SilentlyContinue) {
         Write-Host "Checking C# formatting... " -NoNewline
         dotnet format --verify-no-changes --include ($csFiles -join ' ') 2>&1 | Out-Null
         if ($LASTEXITCODE -eq 0) {
-            Write-Host "✅ PASSED" -ForegroundColor Green
+            Write-Host "[OK] PASSED" -ForegroundColor Green
         } else {
-            Write-Host "⚠️  Auto-formatting" -ForegroundColor Yellow
+            Write-Host "[WARN]  Auto-formatting" -ForegroundColor Yellow
             dotnet format --include ($csFiles -join ' ')
             $csFiles | ForEach-Object { git add $_ }
         }
@@ -93,17 +93,17 @@ Write-Host "Checking for SQL injection risks... " -NoNewline
 $sqlRisk = git diff --cached | Select-String -Pattern '\+.*\b(ExecuteRaw|FromSqlRaw|SqlQuery)' | 
            Where-Object { $_ -notmatch 'parameterized|@' }
 if ($sqlRisk) {
-    Write-Host "⚠️  WARNING: Potential SQL injection" -ForegroundColor Yellow
+    Write-Host "[WARN]  WARNING: Potential SQL injection" -ForegroundColor Yellow
 } else {
-    Write-Host "✅ PASSED" -ForegroundColor Green
+    Write-Host "[OK] PASSED" -ForegroundColor Green
 }
 
 # Summary
 Write-Host ""
 if ($script:Failed) {
-    Write-Host "❌ Pre-commit checks FAILED" -ForegroundColor Red
+    Write-Host "[X] Pre-commit checks FAILED" -ForegroundColor Red
     exit 1
 } else {
-    Write-Host "✅ Security checks passed" -ForegroundColor Green
+    Write-Host "[OK] Security checks passed" -ForegroundColor Green
     exit 0
 }

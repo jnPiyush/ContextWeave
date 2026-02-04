@@ -15,7 +15,7 @@ NC='\033[0m'
 ISSUE_NUM="$1"
 
 if [ -z "$ISSUE_NUM" ]; then
-  echo -e "${RED}❌ Usage: $0 <issue-number>${NC}"
+  echo -e "${RED}[X] Usage: $0 <issue-number>${NC}"
   exit 1
 fi
 
@@ -36,26 +36,26 @@ echo -e "${BLUE}[1/4] Checking Documents Exist${NC}"
 echo ""
 
 if [ -f "$PRD_FILE" ]; then
-  echo -e "${GREEN}✓${NC} PRD exists: $PRD_FILE"
+  echo -e "${GREEN}[OK]${NC} PRD exists: $PRD_FILE"
   HAS_PRD=true
 else
-  echo -e "${YELLOW}⚠${NC}  PRD not found: $PRD_FILE"
+  echo -e "${YELLOW}[WARN]${NC}  PRD not found: $PRD_FILE"
   HAS_PRD=false
 fi
 
 if [ -f "$SPEC_FILE" ]; then
-  echo -e "${GREEN}✓${NC} Spec exists: $SPEC_FILE"
+  echo -e "${GREEN}[OK]${NC} Spec exists: $SPEC_FILE"
   HAS_SPEC=true
 else
-  echo -e "${YELLOW}⚠${NC}  Spec not found: $SPEC_FILE"
+  echo -e "${YELLOW}[WARN]${NC}  Spec not found: $SPEC_FILE"
   HAS_SPEC=false
 fi
 
 if [ -f "$ADR_FILE" ]; then
-  echo -e "${GREEN}✓${NC} ADR exists: $ADR_FILE"
+  echo -e "${GREEN}[OK]${NC} ADR exists: $ADR_FILE"
   HAS_ADR=true
 else
-  echo -e "${YELLOW}⚠${NC}  ADR not found (optional): $ADR_FILE"
+  echo -e "${YELLOW}[WARN]${NC}  ADR not found (optional): $ADR_FILE"
   HAS_ADR=false
 fi
 
@@ -63,7 +63,7 @@ echo ""
 
 # If neither PRD nor Spec exists, can't validate alignment
 if [ "$HAS_PRD" = false ] && [ "$HAS_SPEC" = false ]; then
-  echo -e "${YELLOW}⚠${NC}  No PRD or Spec found - skipping alignment validation"
+  echo -e "${YELLOW}[WARN]${NC}  No PRD or Spec found - skipping alignment validation"
   exit 0
 fi
 
@@ -79,7 +79,7 @@ if [ "$HAS_PRD" = true ]; then
   echo "Found $AC_COUNT acceptance criteria in PRD"
   
   if [ $AC_COUNT -eq 0 ]; then
-    echo -e "${YELLOW}⚠${NC}  Warning: No acceptance criteria found in PRD"
+    echo -e "${YELLOW}[WARN]${NC}  Warning: No acceptance criteria found in PRD"
     WARNINGS+=("No acceptance criteria in PRD")
   fi
 else
@@ -98,9 +98,9 @@ if [ "$HAS_PRD" = true ] && [ "$HAS_SPEC" = true ]; then
   
   # Check if spec has requirements section
   if grep -qi "requirements\|functional requirements" "$SPEC_FILE"; then
-    echo -e "${GREEN}✓${NC} Spec has Requirements section"
+    echo -e "${GREEN}[OK]${NC} Spec has Requirements section"
   else
-    echo -e "${YELLOW}⚠${NC}  Warning: Spec missing Requirements section"
+    echo -e "${YELLOW}[WARN]${NC}  Warning: Spec missing Requirements section"
     WARNINGS+=("Spec missing Requirements section")
   fi
   
@@ -123,19 +123,19 @@ if [ "$HAS_PRD" = true ] && [ "$HAS_SPEC" = true ]; then
       
       if [ "$FOUND_IN_SPEC" = false ]; then
         ALIGNMENT_ISSUES=$((ALIGNMENT_ISSUES + 1))
-        echo -e "${YELLOW}⚠${NC}  Potential gap: '$(echo $ac_item | cut -c1-60)...'"
+        echo -e "${YELLOW}[WARN]${NC}  Potential gap: '$(echo $ac_item | cut -c1-60)...'"
       fi
     done <<< "$AC_ITEMS"
     
     if [ $ALIGNMENT_ISSUES -eq 0 ]; then
-      echo -e "${GREEN}✓${NC} All AC items referenced in Spec"
+      echo -e "${GREEN}[OK]${NC} All AC items referenced in Spec"
     else
-      echo -e "${YELLOW}⚠${NC}  $ALIGNMENT_ISSUES potential alignment gaps found"
+      echo -e "${YELLOW}[WARN]${NC}  $ALIGNMENT_ISSUES potential alignment gaps found"
       WARNINGS+=("$ALIGNMENT_ISSUES PRD → Spec alignment gaps")
     fi
   fi
 elif [ "$HAS_PRD" = true ]; then
-  echo -e "${YELLOW}⚠${NC}  Cannot validate: Spec not found"
+  echo -e "${YELLOW}[WARN]${NC}  Cannot validate: Spec not found"
 fi
 
 echo ""
@@ -152,19 +152,19 @@ if [ "$HAS_SPEC" = true ]; then
     MISSING_FILES=0
     while IFS= read -r file; do
       if [ ! -f "$file" ]; then
-        echo -e "${YELLOW}⚠${NC}  Referenced file not found: $file"
+        echo -e "${YELLOW}[WARN]${NC}  Referenced file not found: $file"
         MISSING_FILES=$((MISSING_FILES + 1))
       fi
     done <<< "$CODE_REFS"
     
     if [ $MISSING_FILES -eq 0 ]; then
-      echo -e "${GREEN}✓${NC} All referenced code files exist"
+      echo -e "${GREEN}[OK]${NC} All referenced code files exist"
     else
-      echo -e "${YELLOW}⚠${NC}  $MISSING_FILES referenced files not found"
+      echo -e "${YELLOW}[WARN]${NC}  $MISSING_FILES referenced files not found"
       WARNINGS+=("$MISSING_FILES code files missing")
     fi
   else
-    echo -e "${YELLOW}⚠${NC}  No code file references found in Spec"
+    echo -e "${YELLOW}[WARN]${NC}  No code file references found in Spec"
   fi
 fi
 
@@ -172,12 +172,12 @@ echo ""
 echo "========================================="
 
 if [ ${#WARNINGS[@]} -eq 0 ]; then
-  echo -e "${GREEN}✓ ALIGNMENT VALIDATION PASSED${NC}"
+  echo -e "${GREEN}[OK] ALIGNMENT VALIDATION PASSED${NC}"
   echo "No critical alignment gaps detected."
   echo "========================================="
   exit 0
 else
-  echo -e "${YELLOW}⚠ ALIGNMENT WARNINGS${NC}"
+  echo -e "${YELLOW}[WARN] ALIGNMENT WARNINGS${NC}"
   echo ""
   for warning in "${WARNINGS[@]}"; do
     echo "  • $warning"

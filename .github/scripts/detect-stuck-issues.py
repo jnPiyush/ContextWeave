@@ -91,7 +91,7 @@ def escalate_issue(repo_name: str, token: str, issue_num: int, hours_inactive: i
     issue.add_to_labels("needs:help")
     
     # Add comment
-    comment = f"""🚨 **Stuck Issue Detected**
+    comment = f"""**Stuck Issue Detected**
 
 This issue has been inactive for **{hours_inactive} hours** without commits or updates.
 
@@ -110,31 +110,31 @@ This issue has been inactive for **{hours_inactive} hours** without commits or u
 """
     issue.create_comment(comment)
     
-    print(f"✅ Escalated issue #{issue_num}")
+    print(f"[SUCCESS] Escalated issue #{issue_num}")
 
 
 def main() -> int:
     """Main entry point."""
     token = os.environ.get("GITHUB_TOKEN")
     if not token:
-        print("❌ GITHUB_TOKEN environment variable not set")
+        print("[ERROR] GITHUB_TOKEN environment variable not set")
         return 1
     
     repo_name = os.environ.get("GITHUB_REPOSITORY")
     if not repo_name:
-        print("❌ GITHUB_REPOSITORY environment variable not set")
+        print("[ERROR] GITHUB_REPOSITORY environment variable not set")
         return 1
     
-    print(f"🔍 Detecting stuck issues in {repo_name}...")
+    print(f"[INFO] Detecting stuck issues in {repo_name}...")
     
     try:
         stuck = detect_stuck_issues(repo_name, token)
         
         if not stuck:
-            print("✅ No stuck issues detected")
+            print("[SUCCESS] No stuck issues detected")
             return 0
         
-        print(f"⚠️  Found {len(stuck)} stuck issue(s)")
+        print(f"[WARNING] Found {len(stuck)} stuck issue(s)")
         
         # Save report
         report_dir = Path(".agent-context")
@@ -153,11 +153,11 @@ def main() -> int:
         for item in stuck:
             escalate_issue(repo_name, token, item["issue"], item["hours_inactive"])
         
-        print(f"✅ Escalated {len(stuck)} stuck issue(s)")
+        print(f"[SUCCESS] Escalated {len(stuck)} stuck issue(s)")
         return 0
         
     except Exception as e:
-        print(f"❌ Error: {e}")
+        print(f"[ERROR] {e}")
         return 1
 
 
