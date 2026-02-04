@@ -4,6 +4,7 @@ Tests for Sync Commands
 Coverage target: 60% (from 11%)
 """
 
+import os
 import pytest
 import json
 import subprocess
@@ -19,7 +20,11 @@ from context_md.commands.sync import (
     _get_auth_token,
     _github_api_get,
     _github_api_post,
+    _detect_github_remote,
+    _show_local_issues,
+    _sync_status,
 )
+from context_md.config import Config
 from context_md.state import State
 
 
@@ -275,6 +280,119 @@ class TestIssuesCommand:
 
         # Config check happens - accept it
         assert "not configured" in result.output or result.exit_code == 0
+
+
+class TestLocalMode:
+    """Test local mode behaviors for sync."""
+
+    def test_sync_local_mode_shows_local_issues(self, runner, tmp_path):
+        """Ensure sync in local mode renders local issues without GitHub."""
+        state = State(tmp_path)
+        state.local_issues = {
+            "1": {
+                "title": "Local issue",
+                "state": "open",
+                "labels": ["type:story"],
+            }
+        }
+        state.save()
+
+        config = Config(tmp_path)
+        config.mode = "local"
+        config.save()
+
+        result = runner.invoke(
+            sync_cmd,
+            obj={"repo_root": tmp_path, "state": state, "config": config},
+            catch_exceptions=False,
+        )
+
+        assert "Local Issues" in result.output
+        assert "#1" in result.output
+
+    def test_show_local_issues_empty(self, capsys, tmp_path):
+        """Show helpful message when no local issues exist."""
+        state = State(tmp_path)
+
+        _show_local_issues(state, verbose=False)
+
+        captured = capsys.readouterr()
+        assert "No local issues tracked" in captured.out
+
+
+class TestHelpers:
+    """Test helper functions in sync module."""
+
+    @patch("subprocess.run")
+    def test_detect_github_remote_ssh(self, mock_run, tmp_path):
+        """Parse SSH-style GitHub remote."""
+        mock_run.return_value = MagicMock(
+            stdout="git@github.com:owner/repo.git\n", returncode=0
+        )
+
+        result = _detect_github_remote(tmp_path)
+
+        assert result == {"owner": "owner", "repo": "repo"}
+
+    @patch("subprocess.run")
+    def test_detect_github_remote_https(self, mock_run, tmp_path):
+        """Parse HTTPS-style GitHub remote."""
+        mock_run.return_value = MagicMock(
+            stdout="https://github.com/owner/repo.git\n", returncode=0
+        )
+
+        result = _detect_github_remote(tmp_path)
+
+        assert result == {"owner": "owner", "repo": "repo"}
+
+    @patch("subprocess.run")
+    def test_detect_github_remote_no_match(self, mock_run, tmp_path):
+        """Return None when remote is not GitHub."""
+        mock_run.return_value = MagicMock(stdout="git@example.com:repo\n", returncode=0)
+
+        result = _detect_github_remote(tmp_path)
+
+        assert result is None
+
+    @patch("subprocess.run")
+    def test_get_auth_token_prefers_state_token(self, mock_run, tmp_path):
+        """Prefer stored token over gh CLI."""
+        state = State(tmp_path)
+        state.github_token = "state-token"
+
+        token = _get_auth_token(state)
+
+        assert token == "state-token"
+        mock_run.assert_not_called()
+
+    @patch("context_md.state.keyring.get_password")
+    @patch("subprocess.run")
+    def test_get_auth_token_falls_back_to_gh(
+        self, mock_run, mock_get_password, tmp_path, monkeypatch
+    ):
+        """Use gh CLI token when no stored token is set."""
+        state = State(tmp_path)
+        mock_get_password.return_value = None
+        if "GITHUB_TOKEN" in os.environ:
+            monkeypatch.delenv("GITHUB_TOKEN", raising=False)
+        mock_run.return_value = MagicMock(returncode=0, stdout="gh-token\n")
+
+        token = _get_auth_token(state)
+
+        assert token == "gh-token"
+
+    def test_sync_status_output(self, capsys, tmp_path):
+        """Render sync status output with local branches/worktrees."""
+        state = State(tmp_path)
+        state.github.owner = "owner"
+        state.github.repo = "repo"
+        state.save()
+        config = Config(tmp_path)
+
+        _sync_status(state, config, verbose=False)
+
+        captured = capsys.readouterr()
+        assert "GitHub Sync Status" in captured.out
 
 
 class TestGitHubAPIHelpers:

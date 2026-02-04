@@ -79,8 +79,7 @@ def _sanitize_label(label: str) -> str:
 
 
 @click.group("issue")
-@click.pass_context
-def issue_cmd(ctx: click.Context) -> None:
+def issue_cmd() -> None:
     """Create and manage issues locally.
     
     In 'local' mode, issues are tracked in state.json.
@@ -93,7 +92,6 @@ def issue_cmd(ctx: click.Context) -> None:
         context-md issue show 1
         context-md issue close 1
     """
-    pass
 
 
 @issue_cmd.command("create")

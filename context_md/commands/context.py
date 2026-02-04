@@ -103,7 +103,6 @@ def context_cmd() -> None:
     - Dependencies
     - References
     """
-    pass
 
 
 @context_cmd.command("generate")

@@ -264,11 +264,14 @@ class TestLoginCommand:
 class TestLogoutCommand:
     """Test logout command."""
 
+    @patch('keyring.get_password')
     @patch('keyring.delete_password')
-    def test_logout_success(self, mock_keyring, runner, tmp_path):
+    def test_logout_success(self, mock_keyring, mock_get_password, runner, tmp_path):
         """Test successful logout."""
+        mock_get_password.return_value = "gho_test_token"
         result = runner.invoke(
             logout_cmd,
+            ["--force"],
             obj={"repo_root": tmp_path},
             catch_exceptions=False
         )
@@ -276,13 +279,16 @@ class TestLogoutCommand:
         # Should succeed (logout always succeeds)
         assert result.exit_code == 0
 
+    @patch('keyring.get_password')
     @patch('keyring.delete_password')
-    def test_logout_no_token(self, mock_keyring, runner, tmp_path):
+    def test_logout_no_token(self, mock_keyring, mock_get_password, runner, tmp_path):
         """Test logout when no token exists."""
+        mock_get_password.return_value = None
         mock_keyring.side_effect = Exception("Not found")
 
         result = runner.invoke(
             logout_cmd,
+            ["--force"],
             obj={"repo_root": tmp_path},
             catch_exceptions=False
         )

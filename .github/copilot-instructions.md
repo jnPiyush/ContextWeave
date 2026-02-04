@@ -89,6 +89,14 @@ git commit -m "type: description (#ID)"
 gh issue close <ID>
 ```
 
+### Using Context.md CLI
+```bash
+context-md issue create "[Type] Description" --type task
+context-md issue list
+git commit -m "type: description (#ID)"
+context-md issue close <ID>
+```
+
 ---
 
 ## 📚 Document Hierarchy

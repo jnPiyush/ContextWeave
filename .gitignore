@@ -2,3 +2,8 @@
 # Context.md runtime state
 .agent-context/state.json
 .agent-context/context-*.md
+
+# Python artifacts
+__pycache__/
+*.pyc
+.coverage

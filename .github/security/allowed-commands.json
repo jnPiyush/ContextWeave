@@ -1,0 +1,208 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "version": "2.2.0",
+  "description": "AgentX Command Allowlist - Defines allowed and blocked commands for agent execution",
+  
+  "allowed": {
+    "git": {
+      "description": "Git version control commands",
+      "commands": [
+        "git add",
+        "git commit",
+        "git push",
+        "git pull",
+        "git fetch",
+        "git checkout",
+        "git branch",
+        "git merge",
+        "git rebase",
+        "git status",
+        "git diff",
+        "git log",
+        "git show",
+        "git stash",
+        "git tag",
+        "git remote",
+        "git clone",
+        "git init"
+      ],
+      "blocked_flags": [
+        "--force",
+        "-f",
+        "--hard"
+      ]
+    },
+    
+    "dotnet": {
+      "description": ".NET CLI commands",
+      "commands": [
+        "dotnet build",
+        "dotnet run",
+        "dotnet test",
+        "dotnet publish",
+        "dotnet restore",
+        "dotnet add",
+        "dotnet remove",
+        "dotnet new",
+        "dotnet clean",
+        "dotnet watch",
+        "dotnet format",
+        "dotnet ef"
+      ]
+    },
+    
+    "npm": {
+      "description": "Node.js package manager",
+      "commands": [
+        "npm install",
+        "npm run",
+        "npm test",
+        "npm build",
+        "npm start",
+        "npm ci",
+        "npm audit",
+        "npm update",
+        "npm init",
+        "npm list"
+      ]
+    },
+    
+    "python": {
+      "description": "Python interpreter and tools",
+      "commands": [
+        "python",
+        "python3",
+        "pip install",
+        "pip list",
+        "pip freeze",
+        "pytest",
+        "ruff",
+        "black",
+        "mypy",
+        "uv"
+      ]
+    },
+    
+    "gh": {
+      "description": "GitHub CLI",
+      "commands": [
+        "gh issue",
+        "gh pr",
+        "gh repo",
+        "gh auth",
+        "gh api",
+        "gh label",
+        "gh project"
+      ]
+    },
+    
+    "filesystem": {
+      "description": "Safe filesystem operations",
+      "commands": [
+        "ls",
+        "dir",
+        "cat",
+        "type",
+        "head",
+        "tail",
+        "find",
+        "grep",
+        "mkdir",
+        "touch",
+        "cp",
+        "copy",
+        "mv",
+        "move"
+      ],
+      "restricted_paths": [
+        "/",
+        "C:\\",
+        "C:\\Windows",
+        "C:\\Program Files",
+        "/etc",
+        "/usr",
+        "/bin",
+        "/root"
+      ]
+    },
+    
+    "database": {
+      "description": "Database CLI tools (read operations)",
+      "commands": [
+        "psql -c 'SELECT",
+        "sqlite3",
+        "sqlcmd"
+      ]
+    },
+    
+    "docker": {
+      "description": "Docker container operations",
+      "commands": [
+        "docker build",
+        "docker run",
+        "docker ps",
+        "docker logs",
+        "docker exec",
+        "docker-compose up",
+        "docker-compose down",
+        "docker-compose build"
+      ]
+    }
+  },
+  
+  "blocked": {
+    "description": "Commands that are NEVER allowed",
+    "patterns": [
+      "rm -rf",
+      "rm -r /",
+      "del /s",
+      "del /q",
+      "format",
+      "fdisk",
+      "mkfs",
+      "dd if=",
+      "git reset --hard",
+      "git push --force",
+      "git push -f",
+      "DROP DATABASE",
+      "DROP TABLE",
+      "TRUNCATE",
+      "DELETE FROM .* WHERE 1=1",
+      "chmod 777",
+      "chmod -R 777",
+      "curl .* | sh",
+      "curl .* | bash",
+      "wget .* | sh",
+      "wget .* | bash",
+      "eval",
+      "exec",
+      "> /dev/sda",
+      ":(){ :|:& };:",
+      "shutdown",
+      "reboot",
+      "halt",
+      "init 0",
+      "init 6"
+    ],
+    "environment": [
+      "Setting PATH to empty",
+      "Unsetting HOME",
+      "Modifying system environment variables"
+    ]
+  },
+  
+  "audit": {
+    "description": "Audit configuration",
+    "enabled": true,
+    "log_path": ".github/security/audit.log",
+    "log_format": "[{timestamp}] [{user}] [{command}] [{result}]",
+    "retention_days": 30
+  },
+  
+  "enforcement": {
+    "mode": "active",
+    "pre_commit_hook": true,
+    "runtime_validation": true,
+    "escalation_on_violation": true
+  }
+}

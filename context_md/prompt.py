@@ -410,7 +410,7 @@ class PromptEngineer:
         constraints.extend(self._extract_constraints_from_prompt(raw_prompt))
         
         # Build success criteria from acceptance criteria and template
-        success_criteria = self._build_success_criteria(raw_prompt, issue_type, template)
+        success_criteria = self._build_success_criteria(raw_prompt, issue_type)
         
         # Quality checklist
         quality_checklist = template["quality_checklist"].copy()
@@ -419,7 +419,7 @@ class PromptEngineer:
         approach_hints = template["approach_hints"].copy()
         
         # Add issue-specific hints based on labels
-        approach_hints.extend(self._get_label_specific_hints(labels, role))
+        approach_hints.extend(self._get_label_specific_hints(labels))
         
         # Pitfalls
         pitfalls = template["pitfalls"].copy()
@@ -551,8 +551,7 @@ class PromptEngineer:
     def _build_success_criteria(
         self,
         raw_prompt: str,
-        issue_type: str,
-        template: Dict[str, Any]
+        issue_type: str
     ) -> List[str]:
         """Build success criteria from prompt and issue type."""
         criteria = []
@@ -594,7 +593,7 @@ class PromptEngineer:
         
         return criteria
     
-    def _get_label_specific_hints(self, labels: List[str], role: str) -> List[str]:
+    def _get_label_specific_hints(self, labels: List[str]) -> List[str]:
         """Get hints specific to issue labels."""
         hints = []
         
