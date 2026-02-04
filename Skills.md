@@ -149,6 +149,12 @@ description: 'Production-ready guidelines for AI agents to build secure, scalabl
 | 08 | [Code Organization](.github/skills/architecture/code-organization/SKILL.md) | Project Structure, Separation of Concerns |
 | 09 | [API Design](.github/skills/architecture/api-design/SKILL.md) | REST, Versioning, Rate Limiting |
 
+### Design
+
+| # | Skill | Core Focus |
+|---|-------|------------|
+| 26 | [UX Design](.github/skills/design/ux-design/SKILL.md) | Wireframes, HTML Prototypes, User Flows, Accessibility (WCAG 2.1) |
+
 ### Development
 
 | # | Skill | Core Focus |
