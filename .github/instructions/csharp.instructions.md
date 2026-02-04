@@ -12,6 +12,7 @@ applyTo: '**.cs, **.csx'
 - Prefer `record` for DTOs and immutable types
 - Use `required` modifier for mandatory properties
 - Enable nullable reference types (`<Nullable>enable</Nullable>`)
+- **NO EMOJIS in code**: Use text markers like `[ERROR]`, `[SUCCESS]`, `[WARN]`, `[INFO]` for cross-platform compatibility
 
 ## Naming Conventions
 

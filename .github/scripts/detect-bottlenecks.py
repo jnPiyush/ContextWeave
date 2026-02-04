@@ -165,14 +165,14 @@ def generate_report(analysis: Dict) -> str:
     
     if analysis["bottlenecks_detected"] == 0:
         lines.extend([
-            "✅ NO BOTTLENECKS DETECTED",
+            "[OK] NO BOTTLENECKS DETECTED",
             "",
             "Workflow is flowing smoothly.",
             "All stages are within acceptable thresholds.",
         ])
     else:
         lines.extend([
-            f"⚠️  {analysis['bottlenecks_detected']} BOTTLENECK(S) DETECTED",
+            f"[WARNING] {analysis['bottlenecks_detected']} BOTTLENECK(S) DETECTED",
             "",
         ])
         

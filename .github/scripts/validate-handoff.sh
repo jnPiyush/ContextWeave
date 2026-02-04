@@ -20,10 +20,10 @@ check_file_exists() {
   local description=$2
   
   if [ -f "$file" ]; then
-    echo -e "${GREEN}✓${NC} $description exists: $file"
+    echo -e "${GREEN}[OK]${NC} $description exists: $file"
     return 0
   else
-    echo -e "${RED}✗${NC} $description missing: $file"
+    echo -e "${RED}[X]${NC} $description missing: $file"
     return 1
   fi
 }
@@ -33,10 +33,10 @@ check_dir_has_files() {
   local description=$2
   
   if find . -path "$pattern" | grep -q .; then
-    echo -e "${GREEN}✓${NC} $description found"
+    echo -e "${GREEN}[OK]${NC} $description found"
     return 0
   else
-    echo -e "${RED}✗${NC} $description not found"
+    echo -e "${RED}[X]${NC} $description not found"
     return 1
   fi
 }
@@ -45,10 +45,10 @@ check_git_commit() {
   local issue_ref=$1
   
   if git log --oneline | grep -q "#${issue_ref}"; then
-    echo -e "${GREEN}✓${NC} Code committed with issue reference #${issue_ref}"
+    echo -e "${GREEN}[OK]${NC} Code committed with issue reference #${issue_ref}"
     return 0
   else
-    echo -e "${RED}✗${NC} No commits found with issue reference #${issue_ref}"
+    echo -e "${RED}[X]${NC} No commits found with issue reference #${issue_ref}"
     return 1
   fi
 }
@@ -63,10 +63,10 @@ check_github_issues() {
   fi
   
   if gh issue list --search "parent:#${parent_issue}" --limit 1 --json number | grep -q "number"; then
-    echo -e "${GREEN}✓${NC} Child issues created for Epic #${parent_issue}"
+    echo -e "${GREEN}[OK]${NC} Child issues created for Epic #${parent_issue}"
     return 0
   else
-    echo -e "${RED}✗${NC} No child issues found for Epic #${parent_issue}"
+    echo -e "${RED}[X]${NC} No child issues found for Epic #${parent_issue}"
     return 1
   fi
 }
@@ -110,10 +110,10 @@ case $ROLE in
       done
       
       if [ ${#missing_sections[@]} -gt 0 ]; then
-        echo -e "${RED}✗${NC} PRD missing required sections: ${missing_sections[*]}"
+        echo -e "${RED}[X]${NC} PRD missing required sections: ${missing_sections[*]}"
         VALIDATION_PASSED=false
       else
-        echo -e "${GREEN}✓${NC} PRD has all required sections"
+        echo -e "${GREEN}[OK]${NC} PRD has all required sections"
       fi
     fi
     ;;
@@ -130,16 +130,16 @@ case $ROLE in
     # Check for wireframes/user flows in UX doc
     if [ -f "docs/ux/UX-${ISSUE}.md" ]; then
       if grep -q "## .*Wireframe" "docs/ux/UX-${ISSUE}.md" && grep -q "## .*User Flow" "docs/ux/UX-${ISSUE}.md"; then
-        echo -e "${GREEN}✓${NC} UX doc includes wireframes and user flows"
+        echo -e "${GREEN}[OK]${NC} UX doc includes wireframes and user flows"
       else
-        echo -e "${RED}✗${NC} UX doc missing wireframes or user flows sections"
+        echo -e "${RED}[X]${NC} UX doc missing wireframes or user flows sections"
         VALIDATION_PASSED=false
       fi
     fi
     
     # Check prototype (optional, just warn)
     if [ -f "docs/ux/PROTOTYPE-${ISSUE}.md" ]; then
-      echo -e "${GREEN}✓${NC} Prototype document exists"
+      echo -e "${GREEN}[OK]${NC} Prototype document exists"
     else
       echo -e "${YELLOW}⚠${NC} Prototype document not found (optional)"
     fi
@@ -171,10 +171,10 @@ case $ROLE in
       done
       
       if [ ${#missing_sections[@]} -gt 0 ]; then
-        echo -e "${RED}✗${NC} ADR missing required sections: ${missing_sections[*]}"
+        echo -e "${RED}[X]${NC} ADR missing required sections: ${missing_sections[*]}"
         VALIDATION_PASSED=false
       else
-        echo -e "${GREEN}✓${NC} ADR has all required sections"
+        echo -e "${GREEN}[OK]${NC} ADR has all required sections"
       fi
     fi
     
@@ -182,7 +182,7 @@ case $ROLE in
     if find docs/specs -name "SPEC-*.md" -exec grep -l '\`\`\`' {} \; | grep -q .; then
       echo -e "${YELLOW}⚠${NC} Warning: Tech Spec contains code examples (should use diagrams instead)"
     else
-      echo -e "${GREEN}✓${NC} Tech Spec follows NO CODE EXAMPLES policy"
+      echo -e "${GREEN}[OK]${NC} Tech Spec follows NO CODE EXAMPLES policy"
     fi
     ;;
   
@@ -199,7 +199,7 @@ case $ROLE in
     if ! check_dir_has_files "**/*Test*.cs" "Unit tests (.NET)" && \
        ! check_dir_has_files "**/*test*.py" "Unit tests (Python)" && \
        ! check_dir_has_files "**/*.test.ts" "Unit tests (TypeScript)"; then
-      echo -e "${RED}✗${NC} No test files found"
+      echo -e "${RED}[X]${NC} No test files found"
       VALIDATION_PASSED=false
     fi
     
@@ -211,7 +211,7 @@ case $ROLE in
     
     # Check for documentation
     if git diff --name-only HEAD~1 | grep -q "README.md"; then
-      echo -e "${GREEN}✓${NC} README updated"
+      echo -e "${GREEN}[OK]${NC} README updated"
     else
       echo -e "${YELLOW}⚠${NC} README not updated (check if needed)"
     fi
@@ -238,26 +238,26 @@ case $ROLE in
       done
       
       if [ ${#missing_sections[@]} -gt 0 ]; then
-        echo -e "${RED}✗${NC} Review missing required sections: ${missing_sections[*]}"
+        echo -e "${RED}[X]${NC} Review missing required sections: ${missing_sections[*]}"
         VALIDATION_PASSED=false
       else
-        echo -e "${GREEN}✓${NC} Review has all required sections"
+        echo -e "${GREEN}[OK]${NC} Review has all required sections"
       fi
       
       # Check for approval decision
       if grep -q "APPROVED" "docs/reviews/REVIEW-${ISSUE}.md"; then
-        echo -e "${GREEN}✓${NC} Review decision: APPROVED"
+        echo -e "${GREEN}[OK]${NC} Review decision: APPROVED"
       elif grep -q "CHANGES REQUESTED" "docs/reviews/REVIEW-${ISSUE}.md"; then
         echo -e "${YELLOW}⚠${NC} Review decision: CHANGES REQUESTED"
       else
-        echo -e "${RED}✗${NC} Review decision not found (must be APPROVED or CHANGES REQUESTED)"
+        echo -e "${RED}[X]${NC} Review decision not found (must be APPROVED or CHANGES REQUESTED)"
         VALIDATION_PASSED=false
       fi
     fi
     ;;
   
   *)
-    echo -e "${RED}✗${NC} Unknown role: ${ROLE}"
+    echo -e "${RED}[X]${NC} Unknown role: ${ROLE}"
     echo "Valid roles: pm, ux, architect, engineer, reviewer"
     exit 1
     ;;
@@ -267,12 +267,12 @@ echo ""
 echo "========================================="
 
 if [ "$VALIDATION_PASSED" = true ]; then
-  echo -e "${GREEN}✓ Validation PASSED${NC}"
+  echo -e "${GREEN}[OK] Validation PASSED${NC}"
   echo "Agent can proceed with handoff."
   echo "========================================="
   exit 0
 else
-  echo -e "${RED}✗ Validation FAILED${NC}"
+  echo -e "${RED}[X] Validation FAILED${NC}"
   echo "Fix the issues above before handoff."
   echo "========================================="
   exit 1

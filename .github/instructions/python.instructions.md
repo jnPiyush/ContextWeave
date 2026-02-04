@@ -11,6 +11,7 @@ applyTo: '**.py, **.pyx'
 - Use type hints for all function signatures (PEP 484)
 - Maximum line length: 88 characters (Black formatter)
 - Use `ruff` for linting and formatting
+- **NO EMOJIS in code**: Use text markers like `[ERROR]`, `[SUCCESS]`, `[WARN]`, `[INFO]` for cross-platform compatibility
 
 ## Type Hints
 

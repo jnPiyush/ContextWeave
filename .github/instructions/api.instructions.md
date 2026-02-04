@@ -5,6 +5,12 @@ applyTo: '**/Controllers/**, **/api/**, **/endpoints/**'
 
 # API Design Instructions
 
+## Output Standards
+
+- **NO EMOJIS in code**: Use text markers like `[ERROR]`, `[SUCCESS]`, `[WARN]`, `[INFO]` for logging and responses
+- Keep response payloads clean and parseable
+- Use standard HTTP status codes instead of emoji indicators
+
 ## REST Conventions
 
 | Operation | HTTP Method | URL Pattern | Response |

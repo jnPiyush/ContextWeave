@@ -5,6 +5,12 @@ applyTo: '**.tsx, **.jsx, **/components/**, **/hooks/**'
 
 # React / TypeScript Instructions
 
+## Code Standards
+
+- **NO EMOJIS in code**: Use text labels for status indicators (e.g., "Success", "Error", "Warning")
+- Emojis allowed in UI text props when needed for user-facing content
+- Console logs should use text markers: `console.log('[INFO] Component mounted')`
+
 ## Component Structure
 
 ```typescript

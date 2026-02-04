@@ -99,6 +99,29 @@ context-md issue close <ID>
 
 ---
 
+## Output Standards
+
+### NO EMOJIS in Code
+**CRITICAL**: Never use emojis (✅❌⚠️🔍📊etc.) in production code, scripts, or automation:
+- ❌ **DON'T**: `print("✅ Success")` or `echo "❌ Error"`
+- ✅ **DO**: `print("[SUCCESS] Operation complete")` or `echo "[ERROR] Failed"`
+
+**Use text markers instead:**
+- `[SUCCESS]` / `[OK]` - for successful operations
+- `[ERROR]` / `[FAIL]` - for errors and failures  
+- `[WARN]` / `[WARNING]` - for warnings
+- `[INFO]` - for informational messages
+
+**Why?** Emojis cause:
+- Encoding issues on Windows (cp1252 vs UTF-8)
+- Terminal compatibility problems
+- Log parsing difficulties
+- Grep/search complications
+
+**Exception**: Emojis ARE allowed in documentation files (*.md, README, reports) for readability.
+
+---
+
 ## 📚 Document Hierarchy
 
 ```
