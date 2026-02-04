@@ -147,7 +147,7 @@ def main() -> int:
         }
         
         report_file = report_dir / "stuck-report.json"
-        report_file.write_text(json.dumps(report, indent=2))
+        report_file.write_text(json.dumps(report, indent=2), encoding='utf-8')
         
         # Escalate each stuck issue
         for item in stuck:

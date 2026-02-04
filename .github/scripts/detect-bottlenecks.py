@@ -235,7 +235,7 @@ def main() -> int:
         
         # Save text report
         text_file = report_dir / f"bottleneck-{datetime.now().strftime('%Y-%m-%d')}.txt"
-        text_file.write_text(report_text)
+        text_file.write_text(report_text, encoding='utf-8')
         
         print(f"\n✅ Bottleneck analysis complete")
         print(f"   JSON: {report_file}")
