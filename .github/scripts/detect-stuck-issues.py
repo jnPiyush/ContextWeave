@@ -11,7 +11,7 @@ Runs every 30 minutes via GitHub Actions (health-monitoring.yml).
 import json
 import os
 import sys
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Dict, List
 
@@ -156,8 +156,11 @@ def main() -> int:
         print(f"[SUCCESS] Escalated {len(stuck)} stuck issue(s)")
         return 0
         
-    except Exception as e:
+    except (RuntimeError, ValueError) as e:
         print(f"[ERROR] {e}")
+        return 1
+    except Exception as e:
+        print(f"[ERROR] Unexpected error: {e}")
         return 1
 
 

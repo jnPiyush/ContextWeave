@@ -2,8 +2,6 @@
 
 import json
 
-import pytest
-
 from context_md.security import (
     CommandValidator,
     PathValidator,

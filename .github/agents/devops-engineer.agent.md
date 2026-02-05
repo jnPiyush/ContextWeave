@@ -135,9 +135,9 @@ Before starting, verify:
 ## Skills to Load
 
 **CRITICAL**: Load these skills before implementation:
-1. [DevOps & CI/CD](.github/skills/operations/devops-cicd/SKILL.md) - GitHub Actions, YAML pipelines, deployment strategies
-2. [Security](.github/skills/architecture/security/SKILL.md) - Secrets management, secure deployments
-3. [Configuration](.github/skills/development/configuration/SKILL.md) - Environment variables, feature flags
+1. [DevOps & CI/CD](../skills/operations/devops-cicd/SKILL.md) - GitHub Actions, YAML pipelines, deployment strategies
+2. [Security](../skills/architecture/security/SKILL.md) - Secrets management, secure deployments
+3. [Configuration](../skills/development/configuration/SKILL.md) - Environment variables, feature flags
 
 ## Quality Checklist
 
