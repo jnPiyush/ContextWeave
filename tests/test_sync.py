@@ -8,15 +8,13 @@ import os
 import pytest
 import json
 import subprocess
-from unittest.mock import patch, MagicMock, call
+from unittest.mock import patch, MagicMock
 from click.testing import CliRunner
-from pathlib import Path
 
 from context_md.commands.sync import (
     sync_cmd,
     setup_cmd,
     issues_cmd,
-    _sync_pull,
     _get_auth_token,
     _github_api_get,
     _github_api_post,
@@ -68,6 +66,7 @@ class TestSetupCommand:
     @patch('subprocess.run')
     def test_setup_manual_owner_repo(self, mock_run, runner, tmp_path):
         """Test manual owner and repo specification."""
+        mock_run.return_value = MagicMock(returncode=0)
         state = State(tmp_path)
         
         result = runner.invoke(
@@ -83,6 +82,7 @@ class TestSetupCommand:
     @patch('subprocess.run')
     def test_setup_with_project(self, mock_run, runner, tmp_path):
         """Test setup with GitHub project ID."""
+        mock_run.return_value = MagicMock(returncode=0)
         result = runner.invoke(
             setup_cmd,
             ["--owner", "myuser", "--repo", "myrepo", "--project", "123"],
@@ -498,9 +498,7 @@ class TestAuthTokenRetrieval:
         )
 
         # This tests the fallback logic
-        state = State(tmp_path)
-        # Would need to call the actual fallback function
-        # For now, verify the mock setup
+        # Verify the mock setup for gh token retrieval
         assert mock_run().stdout.strip() == "gho_gh_token"
 
     @patch('keyring.get_password')
@@ -553,8 +551,8 @@ class TestSyncDryRun:
         assert "dry run" in result.output.lower() or "would" in result.output.lower() or result.exit_code == 0
 
 
-class TestLocalMode:
-    """Test sync behavior in local mode."""
+class TestLocalModeExtended:
+    """Test additional sync behavior in local mode."""
 
     def test_sync_local_mode_shows_warning(self, runner, tmp_path):
         """Test sync in local mode shows appropriate message."""
