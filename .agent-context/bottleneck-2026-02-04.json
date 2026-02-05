@@ -1,0 +1,20 @@
+{
+  "timestamp": "2026-02-04T23:03:33.879611Z",
+  "total_open_issues": 1,
+  "stage_analysis": {
+    "backlog": {
+      "queue_size": 1,
+      "avg_wait_days": 0.1,
+      "top_issues": [
+        {
+          "number": 1,
+          "title": "[Story] Improve test coverage for sync/subagent/context and add integration tests",
+          "wait_days": 0.1,
+          "assignee": "unassigned"
+        }
+      ]
+    }
+  },
+  "bottlenecks_detected": 0,
+  "bottlenecks": []
+}

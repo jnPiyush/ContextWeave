@@ -61,6 +61,8 @@ AgentX uses a **Hub-and-Spoke architecture** for agent coordination:
                       │
                 Engineer Agent
                       │
+               DevOps Engineer
+                      │
                 Reviewer Agent
 ```
 
@@ -86,6 +88,7 @@ Epic + Backlog → Product Manager
 Ready + needs:ux → UX Designer  
 Ready + (no architecture) → Architect
 Ready + (has architecture) → Engineer
+needs:devops → DevOps Engineer
 In Review → Reviewer
 Bug + Backlog → Engineer (skip PM/Architect)
 Spike + Backlog → Architect
@@ -110,6 +113,7 @@ Spike + Backlog → Architect
 - UX: Wireframes + user flows complete, accessibility considered
 - Architect: ADR + Tech Spec exist, NO CODE EXAMPLES compliance
 - Engineer: Code committed, tests ≥80% coverage, docs updated
+- DevOps: Workflows created, security scans pass, health checks implemented
 - Reviewer: Review document complete, approval decision present
 
 ---
@@ -209,6 +213,22 @@ All AgentX core agents are currently **stable** (production-ready).
   - Can modify: `src/**`, `tests/**`, `docs/README.md`
   - Cannot modify: `docs/prd/**`, `docs/adr/**`, `docs/ux/**`, `.github/workflows/**`
 
+### DevOps Engineer
+- **Maturity**: Stable
+- **Trigger**: `needs:devops` or `type:devops` label
+- **Output**: GitHub Actions workflows + Deployment configurations + Documentation
+- **Status**: Move to `In Progress` when starting → `In Review` when workflows complete
+- **Tools**: All tools available (create_file, run_in_terminal, run_workflow, etc.)
+- **Validation**: `.github/scripts/validate-handoff.sh {issue} devops`
+- **Constraints**:
+  - ✅ CAN create CI/CD workflows, deployment pipelines, release automation
+  - ❌ CANNOT modify application code, skip security scanning, use personal tokens
+  - ✅ MUST implement health checks, secrets management, rollback strategies
+  - ❌ MUST NOT deploy without tests, expose secrets in logs, skip approval gates
+- **Boundaries**:
+  - Can modify: `.github/workflows/**`, `.github/actions/**`, deployment configs
+  - Cannot modify: `src/**`, `docs/prd/**`, `docs/adr/**`, `docs/ux/**`
+
 ### Code Reviewer
 - **Maturity**: Stable
 - **Trigger**: Status = `In Review`
@@ -238,9 +258,9 @@ All AgentX core agents are currently **stable** (production-ready).
 ## Handoff Flow
 
 ```
-PM → UX → Architect → Engineer → Reviewer → Done
-     ↑         ↑
-   (optional) (optional for small tasks)
+PM → UX → Architect → Engineer → DevOps Engineer → Reviewer → Done
+     ↑         ↑                      ↑
+   (optional) (optional)         (optional, needs:devops)
 ```
 
 | Phase | Status Transition | Meaning |

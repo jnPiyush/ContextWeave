@@ -181,6 +181,7 @@ description: 'Production-ready guidelines for AI agents to build secure, scalabl
 | # | Skill | Core Focus |
 |---|-------|------------|
 | 16 | [Remote Git Ops](.github/skills/operations/remote-git-operations/SKILL.md) | PRs, CI/CD, GitHub Actions, Azure Pipelines |
+| 27 | [DevOps & CI/CD](.github/skills/operations/devops-cicd/SKILL.md) | GitHub Actions, YAML Pipelines, Deployment Strategies, Release Automation |
 
 ### AI Systems
 
