@@ -119,6 +119,15 @@ cli.add_command(status.status_cmd, name="status")
 cli.add_command(dashboard.dashboard_cmd, name="dashboard")  # Real-time web dashboard
 cli.add_command(sync.sync_cmd, name="sync")
 
+# Conditionally register agent framework command
+try:
+    from context_md.framework import AGENT_FRAMEWORK_AVAILABLE
+    if AGENT_FRAMEWORK_AVAILABLE:
+        from context_md.framework.run import run_cmd
+        cli.add_command(run_cmd, name="run")
+except ImportError:
+    pass  # Agent framework not installed, skip
+
 
 # Input validation helpers
 def validate_issue_number(_ctx, _param, value):

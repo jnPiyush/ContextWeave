@@ -40,6 +40,7 @@ dev = [
     "pytest>=7.0.0",
     "pytest-cov>=4.0.0",
     "pytest-mock>=3.12.0",
+    "pytest-asyncio>=0.23.0",
     "responses>=0.24.0",
     "ruff>=0.1.0",
     "mypy>=1.0.0",
@@ -47,6 +48,15 @@ dev = [
 export = [
     "docx2pdf>=0.1.8; platform_system=='Windows'",
     "pypandoc>=1.12",
+]
+agent = [
+    "agent-framework>=0.1.0a0",
+    "pyyaml>=6.0.0",
+]
+agent-anthropic = [
+    "agent-framework>=0.1.0a0",
+    "agent-framework-anthropic>=0.1.0a0",
+    "pyyaml>=6.0.0",
 ]
 
 [project.scripts]
