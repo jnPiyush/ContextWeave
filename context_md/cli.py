@@ -34,7 +34,7 @@ from typing import Optional
 import click
 
 from context_md import __version__
-from context_md.commands import auth, config, context, init, issue, memory, status, subagent, sync, validate
+from context_md.commands import auth, config, context, dashboard, export, init, issue, memory, status, subagent, sync, validate
 from context_md.config import Config
 from context_md.state import State
 
@@ -112,9 +112,11 @@ cli.add_command(config.config_cmd, name="config")
 cli.add_command(issue.issue_cmd, name="issue")
 cli.add_command(subagent.subagent_cmd, name="subagent")
 cli.add_command(context.context_cmd, name="context")
+cli.add_command(export.export_cmd, name="export")
 cli.add_command(memory.memory_cmd, name="memory")  # Layer 3: Memory
 cli.add_command(validate.validate_cmd, name="validate")
 cli.add_command(status.status_cmd, name="status")
+cli.add_command(dashboard.dashboard_cmd, name="dashboard")  # Real-time web dashboard
 cli.add_command(sync.sync_cmd, name="sync")
 
 
