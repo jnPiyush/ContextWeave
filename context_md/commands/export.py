@@ -7,16 +7,13 @@ Usage:
     context-md export --issue 123 --format both
 """
 
-import json
 import logging
-import os
 import subprocess
 from pathlib import Path
 from typing import Optional, List
 
 import click
 
-from context_md.state import State
 from context_md.wordmcp import WordMCPClient
 
 logger = logging.getLogger(__name__)
@@ -26,18 +23,17 @@ logger = logging.getLogger(__name__)
 @click.pass_context
 def export_cmd(_ctx: click.Context) -> None:
     """Export markdown documents to DOCX and PDF formats."""
-    pass
 
 
 @export_cmd.command("document")
 @click.argument("filepath", type=click.Path(exists=True))
-@click.option("--format", "-f", type=click.Choice(["docx", "pdf", "both"]), default="docx",
+@click.option("--format", "-f", "output_format", type=click.Choice(["docx", "pdf", "both"]), default="docx",
               help="Output format")
 @click.option("--output", "-o", type=click.Path(), help="Output directory (default: same as source)")
 @click.option("--template", "-t", type=click.Path(exists=True),
              help="Template file for styling")
 @click.pass_context
-def export_document_cmd(ctx: click.Context, filepath: str, format: str,
+def export_document_cmd(_ctx: click.Context, filepath: str, output_format: str,
                        output: Optional[str], template: Optional[str]) -> None:
     """Export a markdown document to DOCX/PDF format.
     
@@ -59,37 +55,37 @@ def export_document_cmd(ctx: click.Context, filepath: str, format: str,
     click.echo(f"[SUCCESS] Exporting {filepath_obj.name}...")
     
     # Convert to DOCX
-    if format in ["docx", "both"]:
+    if output_format in ["docx", "both"]:
         docx_path = output_dir / f"{base_name}.docx"
         try:
             _convert_md_to_docx(filepath_obj, docx_path, template)
             click.echo(f"[SUCCESS] DOCX created: {docx_path}")
-        except Exception as e:
+        except (OSError, RuntimeError, ImportError) as e:
             click.echo(f"[ERROR] DOCX conversion failed: {e}", err=True)
     
     # Convert to PDF
-    if format in ["pdf", "both"]:
+    if output_format in ["pdf", "both"]:
         pdf_path = output_dir / f"{base_name}.pdf"
         try:
-            if format == "both":
+            if output_format == "both":
                 # Convert DOCX to PDF using Word MCP
                 _convert_docx_to_pdf(docx_path, pdf_path)
             else:
                 # Direct MD to PDF
                 _convert_md_to_pdf(filepath_obj, pdf_path)
             click.echo(f"[SUCCESS] PDF created: {pdf_path}")
-        except Exception as e:
+        except (OSError, RuntimeError, ImportError) as e:
             click.echo(f"[ERROR] PDF conversion failed: {e}", err=True)
 
 
 @export_cmd.command("issue")
 @click.argument("issue_number", type=int)
-@click.option("--format", "-f", type=click.Choice(["docx", "pdf", "both"]), default="both",
+@click.option("--format", "-f", "output_format", type=click.Choice(["docx", "pdf", "both"]), default="both",
               help="Output format")
 @click.option("--output", "-o", type=click.Path(), default="./deliverables",
               help="Output directory")
 @click.pass_context
-def export_issue_cmd(ctx: click.Context, issue_number: int, format: str,
+def export_issue_cmd(ctx: click.Context, issue_number: int, output_format: str,
                     output: str) -> None:
     """Export all deliverables for an issue (PRD, ADR, Spec, Review).
     
@@ -118,24 +114,24 @@ def export_issue_cmd(ctx: click.Context, issue_number: int, format: str,
         base_name = doc.stem
         
         # Convert to DOCX
-        if format in ["docx", "both"]:
+        if output_format in ["docx", "both"]:
             docx_path = output_dir / f"{base_name}.docx"
             try:
                 _convert_md_to_docx(doc, docx_path, None)
                 click.echo(f"  [SUCCESS] DOCX: {docx_path}")
-            except Exception as e:
+            except (OSError, RuntimeError, ImportError) as e:
                 click.echo(f"  [ERROR] DOCX failed: {e}", err=True)
         
         # Convert to PDF
-        if format in ["pdf", "both"]:
+        if output_format in ["pdf", "both"]:
             pdf_path = output_dir / f"{base_name}.pdf"
             try:
-                if format == "both":
+                if output_format == "both":
                     _convert_docx_to_pdf(docx_path, pdf_path)
                 else:
                     _convert_md_to_pdf(doc, pdf_path)
                 click.echo(f"  [SUCCESS] PDF: {pdf_path}")
-            except Exception as e:
+            except (OSError, RuntimeError, ImportError) as e:
                 click.echo(f"  [ERROR] PDF failed: {e}", err=True)
     
     click.echo(f"\n[SUCCESS] Export complete! Files saved to: {output_dir}")
@@ -194,7 +190,7 @@ def _find_issue_documents(repo_root: Path, issue_number: int) -> List[Path]:
     return sorted(docs)
 
 
-def _convert_md_to_docx(md_path: Path, docx_path: Path, template: Optional[Path]) -> None:
+def _convert_md_to_docx(md_path: Path, docx_path: Path, _template: Optional[Path]) -> None:
     """Convert markdown to DOCX using Word MCP Server."""
     from markdown_it import MarkdownIt
     
@@ -216,7 +212,7 @@ def _create_word_document_via_mcp(mcp: WordMCPClient, tokens: List, output_path:
     filename = str(output_path)
     
     # Create document via MCP
-    logger.info(f"Creating Word document via MCP: {filename}")
+    logger.info("Creating Word document via MCP: %s", filename)
     mcp.create_document(filename, title=document_title, author="Context.md Export")
     
     # Process markdown tokens and add content via MCP
@@ -232,7 +228,7 @@ def _create_word_document_via_mcp(mcp: WordMCPClient, tokens: List, output_path:
                 if i < len(tokens) and tokens[i].type == "inline":
                     text = tokens[i].content
                     mcp.add_heading(filename, text, level=level)
-                    logger.debug(f"Added heading (level {level}): {text[:50]}...")
+                    logger.debug("Added heading (level %d): %s...", level, text[:50])
             
             elif token.type == "paragraph_open":
                 # Get paragraph text
@@ -241,7 +237,7 @@ def _create_word_document_via_mcp(mcp: WordMCPClient, tokens: List, output_path:
                     text = tokens[i].content
                     if text:  # Only add non-empty paragraphs
                         mcp.add_paragraph(filename, text)
-                        logger.debug(f"Added paragraph: {text[:50]}...")
+                        logger.debug("Added paragraph: %s...", text[:50])
             
             elif token.type == "code_block" or token.type == "fence":
                 # Add code block as styled paragraph
@@ -250,28 +246,28 @@ def _create_word_document_via_mcp(mcp: WordMCPClient, tokens: List, output_path:
                     mcp.add_paragraph(filename, code_text, 
                                     font_name="Courier New",
                                     font_size=10)
-                    logger.debug(f"Added code block: {len(code_text)} chars")
+                    logger.debug("Added code block: %d chars", len(code_text))
             
             elif token.type == "table_open":
                 # Handle tables - collect table data
                 table_data = _extract_table_from_tokens(tokens, i)
-                if table_data:
+                if table_data and isinstance(table_data, list) and len(table_data) > 0:
                     rows = len(table_data)
-                    cols = len(table_data[0]) if rows > 0 else 0
+                    cols = len(table_data[0])
                     mcp.add_table(filename, rows, cols, table_data)
-                    logger.debug(f"Added table: {rows}x{cols}")
+                    logger.debug("Added table: %dx%d", rows, cols)
             
             elif token.type == "hr":
                 # Add horizontal rule as page break
                 mcp.add_page_break(filename)
                 logger.debug("Added page break")
         
-        except Exception as e:
-            logger.warning(f"Failed to add element (token type: {token.type}): {e}")
+        except (ValueError, KeyError, IndexError) as e:
+            logger.warning("Failed to add element (token type: %s): %s", token.type, e)
         
         i += 1
     
-    logger.info(f"Document created successfully: {filename}")
+    logger.info("Document created successfully: %s", filename)
 
 
 def _convert_md_to_pdf(md_path: Path, pdf_path: Path) -> None:
@@ -330,12 +326,12 @@ def _convert_md_to_pdf(md_path: Path, pdf_path: Path) -> None:
                 "--pdf-engine=xelatex",
                 "-V", "geometry:margin=1in"
             ], check=True)
-        except FileNotFoundError:
+        except FileNotFoundError as exc:
             raise RuntimeError(
                 "PDF conversion requires either:\n"
                 "  1. pip install weasyprint markdown\n"
                 "  2. Install pandoc: https://pandoc.org/installing.html"
-            )
+            ) from exc
 
 
 def _convert_docx_to_pdf(docx_path: Path, pdf_path: Path) -> None:
@@ -348,7 +344,7 @@ def _convert_docx_to_pdf(docx_path: Path, pdf_path: Path) -> None:
     Raises:
         RuntimeError: If PDF conversion fails
     """
-    logger.info(f"Converting DOCX to PDF: {docx_path} -> {pdf_path}")
+    logger.info("Converting DOCX to PDF: %s -> %s", docx_path, pdf_path)
     
     import platform
     
@@ -362,7 +358,6 @@ def _convert_docx_to_pdf(docx_path: Path, pdf_path: Path) -> None:
                 return
             except ImportError:
                 logger.warning("docx2pdf not available, using weasyprint fallback")
-                pass
             
             # Fallback: Convert DOCX content to PDF via weasyprint
             try:
@@ -401,12 +396,12 @@ def _convert_docx_to_pdf(docx_path: Path, pdf_path: Path) -> None:
                 HTML(string=html_content).write_pdf(str(pdf_path))
                 logger.info("PDF created using weasyprint from DOCX content")
                 return
-            except Exception as e:
+            except (ImportError, OSError) as e:
                 raise RuntimeError(
                     f"Windows PDF conversion failed: {e}\n"
                     "Install with: pip install docx2pdf\n"
                     "Note: Requires Microsoft Word to be installed"
-                )
+                ) from e
         else:
             # Try LibreOffice on Linux/Mac
             subprocess.run([
@@ -418,12 +413,12 @@ def _convert_docx_to_pdf(docx_path: Path, pdf_path: Path) -> None:
             ], check=True)
             logger.info("PDF created using LibreOffice")
             
-    except Exception as e:
+    except (subprocess.CalledProcessError, FileNotFoundError, OSError) as e:
         raise RuntimeError(
             f"PDF conversion failed: {e}\n"
             "Install one of:\n"
             "  1. pip install docx2pdf (Windows, requires MS Word)\n"
             "  2. sudo apt install libreoffice (Linux)\n"
             "  3. brew install libreoffice (Mac)"
-        )
+        ) from e
 

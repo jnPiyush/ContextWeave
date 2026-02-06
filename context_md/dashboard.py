@@ -26,7 +26,7 @@ logger = logging.getLogger(__name__)
 
 
 # HTTP Handler for static files
-async def http_handler(path: str, request_headers) -> tuple:
+async def http_handler(path: str, _request_headers) -> tuple:
     """Handle HTTP requests for static files."""
     static_dir = Path(__file__).parent / "static"
     
@@ -81,13 +81,13 @@ class StateChangeHandler(FileSystemEventHandler):
         
         # Trigger callback for state changes
         if path.endswith('state.json') or path.endswith('.md'):
-            logger.debug(f"File change detected: {path}")
+            logger.debug("File change detected: %s", path)
             asyncio.create_task(self.callback())
     
     def on_created(self, event):
         """Handle file creation events."""
         if not event.is_directory and event.src_path.endswith('.json'):
-            logger.debug(f"File created: {event.src_path}")
+            logger.debug("File created: %s", event.src_path)
             asyncio.create_task(self.callback())
 
 
@@ -106,7 +106,7 @@ class DashboardServer:
     async def register(self, websocket: websockets.ServerProtocol):
         """Register a new client connection."""
         self.clients.add(websocket)
-        logger.info(f"Client connected. Total clients: {len(self.clients)}")
+        logger.info("Client connected. Total clients: %d", len(self.clients))
         
         # Send initial status immediately
         await self.send_status_update(websocket)
@@ -114,7 +114,7 @@ class DashboardServer:
     async def unregister(self, websocket: websockets.ServerProtocol):
         """Unregister a client connection."""
         self.clients.discard(websocket)
-        logger.info(f"Client disconnected. Total clients: {len(self.clients)}")
+        logger.info("Client disconnected. Total clients: %d", len(self.clients))
     
     async def send_status_update(self, websocket: Optional[websockets.ServerProtocol] = None):
         """Send status update to client(s)."""
@@ -162,12 +162,12 @@ class DashboardServer:
                 # Send current status
                 await self.send_status_update(websocket)
             else:
-                logger.warning(f"Unknown message type: {msg_type}")
+                logger.warning("Unknown message type: %s", msg_type)
         
         except json.JSONDecodeError:
-            logger.error(f"Invalid JSON received: {message}")
-        except Exception as e:
-            logger.error(f"Error handling message: {e}")
+            logger.error("Invalid JSON received: %s", message)
+        except (KeyError, ValueError) as e:
+            logger.error("Error handling message: %s", e)
     
     async def ws_handler(self, websocket: websockets.ServerProtocol):
         """WebSocket connection handler."""
@@ -199,14 +199,14 @@ class DashboardServer:
         watch_dir = self.repo_root / ".agent-context"
         
         if not watch_dir.exists():
-            logger.warning(f"Watch directory does not exist: {watch_dir}")
+            logger.warning("Watch directory does not exist: %s", watch_dir)
             return
         
         event_handler = StateChangeHandler(self.broadcast_update)
         self.observer = Observer()
         self.observer.schedule(event_handler, str(watch_dir), recursive=True)
         self.observer.start()
-        logger.info(f"File watcher started on: {watch_dir}")
+        logger.info("File watcher started on: %s", watch_dir)
     
     def stop_file_watcher(self):
         """Stop the file watcher."""
@@ -227,7 +227,7 @@ class DashboardServer:
                 self.port,
                 process_request=self.process_request
             ):
-                logger.info(f"Dashboard server started at http://{self.host}:{self.port}")
+                logger.info("Dashboard server started at http://%s:%d", self.host, self.port)
                 await asyncio.Future()  # Run forever
         finally:
             self.stop_file_watcher()
@@ -238,9 +238,9 @@ class DashboardServer:
         url = f"http://localhost:{port}"
         try:
             webbrowser.open(url)
-            logger.info(f"Opened browser at {url}")
-        except Exception as e:
-            logger.warning(f"Could not open browser: {e}")
+            logger.info("Opened browser at %s", url)
+        except OSError as e:
+            logger.warning("Could not open browser: %s", e)
 
 
 async def start_dashboard(repo_root: Path, host: str = "localhost", port: int = 8765, open_browser: bool = True):

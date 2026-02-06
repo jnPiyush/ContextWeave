@@ -5,12 +5,10 @@ Provides Word document creation using python-docx library for document manipulat
 """
 
 import logging
-from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Dict, List, Optional
 
 from docx import Document
-from docx.shared import Inches, Pt, RGBColor
-from docx.enum.text import WD_ALIGN_PARAGRAPH
+from docx.shared import Pt, RGBColor
 
 logger = logging.getLogger(__name__)
 
@@ -57,29 +55,23 @@ class WordMCPClient:
         if author:
             doc.core_properties.author = author
         
-        logger.info(f"Created document: {filename}")
+        logger.info("Created document: %s", filename)
         return "Document created successfully"
     
-    def add_heading(self, filename: str, text: str, level: int = 1,
-                   font_name: Optional[str] = None, font_size: Optional[int] = None,
-                   bold: Optional[bool] = None, italic: Optional[bool] = None) -> str:
+    def add_heading(self, filename: str, text: str, level: int = 1) -> str:
         """Add a heading to the document.
         
         Args:
             filename: Path to DOCX file
             text: Heading text
             level: Heading level (1-9)
-            font_name: Font family name (ignored for headings)
-            font_size: Font size in points (ignored for headings)
-            bold: Bold formatting (ignored for headings)
-            italic: Italic formatting (ignored for headings)
             
         Returns:
             Success message
         """
         doc = self._get_document(filename)
         doc.add_heading(text, level=level)
-        logger.debug(f"Added heading (level {level}): {text[:50]}...")
+        logger.debug("Added heading (level %d): %s...", level, text[:50])
         return "Heading added successfully"
     
     def add_paragraph(self, filename: str, text: str, style: Optional[str] = None,
@@ -121,7 +113,7 @@ class WordMCPClient:
                     r, g, b = int(color[0:2], 16), int(color[2:4], 16), int(color[4:6], 16)
                     run.font.color.rgb = RGBColor(r, g, b)
         
-        logger.debug(f"Added paragraph: {text[:50]}...")
+        logger.debug("Added paragraph: %s...", text[:50])
         return "Paragraph added successfully"
     
     def add_table(self, filename: str, rows: int, cols: int, 
@@ -150,7 +142,7 @@ class WordMCPClient:
                         if j < len(row.cells):
                             row.cells[j].text = str(cell_text)
         
-        logger.debug(f"Added table: {rows}x{cols}")
+        logger.debug("Added table: %dx%d", rows, cols)
         return "Table added successfully"
     
     def add_page_break(self, filename: str) -> str:
@@ -175,7 +167,7 @@ class WordMCPClient:
         """
         if filename in self.documents:
             self.documents[filename].save(filename)
-            logger.info(f"Saved document: {filename}")
+            logger.info("Saved document: %s", filename)
     
     def convert_to_pdf(self, filename: str, output_filename: Optional[str] = None) -> str:
         """Convert DOCX to PDF (not supported by python-docx).
@@ -198,6 +190,6 @@ class WordMCPClient:
         for filename in list(self.documents.keys()):
             try:
                 self.save_document(filename)
-            except Exception as e:
-                logger.error(f"Failed to save document {filename}: {e}")
+            except OSError as e:
+                logger.error("Failed to save document %s: %s", filename, e)
         return False

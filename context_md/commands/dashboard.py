@@ -9,11 +9,9 @@ Usage:
 
 import asyncio
 import logging
-from pathlib import Path
 
 import click
 
-from context_md.config import Config
 from context_md.state import State
 
 logger = logging.getLogger(__name__)
@@ -46,7 +44,7 @@ def dashboard_cmd(ctx: click.Context, host: str, port: int, no_browser: bool) ->
         return
     
     # Print startup message
-    click.echo(f"[SUCCESS] Starting dashboard server...")
+    click.echo("[SUCCESS] Starting dashboard server...")
     click.echo(f"  Host: {host}")
     click.echo(f"  Port: {port}")
     click.echo(f"  URL: http://{host}:{port}")
