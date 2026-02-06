@@ -80,12 +80,12 @@ DOD_CHECKLISTS = {
 @click.pass_context
 def validate_cmd(_ctx: click.Context) -> None:
     """Run validation checks for issues.
-    
+
     Validation types:
     - task: Validate task quality (required fields, stranger test)
     - pre-exec: Pre-flight validation (context, dependencies)
     - dod: Definition of Done checklist
-    
+
     Note: ctx is required by Click but not used in group commands.
     """
 
@@ -239,7 +239,7 @@ def validate_all_cmd(ctx: click.Context, issue: int, verbose: bool) -> None:
 
 def _run_dod_check(repo_root: Path, issue: int, _role: str, check_id: str, state: State) -> Tuple[bool, str]:
     """Run a specific DoD check and return (passed, remediation).
-    
+
     Args:
         repo_root: Repository root path
         issue: Issue number

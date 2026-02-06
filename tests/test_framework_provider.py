@@ -1,7 +1,5 @@
 """Tests for context_md.framework.context_provider -- Context Provider."""
 
-from pathlib import Path
-from unittest.mock import MagicMock, patch
 
 import pytest
 

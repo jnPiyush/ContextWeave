@@ -13,7 +13,7 @@ from typing import Any, Dict
 class Config:
     """
     Manages Context.md configuration.
-    
+
     Configuration is stored in .agent-context/config.json and includes:
     - Mode settings
     - Skill routing rules

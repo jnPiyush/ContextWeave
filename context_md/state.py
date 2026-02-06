@@ -65,12 +65,12 @@ class GitHubConfig:
 class State:
     """
     Manages Context.md runtime state.
-    
+
     State is stored in .agent-context/state.json and tracks:
     - Active worktrees (SubAgent isolation)
     - GitHub sync configuration
     - Mode settings
-    
+
     Most other state is derived directly from Git:
     - Issues → Branches (issue-{N}-*)
     - Status → Git notes (refs/notes/context)
@@ -191,7 +191,7 @@ class State:
     @property
     def github_token(self) -> Optional[str]:
         """Get stored GitHub OAuth token from system keyring.
-        
+
         Falls back to environment variable GITHUB_TOKEN for CI/CD.
         """
         import os
@@ -214,7 +214,7 @@ class State:
     @github_token.setter
     def github_token(self, token: Optional[str]) -> None:
         """Store GitHub OAuth token in system keyring.
-        
+
         Never stores in state.json for security.
         """
         if token:

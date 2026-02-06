@@ -26,7 +26,7 @@ logger = logging.getLogger(__name__)
 @click.group("subagent")
 def subagent_cmd() -> None:
     """Manage SubAgent worktrees for isolated task execution.
-    
+
     SubAgents run in separate Git worktrees, providing TRUE file system
     isolation. Each SubAgent has its own complete checkout of the repository.
     """
@@ -40,12 +40,12 @@ def subagent_cmd() -> None:
 @click.pass_context
 def spawn_cmd(ctx: click.Context, issue: int, role: str, title: Optional[str]) -> None:
     """Create a new SubAgent with an isolated worktree.
-    
+
     This creates:
     1. A new branch: issue-{issue}-{title}
     2. A worktree at: ../worktrees/{issue}/
     3. State tracking entry
-    
+
     Example:
         context-md subagent spawn 456 --role engineer --title jwt-auth
     """
@@ -141,7 +141,7 @@ def spawn_cmd(ctx: click.Context, issue: int, role: str, title: Optional[str]) -
 
     except subprocess.CalledProcessError as e:
         error_msg = e.stderr if hasattr(e, 'stderr') and e.stderr else str(e)
-        raise click.ClickException(f"Failed to create SubAgent: {error_msg}")
+        raise click.ClickException(f"Failed to create SubAgent: {error_msg}") from e
 
 
 @subagent_cmd.command("list")
@@ -283,7 +283,7 @@ def status_cmd(ctx: click.Context, issue: int, as_json: bool) -> None:
 @click.pass_context
 def complete_cmd(ctx: click.Context, issue: int, force: bool, keep_branch: bool) -> None:
     """Mark SubAgent work as complete and clean up.
-    
+
     This:
     1. Validates DoD (unless --force)
     2. Removes the worktree
@@ -336,7 +336,7 @@ def complete_cmd(ctx: click.Context, issue: int, force: bool, keep_branch: bool)
             click.echo(f"  Removed worktree: {worktree.path}")
     except subprocess.CalledProcessError as e:
         if not force:
-            raise click.ClickException(f"Failed to remove worktree: {e}")
+            raise click.ClickException(f"Failed to remove worktree: {e}") from e
 
     # Update Git note
     metadata = state.get_branch_note(worktree.branch) or {}
@@ -437,4 +437,4 @@ def recover_cmd(ctx: click.Context, issue: int) -> None:
         )
         click.secho(f"[OK] Worktree recovered at: {worktree_path}", fg="green")
     except subprocess.CalledProcessError as e:
-        raise click.ClickException(f"Failed to recover worktree: {e}")
+        raise click.ClickException(f"Failed to recover worktree: {e}") from e

@@ -95,7 +95,7 @@ CONTEXT_TEMPLATE = '''# Context - Issue #{issue}
 @click.group("context")
 def context_cmd() -> None:
     """Generate and manage task context files.
-    
+
     Context files contain everything a SubAgent needs to execute a task:
     - Role instructions
     - Issue details
@@ -115,14 +115,14 @@ def context_cmd() -> None:
 def generate_cmd(ctx: click.Context, issue: int, output: Optional[str],
                  role: Optional[str], dry_run: bool) -> None:
     """Generate context file for an issue.
-    
+
     This assembles:
     - Role instructions from .github/agents/
     - Issue details from Git branch/notes or GitHub
     - Relevant skills based on labels
     - Memory context (lessons learned, session history)
     - Dependencies and references
-    
+
     Example:
         context-md context generate 456
         context-md context generate 456 --role engineer
@@ -198,13 +198,13 @@ def generate_cmd(ctx: click.Context, issue: int, output: Optional[str],
     # Enhanced User Prompt (Layer 2 with Prompt Engineering)
     from context_md.prompt import PromptEngineer
     prompt_engineer = PromptEngineer()
-    
+
     # Build context for prompt enhancement
     prompt_context = {
         "dependencies": metadata.get("dependencies", []),
         "previous_session": memory.get_latest_session(issue),
     }
-    
+
     # Check for existing PRD/Spec
     prd_path = repo_root / "docs" / "prd" / f"PRD-{issue}.md"
     spec_path = repo_root / "docs" / "specs" / f"SPEC-{issue}.md"
@@ -212,10 +212,10 @@ def generate_cmd(ctx: click.Context, issue: int, output: Optional[str],
         prompt_context["prd_path"] = f"docs/prd/PRD-{issue}.md"
     if spec_path.exists():
         prompt_context["spec_path"] = f"docs/specs/SPEC-{issue}.md"
-    
+
     # Get raw description
     raw_description = metadata.get("description", f"Complete issue #{issue}")
-    
+
     # Enhance the prompt
     enhanced = prompt_engineer.enhance_prompt(
         raw_prompt=raw_description,
@@ -225,7 +225,7 @@ def generate_cmd(ctx: click.Context, issue: int, output: Optional[str],
         labels=labels,
         context=prompt_context
     )
-    
+
     # Validate prompt completeness
     validation = prompt_engineer.validate_prompt_completeness(enhanced)
     prompt_quality = f"{validation['completeness_score']:.0%}"

@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)
 @click.pass_context
 def dashboard_cmd(ctx: click.Context, host: str, port: int, no_browser: bool) -> None:
     """Start real-time web dashboard.
-    
+
     Opens a web-based dashboard showing:
     - Active agent status
     - Real-time updates via WebSocket
@@ -34,31 +34,31 @@ def dashboard_cmd(ctx: click.Context, host: str, port: int, no_browser: bool) ->
     repo_root = ctx.obj.get("repo_root")
     if not repo_root:
         raise click.ClickException("Not in a Git repository.")
-    
+
     state = ctx.obj.get("state", State(repo_root))
-    
+
     # Check if initialized
     if not state.is_initialized():
         click.echo("[ERROR] Context.md not initialized.")
         click.echo("Run: context-md init")
         return
-    
+
     # Print startup message
     click.echo("[SUCCESS] Starting dashboard server...")
     click.echo(f"  Host: {host}")
     click.echo(f"  Port: {port}")
     click.echo(f"  URL: http://{host}:{port}")
     click.echo("")
-    
+
     if not no_browser:
         click.echo("[SUCCESS] Opening browser...")
-    
+
     click.echo("[INFO] Press Ctrl+C to stop")
     click.echo("")
-    
+
     # Start async server
     from context_md.dashboard import start_dashboard
-    
+
     try:
         asyncio.run(start_dashboard(
             repo_root=repo_root,
@@ -70,4 +70,4 @@ def dashboard_cmd(ctx: click.Context, host: str, port: int, no_browser: bool) ->
         click.echo("")
         click.echo("[SUCCESS] Dashboard stopped")
     except Exception as e:
-        raise click.ClickException(f"Dashboard failed: {e}")
+        raise click.ClickException(f"Dashboard failed: {e}") from e

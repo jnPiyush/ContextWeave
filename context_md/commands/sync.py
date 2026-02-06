@@ -30,10 +30,10 @@ GITHUB_API_URL = "https://api.github.com"
 @click.pass_context
 def sync_cmd(ctx: click.Context, push: bool, pull: bool, dry_run: bool) -> None:
     """Synchronize local state with GitHub.
-    
+
     In 'github' mode, syncs issues, labels, and project status with GitHub.
     In 'local' mode, shows current local state.
-    
+
     \b
     Examples:
         context-md sync           # Show sync status
@@ -89,7 +89,7 @@ def sync_cmd(ctx: click.Context, push: bool, pull: bool, dry_run: bool) -> None:
 def setup_cmd(ctx: click.Context, owner: Optional[str], repo: Optional[str],
               project: Optional[int]) -> None:
     """Configure GitHub sync settings.
-    
+
     Detects repository information from Git remote if not provided.
     """
     repo_root = ctx.obj.get("repo_root")
@@ -183,7 +183,7 @@ def issues_cmd(ctx: click.Context, issue_state: str, label: tuple) -> None:
     try:
         issues = _github_api_get(token, endpoint)
     except HTTPError as e:
-        raise click.ClickException(f"Failed to fetch issues: {e}")
+        raise click.ClickException(f"Failed to fetch issues: {e}") from e
 
     if not issues:
         click.echo("No issues found.")
@@ -307,7 +307,7 @@ def _sync_pull(state: State, config: Config, dry_run: bool, verbose: bool) -> No
     try:
         issues = _github_api_get(token, endpoint)
     except HTTPError as e:
-        raise click.ClickException(f"Failed to fetch issues: {e}")
+        raise click.ClickException(f"Failed to fetch issues: {e}") from e
 
     click.echo(f"  Found {len(issues)} open issues")
 
@@ -395,7 +395,7 @@ def _sync_push(state: State, config: Config, dry_run: bool, verbose: bool) -> No
 
 def _get_auth_token(state: State) -> Optional[str]:
     """Get a valid GitHub token from OAuth or gh CLI fallback.
-    
+
     Returns:
         Access token string or None if not authenticated
     """
@@ -421,14 +421,14 @@ def _get_auth_token(state: State) -> Optional[str]:
 
 def _github_api_get(token: str, endpoint: str) -> Any:
     """Make an authenticated GET request to GitHub API.
-    
+
     Args:
         token: GitHub access token
         endpoint: API endpoint (e.g., "/repos/owner/repo/issues")
-        
+
     Returns:
         Parsed JSON response
-        
+
     Raises:
         HTTPError: If request fails
     """
@@ -620,7 +620,7 @@ def update_project_status(
     try:
         fields = get_project_field_ids(token, owner, repo, project_number)
     except ValueError as e:
-        raise ValueError(f"Failed to get project fields: {e}")
+        raise ValueError(f"Failed to get project fields: {e}") from e
 
     if "Status" not in fields:
         raise ValueError("Status field not found in project")
@@ -786,6 +786,6 @@ def status_update_cmd(ctx: click.Context, issue_number: int, status: str) -> Non
         click.echo("")
 
     except ValueError as e:
-        raise click.ClickException(f"Failed to update status: {e}")
+        raise click.ClickException(f"Failed to update status: {e}") from e
     except Exception as e:
-        raise click.ClickException(f"Unexpected error: {e}")
+        raise click.ClickException(f"Unexpected error: {e}") from e

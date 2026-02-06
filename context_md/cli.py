@@ -34,7 +34,20 @@ from typing import Optional
 import click
 
 from context_md import __version__
-from context_md.commands import auth, config, context, dashboard, export, init, issue, memory, status, subagent, sync, validate
+from context_md.commands import (
+    auth,
+    config,
+    context,
+    dashboard,
+    export,
+    init,
+    issue,
+    memory,
+    status,
+    subagent,
+    sync,
+    validate,
+)
 from context_md.config import Config
 from context_md.state import State
 
@@ -75,7 +88,7 @@ def setup_logging(verbose: bool = False, quiet: bool = False) -> None:
 @click.pass_context
 def cli(ctx: click.Context, verbose: bool, quiet: bool) -> None:
     """Context.md - Runtime context management for AI agents.
-    
+
     Achieve >95% success rate in production code generation through
     Git-native state management, worktree isolation, and automated
     quality gates.
@@ -132,7 +145,7 @@ except ImportError:
 # Input validation helpers
 def validate_issue_number(_ctx, _param, value):
     """Validate issue number is positive and reasonable.
-    
+
     Click callback signature requires ctx and param parameters
     even if not used.
     """

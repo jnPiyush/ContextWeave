@@ -4,9 +4,10 @@ Tests for Config Command and Config class
 Coverage target: 70%+ (from 32%)
 """
 
-import pytest
 import json
 from pathlib import Path
+
+import pytest
 from click.testing import CliRunner
 
 from context_md.commands.config import config_cmd
@@ -33,7 +34,7 @@ class TestConfigClass:
     def test_default_config_values(self, tmp_path):
         """Test that default configuration values are set."""
         config = Config(tmp_path)
-        
+
         assert config.mode == "local"
         assert config.worktree_base == "../worktrees"
         assert "api" in config._data.get("skill_routing", {})
@@ -44,7 +45,7 @@ class TestConfigClass:
         config = Config(tmp_path)
         config.mode = "github"
         config.save()
-        
+
         # Load fresh instance
         config2 = Config(tmp_path)
         assert config2.mode == "github"
@@ -52,11 +53,11 @@ class TestConfigClass:
     def test_get_with_dot_notation(self, tmp_path):
         """Test getting nested values with dot notation."""
         config = Config(tmp_path)
-        
+
         # Test nested value
         bug_threshold = config.get("validation.stuck_threshold_hours.bug")
         assert bug_threshold == 12
-        
+
         # Test non-existent key with default
         missing = config.get("nonexistent.key", "default")
         assert missing == "default"
@@ -64,10 +65,10 @@ class TestConfigClass:
     def test_set_with_dot_notation(self, tmp_path):
         """Test setting nested values with dot notation."""
         config = Config(tmp_path)
-        
+
         config.set("validation.stuck_threshold_hours.bug", 24)
         config.save()
-        
+
         # Reload and verify
         config2 = Config(tmp_path)
         assert config2.get("validation.stuck_threshold_hours.bug") == 24
@@ -75,19 +76,19 @@ class TestConfigClass:
     def test_set_creates_nested_keys(self, tmp_path):
         """Test that set creates intermediate keys."""
         config = Config(tmp_path)
-        
+
         config.set("new.nested.key", "value")
         assert config.get("new.nested.key") == "value"
 
     def test_mode_setter_validation(self, tmp_path):
         """Test that mode setter validates input."""
         config = Config(tmp_path)
-        
+
         # Valid modes
         for mode in ["local", "github", "hybrid"]:
             config.mode = mode
             assert config.mode == mode
-        
+
         # Invalid mode
         with pytest.raises(ValueError, match="Invalid mode"):
             config.mode = "invalid"
@@ -95,7 +96,7 @@ class TestConfigClass:
     def test_get_worktree_path(self, tmp_path):
         """Test worktree path generation."""
         config = Config(tmp_path)
-        
+
         path = config.get_worktree_path(123)
         assert "123" in str(path)
         assert isinstance(path, Path)
@@ -103,16 +104,16 @@ class TestConfigClass:
     def test_get_skills_for_labels(self, tmp_path):
         """Test skill routing for labels."""
         config = Config(tmp_path)
-        
+
         # API labels should include API and security skills
         api_skills = config.get_skills_for_labels(["api"])
         assert "#09" in api_skills  # API Design
         assert "#04" in api_skills  # Security
-        
+
         # Security labels
         security_skills = config.get_skills_for_labels(["security"])
         assert "#04" in security_skills
-        
+
         # Unknown labels get default skills
         default_skills = config.get_skills_for_labels(["unknown-label"])
         assert "#02" in default_skills  # Testing
@@ -121,7 +122,7 @@ class TestConfigClass:
     def test_get_skills_for_multiple_labels(self, tmp_path):
         """Test skill routing with multiple labels."""
         config = Config(tmp_path)
-        
+
         skills = config.get_skills_for_labels(["api", "security"])
         # Should have union of both
         assert "#04" in skills  # Common
@@ -132,39 +133,39 @@ class TestConfigClass:
         config = Config(tmp_path)
         config.save()  # Ensure config file exists with defaults
         config2 = Config(tmp_path)  # Reload to get persisted values
-        
+
         # Check thresholds from default config
-        thresholds = config2._data.get("validation", {}).get("stuck_threshold_hours", {})
-        
+        config2._data.get("validation", {}).get("stuck_threshold_hours", {})
+
         # Verify method falls back to 24 for unknown types
         assert config2.get_stuck_threshold("unknown") == 24  # Default fallback
 
     def test_get_required_fields(self, tmp_path):
         """Test required fields retrieval."""
         config = Config(tmp_path)
-        
+
         story_fields = config.get_required_fields("story")
         assert "references" in story_fields
         assert "acceptance_criteria" in story_fields
-        
+
         bug_fields = config.get_required_fields("bug")
         assert "steps_to_reproduce" in bug_fields
 
     def test_is_hook_enabled(self, tmp_path):
         """Test hook enabled check."""
         config = Config(tmp_path)
-        
+
         # Default hooks are enabled
         assert config.is_hook_enabled("pre_commit") is True
         assert config.is_hook_enabled("post_commit") is True
-        
+
         # Non-existent hook defaults to True
         assert config.is_hook_enabled("nonexistent") is True
 
     def test_to_dict(self, tmp_path):
         """Test config serialization to dict."""
         config = Config(tmp_path)
-        
+
         data = config.to_dict()
         assert isinstance(data, dict)
         assert "mode" in data
@@ -177,7 +178,7 @@ class TestConfigClass:
         config_dir.mkdir(parents=True, exist_ok=True)
         config_file = config_dir / "config.json"
         config_file.write_text("{ invalid json }")
-        
+
         # Should fall back to defaults
         config = Config(tmp_path)
         assert config.mode == "local"
@@ -302,7 +303,7 @@ class TestSetCommand:
 
         assert result.exit_code == 0
         assert "OK" in result.output
-        
+
         # Verify
         config2 = Config(tmp_path)
         assert config2.mode == "github"
@@ -333,7 +334,7 @@ class TestSetCommand:
         )
 
         assert result.exit_code == 0
-        
+
         config2 = Config(tmp_path)
         assert config2.get("validation.stuck_threshold_hours.bug") == 6
 
@@ -350,7 +351,7 @@ class TestSetCommand:
         )
 
         assert result.exit_code == 0
-        
+
         config2 = Config(tmp_path)
         assert config2.get("hooks.pre_commit") is False
 

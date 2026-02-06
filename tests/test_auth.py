@@ -4,24 +4,21 @@ Tests for OAuth Authentication Flow
 Coverage target: 70% (from 12%)
 """
 
-import pytest
 import json
-import time
-from unittest.mock import patch, MagicMock, call
+from unittest.mock import MagicMock, patch
+
+import pytest
 from click.testing import CliRunner
-from pathlib import Path
 
 from context_md.commands.auth import (
-    auth_cmd,
+    _poll_for_token,
+    _request_device_code,
+    get_github_token,
     login_cmd,
     logout_cmd,
     status_cmd,
-    _request_device_code,
-    _poll_for_token,
-    get_github_token,
 )
 from context_md.state import State
-import webbrowser
 
 
 @pytest.fixture
@@ -356,7 +353,7 @@ class TestGetGitHubToken:
         """Test getting token from environment variable."""
         mock_keyring.return_value = None
         mock_env.return_value = "gho_env_token"
-        
+
         state = State(tmp_path)
         # Token will fall back to env var
         token = state.github_token or mock_env("GITHUB_TOKEN")
@@ -399,7 +396,7 @@ class TestRateLimiting:
         pending_responses.append({"access_token": "gho_test", "token_type": "bearer"})
         mock_poll.side_effect = pending_responses
 
-        result = runner.invoke(
+        runner.invoke(
             login_cmd,
             ["--no-browser"],
             obj={"repo_root": tmp_path},

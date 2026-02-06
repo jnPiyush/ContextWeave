@@ -24,7 +24,7 @@ from context_md.state import State
 @click.pass_context
 def status_cmd(ctx: click.Context, as_json: bool, watch: bool) -> None:
     """Show current Context.md status.
-    
+
     Displays:
     - Operating mode
     - Active SubAgents and their status

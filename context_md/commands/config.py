@@ -24,7 +24,7 @@ from context_md.config import Config
 def config_cmd(ctx: click.Context, key: Optional[str], value: Optional[str],
                list_all: bool, as_json: bool) -> None:
     """View or modify Context.md configuration.
-    
+
     Examples:
         context-md config                    # Show current mode
         context-md config --list             # List all config
@@ -66,7 +66,7 @@ def config_cmd(ctx: click.Context, key: Optional[str], value: Optional[str],
                 config.save()
                 click.secho(f"[OK] Mode set to: {value}", fg="green")
             except ValueError as e:
-                raise click.ClickException(str(e))
+                raise click.ClickException(str(e)) from e
         else:
             # Get mode
             if as_json:

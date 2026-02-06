@@ -17,7 +17,6 @@ import click
 
 from context_md.state import State
 
-
 # Input validation constants
 MAX_TITLE_LENGTH = 200
 MAX_BODY_LENGTH = 65535
@@ -26,26 +25,26 @@ MAX_LABEL_LENGTH = 50
 
 def _sanitize_text(text: str, max_length: int, field_name: str) -> str:
     """Sanitize text input for safe storage.
-    
+
     - Removes control characters (except newlines/tabs in body)
     - Trims whitespace
     - Enforces maximum length
     - Prevents potential injection attacks
-    
+
     Args:
         text: Input text to sanitize
         max_length: Maximum allowed length
         field_name: Name of field for error messages
-        
+
     Returns:
         Sanitized text
-        
+
     Raises:
         click.BadParameter: If text is invalid after sanitization
     """
     if not text:
         return text
-    
+
     # Remove null bytes and other dangerous control chars (keep \n, \t for body)
     if field_name == "body":
         # Allow newlines and tabs in body
@@ -53,24 +52,24 @@ def _sanitize_text(text: str, max_length: int, field_name: str) -> str:
     else:
         # Remove all control characters for titles/labels
         sanitized = re.sub(r'[\x00-\x1f\x7f]', '', text)
-    
+
     # Trim whitespace
     sanitized = sanitized.strip()
-    
+
     # Enforce length limit
     if len(sanitized) > max_length:
         sanitized = sanitized[:max_length].rstrip()
-    
+
     # Check if anything remains
     if not sanitized:
         raise click.BadParameter(f"{field_name} cannot be empty or contain only whitespace")
-    
+
     return sanitized
 
 
 def _sanitize_label(label: str) -> str:
     """Sanitize a label for safe storage and Git branch naming.
-    
+
     Labels should be alphanumeric with limited special chars.
     """
     # Remove dangerous characters, keep alphanumeric, dash, underscore, colon
@@ -81,10 +80,10 @@ def _sanitize_label(label: str) -> str:
 @click.group("issue")
 def issue_cmd() -> None:
     """Create and manage issues locally.
-    
+
     In 'local' mode, issues are tracked in state.json.
     In 'github' mode, use 'context-md sync issues' to view GitHub issues.
-    
+
     \b
     Examples:
         context-md issue create "Add user authentication"
@@ -108,7 +107,7 @@ def issue_cmd() -> None:
 def create_cmd(ctx: click.Context, title: str, body: Optional[str],
                labels: tuple, issue_type: str, role: Optional[str]) -> None:
     """Create a new local issue.
-    
+
     \b
     Examples:
         context-md issue create "Add login page"

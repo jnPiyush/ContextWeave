@@ -47,10 +47,10 @@ GITHUB_SCOPES = "repo read:org read:user"
 @click.pass_context
 def auth_cmd(ctx: click.Context) -> None:
     """Authenticate with GitHub using OAuth.
-    
+
     Uses GitHub's Device Flow for secure CLI authentication.
     No need to manually create Personal Access Tokens.
-    
+
     \b
     Examples:
         context-md auth login     # Start OAuth login
@@ -65,7 +65,7 @@ def auth_cmd(ctx: click.Context) -> None:
 @click.pass_context
 def login_cmd(ctx: click.Context, no_browser: bool) -> None:
     """Authenticate with GitHub using Device Flow.
-    
+
     Opens your browser to complete authentication. The CLI will
     automatically receive the token once you authorize.
     """
@@ -94,7 +94,7 @@ def login_cmd(ctx: click.Context, no_browser: bool) -> None:
     try:
         device_data = _request_device_code()
     except Exception as e:
-        raise click.ClickException(f"Failed to start authentication: {e}")
+        raise click.ClickException(f"Failed to start authentication: {e}") from e
 
     user_code = device_data["user_code"]
     verification_uri = device_data["verification_uri"]
@@ -459,10 +459,10 @@ def _check_gh_cli_auth() -> Optional[str]:
 
 def get_github_token(state: State) -> Optional[str]:
     """Get a valid GitHub token from OAuth or gh CLI.
-    
+
     This is the main function other commands should use to get
     an authenticated token for GitHub API calls.
-    
+
     Returns:
         Access token string or None if not authenticated
     """
@@ -496,16 +496,16 @@ def github_api_request(
     data: Optional[Dict] = None
 ) -> Dict[str, Any]:
     """Make an authenticated GitHub API request.
-    
+
     Args:
         token: GitHub access token
         endpoint: API endpoint (e.g., "/repos/owner/repo/issues")
         method: HTTP method
         data: JSON data for POST/PATCH requests
-        
+
     Returns:
         JSON response as dictionary
-        
+
     Raises:
         HTTPError: If request fails
     """

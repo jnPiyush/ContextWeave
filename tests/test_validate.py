@@ -4,17 +4,17 @@ Tests for Validation Commands
 Coverage target: 60% (from 18%)
 """
 
-import pytest
+import json
 import subprocess
-from unittest.mock import patch, MagicMock, call
+from unittest.mock import MagicMock, patch
+
+import pytest
 from click.testing import CliRunner
-from pathlib import Path
 
 from context_md.commands.validate import (
-    validate_cmd,
-    validate_task_cmd,
-    validate_preexec_cmd,
     validate_dod_cmd,
+    validate_preexec_cmd,
+    validate_task_cmd,
 )
 from context_md.state import State
 
@@ -167,7 +167,7 @@ class TestDoDValidation:
         # Mock various subprocess calls
         def run_side_effect(*args, **kwargs):
             cmd = args[0] if args else kwargs.get('args', [])
-            
+
             if 'git' in cmd and 'status' in cmd:
                 # No uncommitted changes
                 return MagicMock(stdout="", returncode=0)
@@ -197,7 +197,7 @@ class TestDoDValidation:
         """Test DoD when tests fail."""
         def run_side_effect(*args, **kwargs):
             cmd = args[0] if args else kwargs.get('args', [])
-            
+
             if 'pytest' in cmd:
                 # Tests fail
                 return MagicMock(stdout="5 failed, 7 passed", returncode=1)
@@ -220,7 +220,7 @@ class TestDoDValidation:
         """Test DoD with uncommitted changes."""
         def run_side_effect(*args, **kwargs):
             cmd = args[0] if args else kwargs.get('args', [])
-            
+
             if 'git' in cmd and 'status' in cmd:
                 # Has uncommitted changes
                 return MagicMock(stdout=" M file1.py\n", returncode=0)
@@ -244,7 +244,7 @@ class TestDoDValidation:
         """Test DoD with linting errors."""
         def run_side_effect(*args, **kwargs):
             cmd = args[0] if args else kwargs.get('args', [])
-            
+
             if 'ruff' in cmd:
                 # Lint errors found
                 return MagicMock(stdout="Found 5 errors", returncode=1)
@@ -315,7 +315,7 @@ class TestValidationHelpers:
                 "Invalid credentials return 401"
             ]
         }
-        
+
         # Validation would pass - has all required fields and details
         assert good_task["title"]
         assert len(good_task["description"]) > 50
@@ -328,7 +328,7 @@ class TestValidationHelpers:
             "description": "Fix the bug",
             "acceptance_criteria": ["Bug fixed"]
         }
-        
+
         # Should fail stranger test - too vague
         assert len(vague_task["description"]) < 50
         assert all(len(ac) < 20 for ac in vague_task["acceptance_criteria"])
@@ -374,5 +374,3 @@ class TestErrorHandling:
         assert "validation" in result.output.lower() or "linter" in result.output.lower()
 
 
-# Import json for mocking
-import json

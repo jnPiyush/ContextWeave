@@ -12,7 +12,6 @@ Usage:
 
 import json
 import uuid
-from datetime import datetime, timezone
 from typing import Optional
 
 import click
@@ -28,13 +27,13 @@ from context_md.memory import (
 @click.group("memory")
 def memory_cmd() -> None:
     """Manage AI agent memory and learning.
-    
+
     The Memory layer enables agents to:
     - Learn from past executions
     - Track success/failure patterns
     - Maintain session continuity
     - Improve over time
-    
+
     This is Layer 3 of the 4-Layer AI Context Architecture.
     """
     pass
@@ -48,33 +47,33 @@ def show_cmd(ctx: click.Context, as_json: bool) -> None:
     repo_root = ctx.obj.get("repo_root")
     if not repo_root:
         raise click.ClickException("Not in a Git repository with Context.md initialized.")
-    
+
     memory = Memory(repo_root)
-    
+
     if as_json:
         click.echo(json.dumps(memory.to_dict(), indent=2))
         return
-    
+
     metrics = memory.metrics
-    
+
     click.echo("")
     click.secho("╔═══════════════════════════════════════════════════════════╗", fg="cyan")
     click.secho("║              AI AGENT MEMORY SUMMARY                       ║", fg="cyan")
     click.secho("╚═══════════════════════════════════════════════════════════╝", fg="cyan")
     click.echo("")
-    
+
     # Overall metrics
     total = metrics.get("total_executions", 0)
     success = metrics.get("success_count", 0)
     failure = metrics.get("failure_count", 0)
     partial = metrics.get("partial_count", 0)
-    
+
     click.echo("📊 Execution Metrics:")
     click.echo(f"   Total Executions: {total}")
     if total > 0:
         click.echo(f"   Success Rate: {success/total:.1%} ({success} success, {failure} failure, {partial} partial)")
     click.echo("")
-    
+
     # By role
     by_role = metrics.get("by_role", {})
     if by_role:
@@ -85,11 +84,11 @@ def show_cmd(ctx: click.Context, as_json: bool) -> None:
             rate = role_success / role_total if role_total > 0 else 0
             click.echo(f"   {role.title()}: {rate:.1%} ({role_total} executions)")
         click.echo("")
-    
+
     # Lessons count
     lessons = memory._data.get("lessons", [])
     click.echo(f"📚 Lessons Learned: {len(lessons)}")
-    
+
     # Sessions count
     sessions = memory._data.get("sessions", {})
     total_sessions = sum(len(s) for s in sessions.values())
@@ -113,19 +112,19 @@ def lessons_list_cmd(ctx: click.Context, role: Optional[str], category: Optional
     repo_root = ctx.obj.get("repo_root")
     if not repo_root:
         raise click.ClickException("Not in a Git repository with Context.md initialized.")
-    
+
     memory = Memory(repo_root)
     categories = [category] if category else None
     lessons = memory.get_lessons_for_context(role=role, categories=categories, limit=limit)
-    
+
     if not lessons:
         click.echo("No lessons learned yet. Use 'context-md memory lessons add' to add one.")
         return
-    
+
     click.echo("")
     click.secho("📚 Lessons Learned", fg="cyan", bold=True)
     click.echo("")
-    
+
     for i, lesson in enumerate(lessons, 1):
         effectiveness = "🟢" if lesson.effectiveness >= 0.7 else "🟡" if lesson.effectiveness >= 0.4 else "🔴"
         click.echo(f"{i}. [{lesson.category}] {lesson.lesson}")
@@ -157,9 +156,9 @@ def lessons_add_cmd(
     repo_root = ctx.obj.get("repo_root")
     if not repo_root:
         raise click.ClickException("Not in a Git repository with Context.md initialized.")
-    
+
     memory = Memory(repo_root)
-    
+
     new_lesson = LessonLearned(
         id=str(uuid.uuid4())[:8],
         issue=issue,
@@ -170,9 +169,9 @@ def lessons_add_cmd(
         context=context,
         outcome=outcome
     )
-    
+
     memory.add_lesson(new_lesson)
-    
+
     click.secho(f"[OK] Lesson added: {lesson[:50]}...", fg="green")
 
 
@@ -201,9 +200,9 @@ def record_cmd(
     repo_root = ctx.obj.get("repo_root")
     if not repo_root:
         raise click.ClickException("Not in a Git repository with Context.md initialized.")
-    
+
     memory = Memory(repo_root)
-    
+
     record = ExecutionRecord(
         issue=issue,
         role=role,
@@ -214,9 +213,9 @@ def record_cmd(
         duration_seconds=duration,
         tokens_used=tokens
     )
-    
+
     memory.record_execution(record)
-    
+
     # Show updated stats
     success_rate = memory.get_success_rate(role)
     click.secho(f"[OK] Execution recorded: {outcome}", fg="green" if outcome == "success" else "yellow")
@@ -231,20 +230,20 @@ def metrics_cmd(ctx: click.Context, role: Optional[str]) -> None:
     repo_root = ctx.obj.get("repo_root")
     if not repo_root:
         raise click.ClickException("Not in a Git repository with Context.md initialized.")
-    
+
     memory = Memory(repo_root)
-    
+
     click.echo("")
     click.secho("📈 Success Metrics", fg="cyan", bold=True)
     click.echo("")
-    
+
     if role:
         success_rate = memory.get_success_rate(role)
         click.echo(f"   {role.title()} Success Rate: {success_rate:.1%}")
     else:
         overall = memory.get_success_rate()
         click.echo(f"   Overall Success Rate: {overall:.1%}")
-        
+
         # Show by role
         by_role = memory.metrics.get("by_role", {})
         if by_role:
@@ -255,9 +254,9 @@ def metrics_cmd(ctx: click.Context, role: Optional[str]) -> None:
                 success = stats.get("success", 0)
                 rate = success / total if total > 0 else 0
                 click.echo(f"   • {r.title()}: {rate:.1%} ({total} executions)")
-    
+
     click.echo("")
-    
+
     # Common failures
     failures = memory.get_common_failures(limit=5)
     if failures:
@@ -297,9 +296,9 @@ def session_save_cmd(
     repo_root = ctx.obj.get("repo_root")
     if not repo_root:
         raise click.ClickException("Not in a Git repository with Context.md initialized.")
-    
+
     memory = Memory(repo_root)
-    
+
     session = SessionContext(
         issue=issue,
         session_id=str(uuid.uuid4())[:8],
@@ -309,9 +308,9 @@ def session_save_cmd(
         next_steps=list(next_steps),
         files_modified=list(files)
     )
-    
+
     memory.save_session(session)
-    
+
     click.secho(f"[OK] Session saved for issue #{issue}", fg="green")
 
 
@@ -324,19 +323,19 @@ def session_show_cmd(ctx: click.Context, issue: int, history: bool) -> None:
     repo_root = ctx.obj.get("repo_root")
     if not repo_root:
         raise click.ClickException("Not in a Git repository with Context.md initialized.")
-    
+
     memory = Memory(repo_root)
-    
+
     if history:
         sessions = memory.get_session_history(issue, limit=10)
         if not sessions:
             click.echo(f"No session history for issue #{issue}")
             return
-        
+
         click.echo("")
         click.secho(f"📜 Session History for Issue #{issue}", fg="cyan", bold=True)
         click.echo("")
-        
+
         for i, session in enumerate(reversed(sessions), 1):
             click.echo(f"{i}. {session.timestamp}")
             click.echo(f"   Summary: {session.summary}")
@@ -347,27 +346,27 @@ def session_show_cmd(ctx: click.Context, issue: int, history: bool) -> None:
         if not session:
             click.echo(f"No session context for issue #{issue}")
             return
-        
+
         click.echo("")
         click.secho(f"💾 Latest Session for Issue #{issue}", fg="cyan", bold=True)
         click.echo("")
         click.echo(f"   Timestamp: {session.timestamp}")
         click.echo(f"   Summary: {session.summary}")
         click.echo(f"   Progress: {session.progress}")
-        
+
         if session.blockers:
             click.echo("   Blockers:")
             for b in session.blockers:
                 click.echo(f"     • {b}")
-        
+
         if session.next_steps:
             click.echo("   Next Steps:")
             for s in session.next_steps:
                 click.echo(f"     • {s}")
-        
+
         if session.files_modified:
             click.echo("   Files Modified:")
             for f in session.files_modified:
                 click.echo(f"     • {f}")
-        
+
         click.echo("")

@@ -1,12 +1,10 @@
 """Tests for context_md.framework.orchestrator -- Workflow Orchestrator."""
 
-from pathlib import Path
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
 from context_md.framework.orchestrator import (
-    ISSUE_TYPE_MAP,
     WORKFLOW_STEPS,
     StepResult,
     WorkflowOrchestrator,

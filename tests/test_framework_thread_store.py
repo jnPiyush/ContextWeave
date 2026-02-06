@@ -1,7 +1,6 @@
 """Tests for context_md.framework.thread_store -- Git Thread Store."""
 
 import json
-from pathlib import Path
 
 import pytest
 

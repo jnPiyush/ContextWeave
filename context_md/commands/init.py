@@ -133,12 +133,12 @@ MERGED_BRANCH=$(git reflog -1 | grep -oP "merge \\K[^:]+")
 
 if [[ $MERGED_BRANCH =~ ^issue-([0-9]+) ]]; then
     ISSUE_NUM="${BASH_REMATCH[1]}"
-    
+
     # Generate completion certificate if context-md is available
     if command -v context-md &> /dev/null; then
         context-md validate $ISSUE_NUM --certificate --quiet 2>/dev/null || true
     fi
-    
+
     echo "[OK] Issue #$ISSUE_NUM merged successfully"
 fi
 
@@ -174,13 +174,13 @@ exit 0
 @click.pass_context
 def init_cmd(ctx: click.Context, mode: str, force: bool) -> None:
     """Initialize Context.md in the current Git repository.
-    
+
     This command:
     - Creates .agent-context/ directory
     - Installs Git hooks for automation
     - Sets up configuration with selected mode
     - Initializes state tracking
-    
+
     Modes:
     - local: Works offline, no GitHub required
     - github: Full GitHub Issues/Projects sync

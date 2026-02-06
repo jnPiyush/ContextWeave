@@ -1,8 +1,5 @@
 """Tests for context_md.framework.tools -- Tool Registry."""
 
-import asyncio
-from pathlib import Path
-from unittest.mock import MagicMock, patch
 
 import pytest
 

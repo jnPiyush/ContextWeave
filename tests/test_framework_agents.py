@@ -1,7 +1,6 @@
 """Tests for context_md.framework.agents -- Agent Factory."""
 
 import sys
-from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -181,7 +180,7 @@ You are a product manager.
         )
 
         with patch.dict(sys.modules, {"agent_framework": mock_agent_framework}):
-            agent = factory.create_agent("engineer")
+            factory.create_agent("engineer")
             mock_chat_agent_cls.assert_called_once()
             call_kwargs = mock_chat_agent_cls.call_args[1]
             assert call_kwargs["name"] == "engineer"

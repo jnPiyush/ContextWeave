@@ -1,9 +1,7 @@
 """Tests for context_md.framework.config -- LLM provider configuration."""
 
 import json
-import os
 import sys
-from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest

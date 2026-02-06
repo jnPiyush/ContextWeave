@@ -4,25 +4,23 @@ Tests for Issue Command
 Coverage target: 70%+ (from 19%)
 """
 
-import pytest
 import json
-from pathlib import Path
-from unittest.mock import patch, MagicMock
+
+import pytest
 from click.testing import CliRunner
 
 from context_md.commands.issue import (
-    issue_cmd,
-    create_cmd,
-    list_cmd,
-    show_cmd,
-    close_cmd,
-    reopen_cmd,
-    edit_cmd,
-    _sanitize_text,
-    _sanitize_label,
-    MAX_TITLE_LENGTH,
     MAX_BODY_LENGTH,
     MAX_LABEL_LENGTH,
+    MAX_TITLE_LENGTH,
+    _sanitize_label,
+    _sanitize_text,
+    close_cmd,
+    create_cmd,
+    edit_cmd,
+    list_cmd,
+    reopen_cmd,
+    show_cmd,
 )
 from context_md.state import State
 

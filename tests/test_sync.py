@@ -4,23 +4,24 @@ Tests for Sync Commands
 Coverage target: 60% (from 11%)
 """
 
-import os
-import pytest
 import json
+import os
 import subprocess
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
+
+import pytest
 from click.testing import CliRunner
 
 from context_md.commands.sync import (
-    sync_cmd,
-    setup_cmd,
-    issues_cmd,
+    _detect_github_remote,
     _get_auth_token,
     _github_api_get,
     _github_api_post,
-    _detect_github_remote,
     _show_local_issues,
     _sync_status,
+    issues_cmd,
+    setup_cmd,
+    sync_cmd,
 )
 from context_md.config import Config
 from context_md.state import State
@@ -68,7 +69,7 @@ class TestSetupCommand:
         """Test manual owner and repo specification."""
         mock_run.return_value = MagicMock(returncode=0)
         state = State(tmp_path)
-        
+
         result = runner.invoke(
             setup_cmd,
             ["--owner", "myuser", "--repo", "myrepo"],
@@ -101,14 +102,14 @@ class TestSyncPull:
     def test_sync_pull_success(self, mock_token, mock_api, runner, tmp_path):
         """Test successful issue sync from GitHub."""
         mock_token.return_value = "gho_test_token"
-        
+
         # Create state with GitHub config
         state = State(tmp_path)
         state.github.owner = "testuser"
         state.github.repo = "testrepo"
         state.github.enabled = True
         state.save()
-        
+
         # Mock GitHub API response
         mock_api.return_value = [
             {
@@ -141,7 +142,7 @@ class TestSyncPull:
     def test_sync_pull_no_token(self, mock_token, runner, tmp_path):
         """Test sync pull without authentication."""
         mock_token.return_value = None
-        
+
         state = State(tmp_path)
         state.github.owner = "testuser"
         state.github.repo = "testrepo"
@@ -163,7 +164,7 @@ class TestSyncPull:
         """Test sync pull with API error."""
         mock_token.return_value = "gho_test_token"
         mock_api.side_effect = Exception("API error")
-        
+
         state = State(tmp_path)
         state.github.owner = "testuser"
         state.github.repo = "testrepo"
@@ -202,7 +203,7 @@ class TestIssuesCommand:
                 "labels": [{"name": "feature"}]
             }
         ]
-        
+
         state = State(tmp_path)
         state.mode = "hybrid"
         state.github.owner = "testuser"
@@ -232,7 +233,7 @@ class TestIssuesCommand:
                 "labels": [{"name": "bug"}]
             }
         ]
-        
+
         state = State(tmp_path)
         state.mode = "hybrid"
         state.github.owner = "testuser"
@@ -263,7 +264,7 @@ class TestIssuesCommand:
                 "labels": []
             }
         ]
-        
+
         state = State(tmp_path)
         state.mode = "hybrid"
         state.github.owner = "testuser"
@@ -509,14 +510,14 @@ class TestAuthTokenRetrieval:
         mock_run.side_effect = subprocess.CalledProcessError(1, "gh")
 
         state = State(tmp_path)
-        
+
         # _get_auth_token should handle the exception
         token = None
         try:
             token = _get_auth_token(state)
         except subprocess.CalledProcessError:
             pass  # Exception is acceptable outcome
-        
+
         # Should return None or raise exception when no auth available
         assert token is None or True
 
@@ -534,7 +535,7 @@ class TestSyncDryRun:
         mock_api.return_value = [
             {"number": 1, "title": "Issue 1", "state": "open", "labels": []}
         ]
-        
+
         state = State(tmp_path)
         state.github.owner = "testuser"
         state.github.repo = "testrepo"
@@ -578,7 +579,7 @@ class TestConflictResolution:
     def test_sync_with_local_changes(self, mock_token, mock_api, runner, tmp_path):
         """Test sync when local state differs from GitHub."""
         mock_token.return_value = "gho_test_token"
-        
+
         # Setup local state with an issue
         state = State(tmp_path)
         state.github.owner = "testuser"

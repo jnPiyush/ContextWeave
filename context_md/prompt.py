@@ -30,83 +30,83 @@ from typing import Any, Dict, List, Optional
 @dataclass
 class EnhancedPrompt:
     """A structured, enhanced prompt ready for agent consumption."""
-    
+
     # Core elements
     role_primer: str  # Sets the agent's persona/role
     task_statement: str  # Clear statement of what to do
     context_summary: str  # Relevant background info
-    
+
     # Structured requirements
     inputs: List[str] = field(default_factory=list)  # What's provided
     outputs: List[str] = field(default_factory=list)  # Expected deliverables
     constraints: List[str] = field(default_factory=list)  # Boundaries/limits
-    
+
     # Success definition
     success_criteria: List[str] = field(default_factory=list)  # How to measure success
     quality_checklist: List[str] = field(default_factory=list)  # Quality gates
-    
+
     # Guidance
     approach_hints: List[str] = field(default_factory=list)  # Suggested approach
     pitfalls_to_avoid: List[str] = field(default_factory=list)  # Common mistakes
-    
+
     # Handoff preparation
     next_role: Optional[str] = None  # Who receives output
     handoff_requirements: List[str] = field(default_factory=list)  # What next role needs
-    
+
     def to_markdown(self) -> str:
         """Convert to structured markdown format."""
         sections = []
-        
+
         # Role Primer
         sections.append(f"### 🎯 Role\n\n{self.role_primer}")
-        
+
         # Task Statement
         sections.append(f"### 📋 Task\n\n{self.task_statement}")
-        
+
         # Context
         if self.context_summary:
             sections.append(f"### 📖 Context\n\n{self.context_summary}")
-        
+
         # Inputs
         if self.inputs:
             inputs_text = "\n".join(f"- {i}" for i in self.inputs)
             sections.append(f"### 📥 Inputs (What You Have)\n\n{inputs_text}")
-        
+
         # Outputs
         if self.outputs:
             outputs_text = "\n".join(f"- {o}" for o in self.outputs)
             sections.append(f"### 📤 Expected Outputs\n\n{outputs_text}")
-        
+
         # Constraints
         if self.constraints:
             constraints_text = "\n".join(f"- ⚠️ {c}" for c in self.constraints)
             sections.append(f"### 🚧 Constraints\n\n{constraints_text}")
-        
+
         # Success Criteria
         if self.success_criteria:
             criteria_text = "\n".join(f"- ✅ {c}" for c in self.success_criteria)
             sections.append(f"### 🎯 Success Criteria\n\n{criteria_text}")
-        
+
         # Quality Checklist
         if self.quality_checklist:
             checklist_text = "\n".join(f"- [ ] {c}" for c in self.quality_checklist)
             sections.append(f"### ✓ Quality Checklist\n\n{checklist_text}")
-        
+
         # Approach Hints
         if self.approach_hints:
             hints_text = "\n".join(f"{i+1}. {h}" for i, h in enumerate(self.approach_hints))
             sections.append(f"### 💡 Suggested Approach\n\n{hints_text}")
-        
+
         # Pitfalls
         if self.pitfalls_to_avoid:
             pitfalls_text = "\n".join(f"- ❌ {p}" for p in self.pitfalls_to_avoid)
             sections.append(f"### ⚡ Pitfalls to Avoid\n\n{pitfalls_text}")
-        
+
         # Handoff
         if self.next_role and self.handoff_requirements:
             handoff_text = "\n".join(f"- {r}" for r in self.handoff_requirements)
             sections.append(f"### 🔄 Handoff to {self.next_role.title()}\n\n{handoff_text}")
-        
+
         return "\n\n---\n\n".join(sections)
 
 
@@ -159,7 +159,7 @@ ROLE_TEMPLATES = {
             "Technical constraints identified (if any)"
         ]
     },
-    
+
     "architect": {
         "role_primer": (
             "You are a **Solution Architect Agent** responsible for designing robust, "
@@ -207,7 +207,7 @@ ROLE_TEMPLATES = {
             "Test strategy outline"
         ]
     },
-    
+
     "engineer": {
         "role_primer": (
             "You are a **Software Engineer Agent** responsible for implementing "
@@ -257,7 +257,7 @@ ROLE_TEMPLATES = {
             "PR created (if applicable)"
         ]
     },
-    
+
     "reviewer": {
         "role_primer": (
             "You are a **Code Reviewer Agent** responsible for ensuring code quality, "
@@ -301,7 +301,7 @@ ROLE_TEMPLATES = {
         "next_role": None,  # End of workflow
         "handoff_requirements": []
     },
-    
+
     "ux": {
         "role_primer": (
             "You are a **UX Designer Agent** responsible for creating user-centered "
@@ -356,14 +356,14 @@ ROLE_TEMPLATES = {
 class PromptEngineer:
     """
     Enhances and structures user prompts using prompt engineering best practices.
-    
+
     This acts as a "helper" that preprocesses prompts before handing them
     to role-based agents, improving clarity and completeness.
     """
-    
+
     def __init__(self):
         self.templates = ROLE_TEMPLATES
-    
+
     def enhance_prompt(
         self,
         raw_prompt: str,
@@ -375,7 +375,7 @@ class PromptEngineer:
     ) -> EnhancedPrompt:
         """
         Enhance a raw prompt for a specific role.
-        
+
         Args:
             raw_prompt: Original user prompt/issue description
             role: Target agent role (pm, architect, engineer, etc.)
@@ -383,51 +383,51 @@ class PromptEngineer:
             issue_type: Type of issue (epic, feature, story, bug)
             labels: Issue labels for context
             context: Additional context (dependencies, previous work, etc.)
-        
+
         Returns:
             EnhancedPrompt: Structured, enhanced prompt
         """
         context = context or {}
         template = self.templates.get(role, self.templates["engineer"])
-        
+
         # Build role primer
         role_primer = template["role_primer"]
-        
+
         # Analyze and enhance the task statement
         task_statement = self._enhance_task_statement(raw_prompt, issue_type, issue_number)
-        
+
         # Build context summary
         context_summary = self._build_context_summary(context, labels, issue_type)
-        
+
         # Determine inputs based on workflow position
         inputs = self._determine_inputs(role, context)
-        
+
         # Get outputs with issue number substitution
         outputs = [o.format(issue=issue_number) for o in template["default_outputs"]]
-        
+
         # Get constraints
         constraints = template["default_constraints"].copy()
         constraints.extend(self._extract_constraints_from_prompt(raw_prompt))
-        
+
         # Build success criteria from acceptance criteria and template
         success_criteria = self._build_success_criteria(raw_prompt, issue_type)
-        
+
         # Quality checklist
         quality_checklist = template["quality_checklist"].copy()
-        
+
         # Approach hints
         approach_hints = template["approach_hints"].copy()
-        
+
         # Add issue-specific hints based on labels
         approach_hints.extend(self._get_label_specific_hints(labels))
-        
+
         # Pitfalls
         pitfalls = template["pitfalls"].copy()
-        
+
         # Handoff info
         next_role = template.get("next_role")
         handoff_requirements = template.get("handoff_requirements", [])
-        
+
         return EnhancedPrompt(
             role_primer=role_primer,
             task_statement=task_statement,
@@ -442,12 +442,12 @@ class PromptEngineer:
             next_role=next_role,
             handoff_requirements=handoff_requirements
         )
-    
+
     def _enhance_task_statement(self, raw_prompt: str, issue_type: str, issue_number: int) -> str:
         """Enhance the raw prompt into a clear task statement."""
         # Clean up the prompt
         cleaned = raw_prompt.strip()
-        
+
         # Add issue type context
         type_context = {
             "epic": "Define the complete scope and break down into deliverable features for",
@@ -457,17 +457,17 @@ class PromptEngineer:
             "spike": "Research and document findings for",
             "docs": "Create or update documentation for"
         }
-        
+
         prefix = type_context.get(issue_type, "Complete the following task:")
-        
+
         # Structure the task
         task = f"{prefix}\n\n**Issue #{issue_number}**: {cleaned}"
-        
+
         # Add clarity prompt
         task += "\n\n*Before starting, ensure you understand the full scope and have all required context.*"
-        
+
         return task
-    
+
     def _build_context_summary(
         self,
         context: Dict[str, Any],
@@ -476,35 +476,35 @@ class PromptEngineer:
     ) -> str:
         """Build a context summary from available information."""
         parts = []
-        
+
         # Issue type context
         parts.append(f"**Issue Type**: {issue_type}")
-        
+
         # Labels
         if labels:
-            parts.append(f"**Labels**: {', '.join(f'`{l}`' for l in labels)}")
-        
+            parts.append(f"**Labels**: {', '.join(f'`{lbl}`' for lbl in labels)}")
+
         # Dependencies
         if context.get("dependencies"):
             deps = context["dependencies"]
             parts.append(f"**Dependencies**: {deps}")
-        
+
         # Previous work
         if context.get("previous_session"):
             parts.append(f"**Previous Session**: {context['previous_session']}")
-        
+
         # Related PRD/Spec
         if context.get("prd_path"):
             parts.append(f"**PRD**: [{context['prd_path']}]({context['prd_path']})")
         if context.get("spec_path"):
             parts.append(f"**Spec**: [{context['spec_path']}]({context['spec_path']})")
-        
+
         return "\n".join(parts) if parts else "_No additional context available._"
-    
+
     def _determine_inputs(self, role: str, context: Dict[str, Any]) -> List[str]:
         """Determine what inputs are available based on role and workflow position."""
         inputs = []
-        
+
         if role == "pm":
             inputs.append("User request or problem statement")
             inputs.append("Existing documentation and related issues")
@@ -524,13 +524,13 @@ class PromptEngineer:
         elif role == "ux":
             inputs.append("Product Requirements Document (PRD)")
             inputs.append("User personas and goals")
-        
+
         return inputs
-    
+
     def _extract_constraints_from_prompt(self, raw_prompt: str) -> List[str]:
         """Extract any constraints mentioned in the raw prompt."""
         constraints = []
-        
+
         # Look for constraint patterns
         constraint_patterns = [
             r"must\s+(.+?)(?:\.|$)",
@@ -539,15 +539,15 @@ class PromptEngineer:
             r"restricted\s+to\s+(.+?)(?:\.|$)",
             r"limited\s+to\s+(.+?)(?:\.|$)"
         ]
-        
+
         prompt_lower = raw_prompt.lower()
         for pattern in constraint_patterns:
             matches = re.findall(pattern, prompt_lower, re.IGNORECASE)
             for match in matches[:2]:  # Limit to 2 per pattern
                 constraints.append(match.strip().capitalize())
-        
+
         return constraints
-    
+
     def _build_success_criteria(
         self,
         raw_prompt: str,
@@ -555,7 +555,7 @@ class PromptEngineer:
     ) -> List[str]:
         """Build success criteria from prompt and issue type."""
         criteria = []
-        
+
         # Type-specific criteria
         type_criteria = {
             "epic": [
@@ -584,19 +584,19 @@ class PromptEngineer:
                 "Recommendations are actionable"
             ]
         }
-        
+
         criteria.extend(type_criteria.get(issue_type, type_criteria["story"]))
-        
+
         # Extract acceptance criteria from prompt
         if "acceptance criteria" in raw_prompt.lower() or "- [ ]" in raw_prompt:
             criteria.append("All acceptance criteria from issue are satisfied")
-        
+
         return criteria
-    
+
     def _get_label_specific_hints(self, labels: List[str]) -> List[str]:
         """Get hints specific to issue labels."""
         hints = []
-        
+
         label_hints = {
             "security": [
                 "Review OWASP Top 10 before implementation",
@@ -624,18 +624,18 @@ class PromptEngineer:
                 "Optimize for mobile"
             ]
         }
-        
+
         for label in labels:
             label_lower = label.lower().replace("type:", "")
             if label_lower in label_hints:
                 hints.extend(label_hints[label_lower][:2])  # Max 2 per label
-        
+
         return hints
-    
+
     def get_chain_of_thought_prompt(self, role: str, task: str) -> str:
         """
         Generate a chain-of-thought prompt to encourage step-by-step reasoning.
-        
+
         This is useful for complex tasks where we want the agent to
         show their reasoning process.
         """
@@ -742,54 +742,54 @@ Let's review this systematically:
 Now, let me apply this to: {task}
 """
         }
-        
+
         template = cot_templates.get(role, cot_templates["engineer"])
         return template.format(task=task)
-    
+
     def validate_prompt_completeness(self, prompt: EnhancedPrompt) -> Dict[str, Any]:
         """
         Validate that an enhanced prompt has all required elements.
-        
+
         Returns a validation report with missing or weak elements.
         """
         issues = []
         warnings = []
-        
+
         # Required elements
         if not prompt.task_statement or len(prompt.task_statement) < 20:
             issues.append("Task statement is missing or too brief")
-        
+
         if not prompt.outputs:
             issues.append("No expected outputs defined")
-        
+
         if not prompt.success_criteria:
             issues.append("No success criteria defined")
-        
+
         # Warnings for optional but recommended elements
         if not prompt.constraints:
             warnings.append("No constraints defined - consider adding boundaries")
-        
+
         if not prompt.approach_hints:
             warnings.append("No approach hints - agent may take suboptimal path")
-        
+
         if not prompt.pitfalls_to_avoid:
             warnings.append("No pitfalls listed - agent may repeat common mistakes")
-        
+
         if prompt.next_role and not prompt.handoff_requirements:
             warnings.append(f"Handoff to {prompt.next_role} defined but no requirements specified")
-        
+
         return {
             "is_valid": len(issues) == 0,
             "issues": issues,
             "warnings": warnings,
             "completeness_score": self._calculate_completeness_score(prompt)
         }
-    
+
     def _calculate_completeness_score(self, prompt: EnhancedPrompt) -> float:
         """Calculate a completeness score from 0.0 to 1.0."""
         score = 0.0
         total_weight = 0.0
-        
+
         # Weighted elements
         elements = [
             (bool(prompt.role_primer), 1.0),
@@ -803,10 +803,10 @@ Now, let me apply this to: {task}
             (len(prompt.approach_hints) > 0, 1.0),
             (len(prompt.pitfalls_to_avoid) > 0, 1.0),
         ]
-        
+
         for has_element, weight in elements:
             total_weight += weight
             if has_element:
                 score += weight
-        
+
         return score / total_weight if total_weight > 0 else 0.0
