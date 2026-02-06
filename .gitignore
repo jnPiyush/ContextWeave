@@ -1,7 +1,7 @@
 
 # ContextWeave runtime state
-.context-weave/state.json
-.context-weave/context-*.md
+.context-weave/
+.agent-context/
 
 # Python artifacts
 __pycache__/
@@ -11,6 +11,11 @@ htmlcov/
 *.egg-info/
 dist/
 build/
+
+# Tool caches
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
 
 # Claude Code session artifacts
 tmpclaude-*
