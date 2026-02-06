@@ -340,6 +340,13 @@ Workflow: PM → UX → Architect → Engineer → Reviewer → Done
 
 - **Python 3.10+**
 - **Git 2.20+** (for worktree and notes support)
+- **VS Code** with GitHub Copilot (for sub-agent dropdown)
+
+### Install from PyPI
+
+```bash
+pip install context-weave
+```
 
 ### Install from Source
 
@@ -360,6 +367,36 @@ pip install -e ".[dev]"
 ```bash
 context-weave --version
 # context-weave, version 0.1.0
+```
+
+### Initialize in Your Project
+
+```bash
+cd your-project
+context-weave init --mode local
+```
+
+This step is **critical** — it deploys all the required files into your repository:
+
+| Deployed Files | Location | Purpose |
+|----------------|----------|---------|
+| Agent definitions (7) | `.github/agents/*.agent.md` | Sub-agents in VS Code Copilot dropdown |
+| Copilot instructions | `.github/copilot-instructions.md` | Global Copilot behavior rules |
+| Coding instructions (4) | `.github/instructions/*.instructions.md` | Language-specific coding standards |
+| Prompt templates (3) | `.github/prompts/*.prompt.md` | Reusable prompt templates |
+| Document templates (6) | `.github/templates/*.md` | PRD, ADR, Spec, Review templates |
+| Agent guidelines | `AGENTS.md` | Workflow & role definitions |
+| Skills index | `Skills.md` | Technical standards reference |
+
+> **Why this matters:** VS Code Copilot reads `.github/agents/*.agent.md` to populate the
+> agent dropdown. Without running `context-weave init`, these files won't exist in your
+> repo and the sub-agents (Engineer, Architect, PM, Reviewer, UX, DevOps, Agent X) won't
+> appear.
+
+Use `--force` to overwrite existing scaffold files:
+
+```bash
+context-weave init --mode local --force
 ```
 
 ---
@@ -524,45 +561,76 @@ ContextWeave/
 │   ├── state.py                # Git-based state management
 │   ├── memory.py               # Layer 3: Memory implementation
 │   ├── prompt.py               # Prompt engineering module
-│   └── commands/               # CLI command implementations
-│       ├── auth.py             # GitHub OAuth authentication
-│       ├── config.py           # Config commands
-│       ├── context.py          # Context generation
-│       ├── init.py             # Repository initialization
-│       ├── issue.py            # Issue management
-│       ├── memory.py           # Memory CLI commands
-│       ├── status.py           # Status display
-│       ├── subagent.py         # SubAgent management
-│       ├── sync.py             # GitHub sync
-│       └── validate.py         # Validation commands
+│   ├── security.py             # Security utilities
+│   ├── dashboard.py            # Dashboard server
+│   ├── debugmcp.py             # MCP debug integration
+│   ├── scaffolds/              # Bundled scaffold files (shipped with pip)
+│   │   ├── __init__.py         # get_scaffolds_dir() helper
+│   │   ├── AGENTS.md           # Agent guidelines (deployed to repo root)
+│   │   ├── Skills.md           # Skills index (deployed to repo root)
+│   │   └── github/             # Deployed to .github/ on init
+│   │       ├── copilot-instructions.md
+│   │       ├── agents/         # 7 agent definitions (.agent.md)
+│   │       ├── instructions/   # 4 coding instructions
+│   │       ├── prompts/        # 3 prompt templates
+│   │       └── templates/      # 6 document templates
+│   ├── commands/               # CLI command implementations
+│   │   ├── auth.py             # GitHub OAuth authentication
+│   │   ├── config.py           # Config commands
+│   │   ├── context.py          # Context generation
+│   │   ├── init.py             # Repository initialization + scaffold deploy
+│   │   ├── issue.py            # Issue management
+│   │   ├── memory.py           # Memory CLI commands
+│   │   ├── status.py           # Status display
+│   │   ├── subagent.py         # SubAgent management
+│   │   ├── sync.py             # GitHub sync
+│   │   └── validate.py         # Validation commands
+│   ├── framework/              # Microsoft Agent Framework integration
+│   │   ├── agents.py           # Agent definitions
+│   │   ├── orchestrator.py     # Multi-agent orchestrator
+│   │   ├── tools.py            # Tool definitions
+│   │   └── ...
+│   └── static/                 # Web dashboard assets
+│       ├── dashboard.html
+│       ├── dashboard.css
+│       └── dashboard.js
 ├── docs/
 │   └── architecture/
 │       └── 4-LAYER-CONTEXT-ARCHITECTURE.md
 ├── examples/
 │   └── prompt_enhancement_demo.py
-├── tests/                      # Test suite (189 tests)
+├── tests/                      # Test suite (358 tests)
 │   ├── test_auth.py
 │   ├── test_config.py
 │   ├── test_context_weave.py
 │   ├── test_issue.py
 │   ├── test_memory.py
 │   ├── test_prompt.py
+│   ├── test_security.py
 │   ├── test_sync.py
-│   └── test_validate.py
+│   ├── test_validate.py
+│   └── test_framework_*.py    # Framework tests
 ├── .github/
-│   ├── agents/                 # Role-specific agent instructions
+│   ├── agents/                 # Role-specific agent definitions
+│   │   ├── agent-x.agent.md    # Hub coordinator
 │   │   ├── engineer.agent.md
-│   │   ├── pm.agent.md
 │   │   ├── architect.agent.md
+│   │   ├── product-manager.agent.md
 │   │   ├── reviewer.agent.md
-│   │   └── ux.agent.md
+│   │   ├── ux-designer.agent.md
+│   │   └── devops-engineer.agent.md
+│   ├── instructions/           # Language-specific coding standards
+│   ├── prompts/                # Reusable prompt templates
+│   ├── templates/              # Document templates (PRD, ADR, etc.)
 │   └── skills/                 # Technical skill documents
 │       ├── architecture/
 │       ├── development/
+│       ├── design/
+│       ├── ai-systems/
 │       └── operations/
 ├── pyproject.toml
 ├── AGENTS.md                   # Agent workflow guidelines
-├── Skills.md                   # Skills index
+├── Skills.md                   # Skills index (25 skills)
 └── CONTRIBUTING.md             # Contribution guide
 ```
 
@@ -582,8 +650,8 @@ pytest tests/test_memory.py -v
 ```
 
 **Current Status:**
-- ✅ 189 tests passing
-- 📊 ~65% code coverage
+- ✅ 358 tests passing
+- 📊 ~68% code coverage
 
 ---
 

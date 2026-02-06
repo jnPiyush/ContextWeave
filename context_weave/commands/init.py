@@ -5,6 +5,7 @@ Usage:
     context-weave init [--mode local|github|hybrid] [--force]
 """
 
+import shutil
 import subprocess
 from pathlib import Path
 from typing import Optional
@@ -12,6 +13,7 @@ from typing import Optional
 import click
 
 from context_weave.config import Config
+from context_weave.scaffolds import get_scaffolds_dir
 from context_weave.state import State
 
 # Git hook scripts
@@ -231,6 +233,9 @@ def init_cmd(ctx: click.Context, mode: str, force: bool) -> None:
     if verbose:
         click.echo(f"  Created state: {state.state_file}")
 
+    # Deploy .github scaffolds (agents, instructions, prompts, templates)
+    scaffolds_deployed = deploy_github_scaffolds(repo_root, force, verbose, quiet)
+
     # Install Git hooks
     hooks_installed = install_hooks(repo_root, config, verbose, quiet)
 
@@ -248,6 +253,7 @@ def init_cmd(ctx: click.Context, mode: str, force: bool) -> None:
         click.echo("   Config: .context-weave/config.json")
         click.echo("   State: .context-weave/state.json")
         click.echo(f"   Hooks: {hooks_installed} installed")
+        click.echo(f"   Agents: {scaffolds_deployed} files deployed to .github/")
         click.echo("   Worktrees: ../worktrees/")
         click.echo("")
         click.echo("Next steps:")
@@ -266,6 +272,90 @@ def find_git_root() -> Optional[Path]:
         return Path(result.stdout.strip())
     except subprocess.CalledProcessError:
         return None
+
+
+def deploy_github_scaffolds(
+    repo_root: Path, force: bool, verbose: bool, quiet: bool
+) -> int:
+    """Deploy .github scaffold files (agents, instructions, prompts, templates).
+
+    Copies bundled scaffold files from the installed package into the target
+    repository's .github/ directory. This enables VS Code Copilot to discover
+    sub-agents from .github/agents/*.agent.md files.
+
+    Args:
+        repo_root: Root of the target Git repository.
+        force: If True, overwrite existing files.
+        verbose: If True, print detailed progress.
+        quiet: If True, suppress output.
+
+    Returns:
+        Number of scaffold files deployed.
+    """
+    scaffolds_dir = get_scaffolds_dir() / "github"
+    if not scaffolds_dir.exists():
+        if verbose:
+            click.echo("  [WARNING] Scaffolds directory not found in package.")
+        return 0
+
+    target_github_dir = repo_root / ".github"
+    deployed = 0
+
+    # Directories to deploy: agents, instructions, prompts, templates
+    scaffold_dirs = ["agents", "instructions", "prompts", "templates"]
+
+    for subdir in scaffold_dirs:
+        src_dir = scaffolds_dir / subdir
+        if not src_dir.exists():
+            continue
+
+        dst_dir = target_github_dir / subdir
+        dst_dir.mkdir(parents=True, exist_ok=True)
+
+        for src_file in src_dir.iterdir():
+            if not src_file.is_file():
+                continue
+            dst_file = dst_dir / src_file.name
+            if dst_file.exists() and not force:
+                if verbose:
+                    click.echo(f"  Skipped (exists): .github/{subdir}/{src_file.name}")
+                continue
+            shutil.copy2(src_file, dst_file)
+            deployed += 1
+            if verbose:
+                click.echo(f"  Deployed: .github/{subdir}/{src_file.name}")
+
+    # Deploy copilot-instructions.md at .github/ root
+    copilot_src = scaffolds_dir / "copilot-instructions.md"
+    if copilot_src.exists():
+        target_github_dir.mkdir(parents=True, exist_ok=True)
+        copilot_dst = target_github_dir / "copilot-instructions.md"
+        if not copilot_dst.exists() or force:
+            shutil.copy2(copilot_src, copilot_dst)
+            deployed += 1
+            if verbose:
+                click.echo("  Deployed: .github/copilot-instructions.md")
+        elif verbose:
+            click.echo("  Skipped (exists): .github/copilot-instructions.md")
+
+    # Deploy AGENTS.md and Skills.md to repo root (referenced by agent definitions)
+    scaffolds_root = get_scaffolds_dir()
+    for root_file in ["AGENTS.md", "Skills.md"]:
+        src = scaffolds_root / root_file
+        if src.exists():
+            dst = repo_root / root_file
+            if not dst.exists() or force:
+                shutil.copy2(src, dst)
+                deployed += 1
+                if verbose:
+                    click.echo(f"  Deployed: {root_file}")
+            elif verbose:
+                click.echo(f"  Skipped (exists): {root_file}")
+
+    if not quiet and deployed > 0:
+        click.echo(f"  Deployed {deployed} scaffold files to .github/")
+
+    return deployed
 
 
 def install_hooks(repo_root: Path, config: Config, verbose: bool, quiet: bool) -> int:

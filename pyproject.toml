@@ -73,7 +73,12 @@ where = ["."]
 include = ["context_weave*"]
 
 [tool.setuptools.package-data]
-context_weave = ["static/*"]
+context_weave = [
+    "static/*",
+    "scaffolds/*.md",
+    "scaffolds/github/**/*.md",
+    "scaffolds/github/*.md",
+]
 
 [tool.ruff]
 target-version = "py310"
