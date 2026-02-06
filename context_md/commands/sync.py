@@ -449,15 +449,15 @@ def _github_api_get(token: str, endpoint: str) -> Any:
 
 def _github_api_post(token: str, endpoint: str, data: Dict[str, Any]) -> Any:
     """Make an authenticated POST request to GitHub API.
-    
+
     Args:
         token: GitHub access token
         endpoint: API endpoint
         data: JSON data to post
-        
+
     Returns:
         Parsed JSON response
-        
+
     Raises:
         HTTPError: If request fails
     """
@@ -477,3 +477,315 @@ def _github_api_post(token: str, endpoint: str, data: Dict[str, Any]) -> Any:
 
     with urlopen(request, timeout=30) as response:
         return json.loads(response.read().decode())
+
+
+def _github_graphql(token: str, query: str, variables: Optional[Dict[str, Any]] = None) -> Any:
+    """Execute a GraphQL query against GitHub API.
+
+    Args:
+        token: GitHub access token
+        query: GraphQL query string
+        variables: Optional query variables
+
+    Returns:
+        Parsed GraphQL response
+
+    Raises:
+        HTTPError: If request fails
+        ValueError: If GraphQL returns errors
+    """
+    url = "https://api.github.com/graphql"
+
+    payload = {"query": query}
+    if variables:
+        payload["variables"] = variables
+
+    request = Request(
+        url,
+        data=json.dumps(payload).encode(),
+        headers={
+            "Authorization": f"Bearer {token}",
+            "Content-Type": "application/json"
+        },
+        method="POST"
+    )
+
+    with urlopen(request, timeout=30) as response:
+        result = json.loads(response.read().decode())
+
+    if "errors" in result:
+        error_messages = [err.get("message", str(err)) for err in result["errors"]]
+        raise ValueError(f"GraphQL errors: {'; '.join(error_messages)}")
+
+    return result.get("data")
+
+
+def get_project_field_ids(token: str, owner: str, repo: str, project_number: int) -> Dict[str, str]:
+    """Get field IDs for a GitHub Projects V2 project.
+
+    Retrieves the internal field IDs needed to update project fields like Status.
+
+    Args:
+        token: GitHub access token
+        owner: Repository owner
+        repo: Repository name
+        project_number: Project number (not database ID)
+
+    Returns:
+        Dict mapping field names to their IDs
+
+    Raises:
+        ValueError: If project or fields not found
+    """
+    query = """
+    query($owner: String!, $repo: String!, $number: Int!) {
+      repository(owner: $owner, name: $repo) {
+        projectV2(number: $number) {
+          id
+          title
+          fields(first: 20) {
+            nodes {
+              ... on ProjectV2Field {
+                id
+                name
+              }
+              ... on ProjectV2SingleSelectField {
+                id
+                name
+                options {
+                  id
+                  name
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    """
+
+    variables = {
+        "owner": owner,
+        "repo": repo,
+        "number": project_number
+    }
+
+    data = _github_graphql(token, query, variables)
+
+    if not data or not data.get("repository") or not data["repository"].get("projectV2"):
+        raise ValueError(f"Project #{project_number} not found in {owner}/{repo}")
+
+    project = data["repository"]["projectV2"]
+    fields = {}
+
+    for field in project["fields"]["nodes"]:
+        field_name = field["name"]
+        field_id = field["id"]
+        fields[field_name] = {"id": field_id}
+
+        # If single select field, store option mappings
+        if "options" in field:
+            fields[field_name]["options"] = {
+                opt["name"]: opt["id"] for opt in field["options"]
+            }
+
+    return fields
+
+
+def update_project_status(
+    token: str,
+    owner: str,
+    repo: str,
+    project_number: int,
+    issue_number: int,
+    status: str
+) -> bool:
+    """Update an issue's status in GitHub Projects V2.
+
+    Args:
+        token: GitHub access token
+        owner: Repository owner
+        repo: Repository name
+        project_number: Project number
+        issue_number: Issue number
+        status: New status (Backlog|In Progress|In Review|Ready|Done)
+
+    Returns:
+        True if update succeeded
+
+    Raises:
+        ValueError: If project, issue, or status invalid
+    """
+    # Step 1: Get project and field information
+    try:
+        fields = get_project_field_ids(token, owner, repo, project_number)
+    except ValueError as e:
+        raise ValueError(f"Failed to get project fields: {e}")
+
+    if "Status" not in fields:
+        raise ValueError("Status field not found in project")
+
+    status_field = fields["Status"]
+    if status not in status_field.get("options", {}):
+        available = ", ".join(status_field.get("options", {}).keys())
+        raise ValueError(f"Invalid status '{status}'. Available: {available}")
+
+    status_option_id = status_field["options"][status]
+
+    # Step 2: Get issue node ID
+    issue_query = """
+    query($owner: String!, $repo: String!, $number: Int!) {
+      repository(owner: $owner, name: $repo) {
+        issue(number: $number) {
+          id
+          projectItems(first: 10) {
+            nodes {
+              id
+              project {
+                number
+              }
+            }
+          }
+        }
+      }
+    }
+    """
+
+    issue_data = _github_graphql(token, issue_query, {
+        "owner": owner,
+        "repo": repo,
+        "number": issue_number
+    })
+
+    if not issue_data or not issue_data.get("repository") or not issue_data["repository"].get("issue"):
+        raise ValueError(f"Issue #{issue_number} not found")
+
+    issue = issue_data["repository"]["issue"]
+
+    # Find project item ID for this project
+    project_item_id = None
+    for item in issue["projectItems"]["nodes"]:
+        if item["project"]["number"] == project_number:
+            project_item_id = item["id"]
+            break
+
+    if not project_item_id:
+        raise ValueError(f"Issue #{issue_number} not found in project #{project_number}")
+
+    # Step 3: Update the status field
+    update_mutation = """
+    mutation($projectId: ID!, $itemId: ID!, $fieldId: ID!, $value: String!) {
+      updateProjectV2ItemFieldValue(
+        input: {
+          projectId: $projectId
+          itemId: $itemId
+          fieldId: $fieldId
+          value: {
+            singleSelectOptionId: $value
+          }
+        }
+      ) {
+        projectV2Item {
+          id
+        }
+      }
+    }
+    """
+
+    # Get project ID
+    projectQuery = """
+    query($owner: String!, $repo: String!, $number: Int!) {
+      repository(owner: $owner, name: $repo) {
+        projectV2(number: $number) {
+          id
+        }
+      }
+    }
+    """
+
+    project_data = _github_graphql(token, projectQuery, {
+        "owner": owner,
+        "repo": repo,
+        "number": project_number
+    })
+
+    project_id = project_data["repository"]["projectV2"]["id"]
+
+    # Execute update
+    _github_graphql(token, update_mutation, {
+        "projectId": project_id,
+        "itemId": project_item_id,
+        "fieldId": status_field["id"],
+        "value": status_option_id
+    })
+
+    return True
+
+
+@sync_cmd.command("status-update")
+@click.argument("issue_number", type=int)
+@click.argument("status", type=click.Choice([
+    "Backlog", "In Progress", "In Review", "Ready", "Done"
+]))
+@click.pass_context
+def status_update_cmd(ctx: click.Context, issue_number: int, status: str) -> None:
+    """Update issue status in GitHub Projects V2.
+
+    Updates the Status field for an issue in the configured GitHub Project.
+    This is the primary way to coordinate agent handoffs.
+
+    \b
+    Status Values:
+        Backlog      - Issue created, not started
+        In Progress  - Active work by current agent
+        In Review    - Code review phase
+        Ready        - Design/spec done, awaiting next phase
+        Done         - Completed and closed
+
+    \b
+    Examples:
+        context-md sync status-update 42 "Ready"
+        context-md sync status-update 42 "In Progress"
+    """
+    repo_root = ctx.obj.get("repo_root")
+    state = ctx.obj.get("state", State(repo_root))
+
+    if not state.github.enabled:
+        raise click.ClickException("GitHub sync not configured. Run: context-md sync setup")
+
+    if not state.github.project_number:
+        raise click.ClickException(
+            "No project configured. Run: context-md sync setup --project <number>"
+        )
+
+    # Get token
+    token = _get_auth_token(state)
+    if not token:
+        raise click.ClickException(
+            "Not authenticated with GitHub. Run: context-md auth login"
+        )
+
+    click.echo("")
+    click.echo(f"Updating issue #{issue_number} status to '{status}'...")
+
+    try:
+        update_project_status(
+            token=token,
+            owner=state.github.owner,
+            repo=state.github.repo,
+            project_number=state.github.project_number,
+            issue_number=issue_number,
+            status=status
+        )
+
+        click.echo("")
+        click.secho("[OK] Status updated successfully!", fg="green")
+        click.echo(f"  Issue: #{issue_number}")
+        click.echo(f"  Status: {status}")
+        click.echo(f"  Project: #{state.github.project_number}")
+        click.echo("")
+
+    except ValueError as e:
+        raise click.ClickException(f"Failed to update status: {e}")
+    except Exception as e:
+        raise click.ClickException(f"Unexpected error: {e}")

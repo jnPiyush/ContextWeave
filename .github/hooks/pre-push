@@ -1,0 +1,132 @@
+#!/bin/bash
+# Context.md Pre-Push Hook
+# Validates Definition of Done before allowing push to remote
+# Ensures quality gates are met before code reaches main branch
+
+set -e
+
+# Colors for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+NC='\033[0m' # No Color
+
+REPO_ROOT=$(git rev-parse --show-toplevel)
+
+echo ""
+echo "========================================"
+echo "  Context.md Pre-Push Validation"
+echo "========================================"
+echo ""
+
+# Get the remote name and URL
+remote="$1"
+url="$2"
+
+# Get commits about to be pushed
+range="$3"
+if [ -z "$range" ]; then
+    # If range not provided, check unpushed commits
+    range="@{u}..HEAD"
+fi
+
+# Extract issue numbers from commits about to be pushed
+ISSUE_NUMS=$(git log --oneline $range | grep -oP '#\K\d+' | sort -u || true)
+
+if [ -z "$ISSUE_NUMS" ]; then
+    echo -e "${YELLOW}[INFO]${NC} No issue references found in commits. Skipping DoD validation."
+    echo -e "${GREEN}[OK]${NC} Pre-push checks passed"
+    echo ""
+    exit 0
+fi
+
+echo "Issues in commits about to be pushed:"
+for issue in $ISSUE_NUMS; do
+    echo "  - #$issue"
+done
+echo ""
+
+VALIDATION_FAILED=false
+
+# For each issue, run DoD validation
+for issue in $ISSUE_NUMS; do
+    echo "----------------------------------------"
+    echo "Validating Issue #$issue"
+    echo "----------------------------------------"
+    echo ""
+
+    # Check if context-md is available
+    if command -v context-md &> /dev/null; then
+        echo "Running Definition of Done validation..."
+
+        # Run DoD validation using context-md
+        if context-md validate $issue --dod 2>&1; then
+            echo -e "${GREEN}[OK]${NC} Issue #$issue passes DoD validation"
+        else
+            echo -e "${RED}[FAIL]${NC} Issue #$issue fails DoD validation"
+            VALIDATION_FAILED=true
+        fi
+    else
+        # Fallback to manual checks if context-md not installed
+        echo -e "${YELLOW}[WARN]${NC} context-md not installed, running basic checks..."
+
+        BASIC_CHECKS_PASSED=true
+
+        # Check 1: Are there tests?
+        echo -n "  Checking for test files... "
+        if git diff --name-only $range | grep -qE '(test_|_test\.py|\.test\.(ts|js)|\.\*Test\.cs)'; then
+            echo -e "${GREEN}✓${NC}"
+        else
+            echo -e "${RED}✗ No test files found${NC}"
+            BASIC_CHECKS_PASSED=false
+        fi
+
+        # Check 2: Is documentation updated?
+        echo -n "  Checking for documentation updates... "
+        if git diff --name-only $range | grep -qE '(README|CHANGELOG|\.md)'; then
+            echo -e "${GREEN}✓${NC}"
+        else
+            echo -e "${YELLOW}⚠ No documentation updates${NC}"
+        fi
+
+        # Check 3: Are there actual code changes?
+        echo -n "  Checking for code changes... "
+        if git diff --name-only $range | grep -qE '\.(py|js|ts|cs|java|go|rs)$'; then
+            echo -e "${GREEN}✓${NC}"
+        else
+            echo -e "${RED}✗ No code changes found${NC}"
+            BASIC_CHECKS_PASSED=false
+        fi
+
+        if [ "$BASIC_CHECKS_PASSED" = false ]; then
+            VALIDATION_FAILED=true
+        fi
+    fi
+
+    echo ""
+done
+
+echo "========================================"
+
+if [ "$VALIDATION_FAILED" = true ]; then
+    echo -e "${RED}[FAIL] Pre-push validation failed${NC}"
+    echo ""
+    echo "One or more issues do not meet Definition of Done criteria."
+    echo ""
+    echo "Please ensure:"
+    echo "  1. Tests are included and passing"
+    echo "  2. Code is reviewed (or ready for review)"
+    echo "  3. Documentation is updated"
+    echo "  4. Issue status is correct"
+    echo ""
+    echo "To bypass this check (not recommended):"
+    echo "  git push --no-verify"
+    echo ""
+    echo "========================================"
+    exit 1
+else
+    echo -e "${GREEN}[OK] All pre-push validations passed${NC}"
+    echo "========================================"
+    echo ""
+    exit 0
+fi

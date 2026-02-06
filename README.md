@@ -10,7 +10,7 @@
 
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Tests](https://img.shields.io/badge/tests-233%20passing-brightgreen.svg)](./tests)
+[![Tests](https://img.shields.io/badge/tests-358%20passing-brightgreen.svg)](./tests)
 [![Coverage](https://img.shields.io/badge/coverage-68%25-yellowgreen.svg)](./htmlcov)
 [![Automation](https://img.shields.io/badge/automation-10%20layers-blue.svg)](./.github/workflows)
 
