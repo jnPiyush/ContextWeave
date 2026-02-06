@@ -13,8 +13,9 @@ from pathlib import Path
 from typing import Optional, List
 
 import click
-
-from context_md.wordmcp import WordMCPClient
+from docx import Document
+from docx.shared import Pt, RGBColor
+from docx.enum.text import WD_PARAGRAPH_ALIGNMENT
 
 logger = logging.getLogger(__name__)
 
@@ -191,7 +192,7 @@ def _find_issue_documents(repo_root: Path, issue_number: int) -> List[Path]:
 
 
 def _convert_md_to_docx(md_path: Path, docx_path: Path, _template: Optional[Path]) -> None:
-    """Convert markdown to DOCX using Word MCP Server."""
+    """Convert markdown to DOCX using python-docx directly."""
     from markdown_it import MarkdownIt
     
     # Parse markdown content
@@ -201,21 +202,24 @@ def _convert_md_to_docx(md_path: Path, docx_path: Path, _template: Optional[Path
     
     tokens = md.parse(content)
     
-    # Use Word MCP client to create document
-    with WordMCPClient() as mcp:
-        _create_word_document_via_mcp(mcp, tokens, docx_path, md_path.stem)
+    # Create Word document directly
+    _create_word_document_direct(tokens, docx_path, md_path.stem)
 
 
-def _create_word_document_via_mcp(mcp: WordMCPClient, tokens: List, output_path: Path,
-                                   document_title: str) -> None:
-    """Create Word document using MCP server tools."""
-    filename = str(output_path)
+def _create_word_document_direct(tokens: List, output_path: Path,
+                                  document_title: str) -> None:
+    """Create Word document using python-docx directly."""
+    logger.info("Creating Word document: %s", output_path)
     
-    # Create document via MCP
-    logger.info("Creating Word document via MCP: %s", filename)
-    mcp.create_document(filename, title=document_title, author="Context.md Export")
+    # Create new document
+    doc = Document()
     
-    # Process markdown tokens and add content via MCP
+    # Set document properties
+    core_properties = doc.core_properties
+    core_properties.title = document_title
+    core_properties.author = "Context.md Export"
+    
+    # Process markdown tokens and add content
     i = 0
     while i < len(tokens):
         token = tokens[i]
@@ -227,7 +231,7 @@ def _create_word_document_via_mcp(mcp: WordMCPClient, tokens: List, output_path:
                 i += 1
                 if i < len(tokens) and tokens[i].type == "inline":
                     text = tokens[i].content
-                    mcp.add_heading(filename, text, level=level)
+                    paragraph = doc.add_heading(text, level=level)
                     logger.debug("Added heading (level %d): %s...", level, text[:50])
             
             elif token.type == "paragraph_open":
@@ -236,16 +240,19 @@ def _create_word_document_via_mcp(mcp: WordMCPClient, tokens: List, output_path:
                 if i < len(tokens) and tokens[i].type == "inline":
                     text = tokens[i].content
                     if text:  # Only add non-empty paragraphs
-                        mcp.add_paragraph(filename, text)
+                        doc.add_paragraph(text)
                         logger.debug("Added paragraph: %s...", text[:50])
             
             elif token.type == "code_block" or token.type == "fence":
                 # Add code block as styled paragraph
                 code_text = token.content
                 if code_text:
-                    mcp.add_paragraph(filename, code_text, 
-                                    font_name="Courier New",
-                                    font_size=10)
+                    paragraph = doc.add_paragraph(code_text)
+                    # Style as code
+                    for run in paragraph.runs:
+                        run.font.name = "Courier New"
+                        run.font.size = Pt(10)
+                        run.font.color.rgb = RGBColor(0, 0, 0)
                     logger.debug("Added code block: %d chars", len(code_text))
             
             elif token.type == "table_open":
@@ -254,12 +261,22 @@ def _create_word_document_via_mcp(mcp: WordMCPClient, tokens: List, output_path:
                 if table_data and isinstance(table_data, list) and len(table_data) > 0:
                     rows = len(table_data)
                     cols = len(table_data[0])
-                    mcp.add_table(filename, rows, cols, table_data)
+                    
+                    # Create table
+                    table = doc.add_table(rows=rows, cols=cols)
+                    table.style = 'Light Grid Accent 1'
+                    
+                    # Fill table data
+                    for row_idx, row_data in enumerate(table_data):
+                        for col_idx, cell_data in enumerate(row_data):
+                            if col_idx < cols:
+                                table.rows[row_idx].cells[col_idx].text = cell_data
+                    
                     logger.debug("Added table: %dx%d", rows, cols)
             
             elif token.type == "hr":
                 # Add horizontal rule as page break
-                mcp.add_page_break(filename)
+                doc.add_page_break()
                 logger.debug("Added page break")
         
         except (ValueError, KeyError, IndexError) as e:
@@ -267,7 +284,9 @@ def _create_word_document_via_mcp(mcp: WordMCPClient, tokens: List, output_path:
         
         i += 1
     
-    logger.info("Document created successfully: %s", filename)
+    # Save document
+    doc.save(str(output_path))
+    logger.info("Document created successfully: %s", output_path)
 
 
 def _convert_md_to_pdf(md_path: Path, pdf_path: Path) -> None:

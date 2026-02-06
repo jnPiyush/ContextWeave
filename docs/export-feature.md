@@ -24,17 +24,6 @@ brew install --cask libreoffice    # macOS
 # Install pandoc: https://pandoc.org/installing.html
 ```
 
-### Configure Word MCP Server (Optional)
-
-For advanced Word document manipulation, configure the Word MCP server:
-
-```bash
-# Install Word MCP server via uvx
-pip install word-mcp-server
-```
-
-The MCP server is already configured in `.vscode/mcp.json`.
-
 ## Usage
 
 ### Export Single Document
@@ -105,17 +94,16 @@ deliverables/
 ```
 Export Command
     ├── markdown-it-py      # Parse markdown structure
-    ├── python-docx         # Generate DOCX files
-    ├── pandoc              # Generate PDF from markdown (optional)
-    └── Word MCP Server     # Advanced Word document manipulation (optional)
+    ├── python-docx         # Generate DOCX files directly
+    └── pandoc              # Generate PDF from markdown (optional)
 ```
 
 ## Conversion Methods
 
 ### Markdown → DOCX
 1. Parse markdown using `markdown-it-py`
-2. Generate Word document using `python-docx`
-3. Apply formatting (fonts, styles, colors)
+2. Generate Word document using `python-docx` directly
+3. Apply formatting (fonts, styles, colors, tables)
 4. Save `.docx` file
 
 ### Markdown → PDF

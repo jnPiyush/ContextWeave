@@ -12,15 +12,6 @@
       // "type": "http",
       // "url": "https://api.githubcopilot.com/mcp/",
       // "headers": { "Authorization": "Bearer ${input:github_token}" }
-    },
-    "word-document": {
-      // Office Word MCP Server for document generation
-      // Install: pip install word-mcp-server
-      "command": "uvx",
-      "args": ["--from", "word-mcp-server", "word_mcp_server"],
-      "env": {
-        "FASTMCP_LOG_LEVEL": "INFO"
-      }
     }
   },
   "inputs": [
