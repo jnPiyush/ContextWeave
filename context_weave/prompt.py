@@ -216,7 +216,7 @@ ROLE_TEMPLATES = {
         ),
         "default_outputs": [
             "Production code implementing the specification",
-            "Unit tests with ≥80% coverage",
+            "Unit tests with >=80% coverage",
             "Integration tests for critical paths",
             "Updated documentation (inline + README)"
         ],
@@ -230,7 +230,7 @@ ROLE_TEMPLATES = {
         "quality_checklist": [
             "Code compiles without warnings",
             "All tests pass",
-            "Coverage ≥80% for new code",
+            "Coverage >=80% for new code",
             "Security checklist completed",
             "Documentation is updated",
             "Code review guidelines followed"
@@ -570,7 +570,7 @@ class PromptEngineer:
             ],
             "story": [
                 "All acceptance criteria are met",
-                "Tests pass with ≥80% coverage",
+                "Tests pass with >=80% coverage",
                 "Code review is approved"
             ],
             "bug": [

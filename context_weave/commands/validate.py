@@ -48,7 +48,7 @@ DOD_CHECKLISTS = {
         "name": "Engineer",
         "checks": [
             ("code_committed", "Code committed and pushed"),
-            ("tests_written", "Tests written (≥80% coverage)"),
+            ("tests_written", "Tests written (>=80% coverage)"),
             ("tests_passing", "Tests passing"),
             ("docs_updated", "Documentation updated"),
             ("no_lint_errors", "No compiler warnings or linter errors"),
@@ -350,7 +350,7 @@ def _display_validation_results(results: List[Tuple[str, bool, str]], title: str
         symbol = "[OK]" if passed else "[FAIL]"
         click.echo(f"  {symbol} {description}")
         if not passed and verbose and remediation:
-            click.echo(f"      → {remediation}")
+            click.echo(f"      -> {remediation}")
 
     if not all_passed:
         click.echo("")

@@ -253,7 +253,7 @@ def metrics_cmd(ctx: click.Context, role: Optional[str]) -> None:
                 total = stats.get("total", 0)
                 success = stats.get("success", 0)
                 rate = success / total if total > 0 else 0
-                click.echo(f"   • {r.title()}: {rate:.1%} ({total} executions)")
+                click.echo(f"   - {r.title()}: {rate:.1%} ({total} executions)")
 
     click.echo("")
 
@@ -263,7 +263,7 @@ def metrics_cmd(ctx: click.Context, role: Optional[str]) -> None:
         click.secho("Common Failures", fg="yellow", bold=True)
         click.echo("")
         for f in failures:
-            click.echo(f"   • {f['error_type']}: {f['count']} occurrences")
+            click.echo(f"   - {f['error_type']}: {f['count']} occurrences")
             if f.get('example'):
                 click.echo(f"     Example: {f['example'][:60]}...")
         click.echo("")
@@ -357,16 +357,16 @@ def session_show_cmd(ctx: click.Context, issue: int, history: bool) -> None:
         if session.blockers:
             click.echo("   Blockers:")
             for b in session.blockers:
-                click.echo(f"     • {b}")
+                click.echo(f"     - {b}")
 
         if session.next_steps:
             click.echo("   Next Steps:")
             for s in session.next_steps:
-                click.echo(f"     • {s}")
+                click.echo(f"     - {s}")
 
         if session.files_modified:
             click.echo("   Files Modified:")
             for f in session.files_modified:
-                click.echo(f"     • {f}")
+                click.echo(f"     - {f}")
 
         click.echo("")

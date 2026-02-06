@@ -291,7 +291,7 @@ def _create_word_document_direct(tokens: List, output_path: Path,
 def _convert_md_to_pdf(md_path: Path, pdf_path: Path) -> None:
     """Convert markdown to PDF using pandoc.
 
-    Note: Direct MD→PDF requires pandoc to be installed.
+    Note: Direct MD->PDF requires pandoc to be installed.
     For Windows users, convert to DOCX first, then use docx2pdf.
     """
     try:

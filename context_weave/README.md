@@ -199,7 +199,7 @@ ContextWeave installs these Git hooks for automation:
 
 **Engineer:**
 - [ ] Code committed and pushed
-- [ ] Tests written (≥80% coverage)
+- [ ] Tests written (>=80% coverage)
 - [ ] Tests passing
 - [ ] Documentation updated
 - [ ] No linter errors

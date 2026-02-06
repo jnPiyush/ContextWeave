@@ -198,7 +198,7 @@ def _display_status(data: Dict[str, Any], config: Config) -> None:
         click.echo("")
         click.secho("  [!] Stuck Issues (no activity):", fg="red", bold=True)
         for stuck in data["stuck"]:
-            click.echo(f"      • #{stuck['issue']} - {stuck['hours_inactive']:.0f}h inactive")
+            click.echo(f"      - #{stuck['issue']} - {stuck['hours_inactive']:.0f}h inactive")
 
     click.echo("")
 

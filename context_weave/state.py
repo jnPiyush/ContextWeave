@@ -72,9 +72,9 @@ class State:
     - Mode settings
 
     Most other state is derived directly from Git:
-    - Issues → Branches (issue-{N}-*)
-    - Status → Git notes (refs/notes/context)
-    - Audit → Commit history
+    - Issues -> Branches (issue-{N}-*)
+    - Status -> Git notes (refs/notes/context)
+    - Audit -> Commit history
     """
 
     SCHEMA_VERSION = "1.0"
