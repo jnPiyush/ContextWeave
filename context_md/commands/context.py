@@ -155,6 +155,14 @@ def generate_cmd(ctx: click.Context, issue: int, output: Optional[str],
 
     # Get metadata from Git notes
     metadata = state.get_branch_note(branch) if branch else {}
+    if metadata is None:
+        metadata = {}
+
+    # Fall back to local issue metadata if Git notes are empty
+    if not metadata:
+        local_issue = state.local_issues.get(str(issue), {})
+        if local_issue:
+            metadata = local_issue
 
     # Determine role
     if role:
