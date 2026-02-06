@@ -1,10 +1,10 @@
-"""Tests for context_md.framework.orchestrator -- Workflow Orchestrator."""
+"""Tests for context_weave.framework.orchestrator -- Workflow Orchestrator."""
 
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from context_md.framework.orchestrator import (
+from context_weave.framework.orchestrator import (
     WORKFLOW_STEPS,
     StepResult,
     WorkflowOrchestrator,

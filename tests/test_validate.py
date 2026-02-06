@@ -11,12 +11,12 @@ from unittest.mock import MagicMock, patch
 import pytest
 from click.testing import CliRunner
 
-from context_md.commands.validate import (
+from context_weave.commands.validate import (
     validate_dod_cmd,
     validate_preexec_cmd,
     validate_task_cmd,
 )
-from context_md.state import State
+from context_weave.state import State
 
 
 @pytest.fixture
@@ -190,7 +190,7 @@ class TestDoDValidation:
         )
 
         assert result.exit_code == 0
-        assert "passed" in result.output.lower() or "✓" in result.output
+        assert "passed" in result.output.lower() or "[OK]" in result.output
 
     @patch('subprocess.run')
     def test_dod_tests_fail(self, mock_run, runner, tmp_path):

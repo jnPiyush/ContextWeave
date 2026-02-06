@@ -9,8 +9,8 @@ import json
 import pytest
 from click.testing import CliRunner
 
-from context_md.commands.memory import memory_cmd
-from context_md.memory import (
+from context_weave.commands.memory import memory_cmd
+from context_weave.memory import (
     ExecutionRecord,
     LessonLearned,
     Memory,
@@ -390,7 +390,7 @@ class TestMemoryClass:
 
     def test_corrupted_memory_recovery(self, tmp_path):
         """Test recovery from corrupted memory file."""
-        memory_dir = tmp_path / ".agent-context"
+        memory_dir = tmp_path / ".context-weave"
         memory_dir.mkdir(parents=True, exist_ok=True)
         memory_file = memory_dir / "memory.json"
         memory_file.write_text("{ invalid json }")

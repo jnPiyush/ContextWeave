@@ -1,5 +1,5 @@
 #!/bin/bash
-# Context.md Git Hooks Installer
+# ContextWeave Git Hooks Installer
 # Sets up Git hooks for automated validation and certificate generation
 #
 # Usage:
@@ -21,7 +21,7 @@ GIT_HOOKS_DIR="$REPO_ROOT/.git/hooks"
 
 echo ""
 echo "========================================"
-echo "  Context.md Git Hooks Installer"
+echo "  ContextWeave Git Hooks Installer"
 echo "========================================"
 echo ""
 

@@ -12,7 +12,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 from click.testing import CliRunner
 
-from context_md.commands.sync import (
+from context_weave.commands.sync import (
     _detect_github_remote,
     _get_auth_token,
     _github_api_get,
@@ -23,8 +23,8 @@ from context_md.commands.sync import (
     setup_cmd,
     sync_cmd,
 )
-from context_md.config import Config
-from context_md.state import State
+from context_weave.config import Config
+from context_weave.state import State
 
 
 @pytest.fixture
@@ -97,8 +97,8 @@ class TestSetupCommand:
 class TestSyncPull:
     """Test pulling issues from GitHub."""
 
-    @patch('context_md.commands.sync._github_api_get')
-    @patch('context_md.commands.sync._get_auth_token')
+    @patch('context_weave.commands.sync._github_api_get')
+    @patch('context_weave.commands.sync._get_auth_token')
     def test_sync_pull_success(self, mock_token, mock_api, runner, tmp_path):
         """Test successful issue sync from GitHub."""
         mock_token.return_value = "gho_test_token"
@@ -138,7 +138,7 @@ class TestSyncPull:
         # Should succeed or show issues
         assert result.exit_code == 0 or "issue" in result.output.lower()
 
-    @patch('context_md.commands.sync._get_auth_token')
+    @patch('context_weave.commands.sync._get_auth_token')
     def test_sync_pull_no_token(self, mock_token, runner, tmp_path):
         """Test sync pull without authentication."""
         mock_token.return_value = None
@@ -158,8 +158,8 @@ class TestSyncPull:
         # Should mention sync is disabled or needs configuration
         assert "disabled" in result.output.lower() or "configure" in result.output.lower()
 
-    @patch('context_md.commands.sync._github_api_get')
-    @patch('context_md.commands.sync._get_auth_token')
+    @patch('context_weave.commands.sync._github_api_get')
+    @patch('context_weave.commands.sync._get_auth_token')
     def test_sync_pull_api_error(self, mock_token, mock_api, runner, tmp_path):
         """Test sync pull with API error."""
         mock_token.return_value = "gho_test_token"
@@ -184,8 +184,8 @@ class TestSyncPull:
 class TestIssuesCommand:
     """Test listing GitHub issues."""
 
-    @patch('context_md.commands.sync._github_api_get')
-    @patch('context_md.commands.sync._get_auth_token')
+    @patch('context_weave.commands.sync._github_api_get')
+    @patch('context_weave.commands.sync._get_auth_token')
     def test_list_issues_success(self, mock_token, mock_api, runner, tmp_path):
         """Test successful issue listing."""
         mock_token.return_value = "gho_test_token"
@@ -220,8 +220,8 @@ class TestIssuesCommand:
         # Config check happens - accept it
         assert "not configured" in result.output or result.exit_code == 0
 
-    @patch('context_md.commands.sync._github_api_get')
-    @patch('context_md.commands.sync._get_auth_token')
+    @patch('context_weave.commands.sync._github_api_get')
+    @patch('context_weave.commands.sync._get_auth_token')
     def test_list_issues_filter_by_label(self, mock_token, mock_api, runner, tmp_path):
         """Test filtering issues by label."""
         mock_token.return_value = "gho_test_token"
@@ -251,8 +251,8 @@ class TestIssuesCommand:
         # Config check happens - accept it
         assert "not configured" in result.output or result.exit_code == 0
 
-    @patch('context_md.commands.sync._github_api_get')
-    @patch('context_md.commands.sync._get_auth_token')
+    @patch('context_weave.commands.sync._github_api_get')
+    @patch('context_weave.commands.sync._get_auth_token')
     def test_list_issues_filter_by_state(self, mock_token, mock_api, runner, tmp_path):
         """Test filtering issues by state."""
         mock_token.return_value = "gho_test_token"
@@ -366,7 +366,7 @@ class TestHelpers:
         assert token == "state-token"
         mock_run.assert_not_called()
 
-    @patch("context_md.state.keyring.get_password")
+    @patch("context_weave.state.keyring.get_password")
     @patch("subprocess.run")
     def test_get_auth_token_falls_back_to_gh(
         self, mock_run, mock_get_password, tmp_path, monkeypatch
@@ -399,7 +399,7 @@ class TestHelpers:
 class TestGitHubAPIHelpers:
     """Test GitHub API helper functions."""
 
-    @patch('context_md.commands.sync.urlopen')
+    @patch('context_weave.commands.sync.urlopen')
     def test_github_api_get_success(self, mock_urlopen):
         """Test successful GET request."""
         response_data = [{"id": 1, "name": "test"}]
@@ -412,7 +412,7 @@ class TestGitHubAPIHelpers:
 
         assert result == response_data
 
-    @patch('context_md.commands.sync.urlopen')
+    @patch('context_weave.commands.sync.urlopen')
     def test_github_api_get_401_unauthorized(self, mock_urlopen):
         """Test GET request with invalid token."""
         from urllib.error import HTTPError
@@ -427,7 +427,7 @@ class TestGitHubAPIHelpers:
         with pytest.raises(HTTPError):
             _github_api_get("invalid_token", "/repos/user/repo/issues")
 
-    @patch('context_md.commands.sync.urlopen')
+    @patch('context_weave.commands.sync.urlopen')
     def test_github_api_get_404_not_found(self, mock_urlopen):
         """Test GET request for non-existent resource."""
         from urllib.error import HTTPError
@@ -442,7 +442,7 @@ class TestGitHubAPIHelpers:
         with pytest.raises(HTTPError):
             _github_api_get("gho_token", "/repos/user/nonexistent")
 
-    @patch('context_md.commands.sync.urlopen')
+    @patch('context_weave.commands.sync.urlopen')
     def test_github_api_post_success(self, mock_urlopen):
         """Test successful POST request."""
         response_data = {"id": 123, "number": 1}
@@ -459,7 +459,7 @@ class TestGitHubAPIHelpers:
 
         assert result["id"] == 123
 
-    @patch('context_md.commands.sync.urlopen')
+    @patch('context_weave.commands.sync.urlopen')
     def test_github_api_rate_limit(self, mock_urlopen):
         """Test handling of rate limit error."""
         from urllib.error import HTTPError
@@ -503,7 +503,7 @@ class TestAuthTokenRetrieval:
         assert mock_run().stdout.strip() == "gho_gh_token"
 
     @patch('keyring.get_password')
-    @patch('context_md.commands.sync.subprocess.run')
+    @patch('context_weave.commands.sync.subprocess.run')
     def test_get_token_no_auth_available(self, mock_run, mock_keyring, tmp_path):
         """Test when no authentication is available."""
         mock_keyring.return_value = None
@@ -527,8 +527,8 @@ class TestAuthTokenRetrieval:
 class TestSyncDryRun:
     """Test sync with --dry-run flag."""
 
-    @patch('context_md.commands.sync._github_api_get')
-    @patch('context_md.commands.sync._get_auth_token')
+    @patch('context_weave.commands.sync._github_api_get')
+    @patch('context_weave.commands.sync._get_auth_token')
     def test_sync_dry_run_no_changes(self, mock_token, mock_api, runner, tmp_path):
         """Test dry run doesn't make changes."""
         mock_token.return_value = "gho_test_token"
@@ -574,8 +574,8 @@ class TestLocalModeExtended:
 class TestConflictResolution:
     """Test handling of sync conflicts."""
 
-    @patch('context_md.commands.sync._github_api_get')
-    @patch('context_md.commands.sync._get_auth_token')
+    @patch('context_weave.commands.sync._github_api_get')
+    @patch('context_weave.commands.sync._get_auth_token')
     def test_sync_with_local_changes(self, mock_token, mock_api, runner, tmp_path):
         """Test sync when local state differs from GitHub."""
         mock_token.return_value = "gho_test_token"

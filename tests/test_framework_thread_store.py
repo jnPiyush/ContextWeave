@@ -1,10 +1,10 @@
-"""Tests for context_md.framework.thread_store -- Git Thread Store."""
+"""Tests for context_weave.framework.thread_store -- Git Thread Store."""
 
 import json
 
 import pytest
 
-from context_md.framework.thread_store import ChatMessage, GitThreadStore
+from context_weave.framework.thread_store import ChatMessage, GitThreadStore
 
 
 class TestChatMessage:
@@ -94,7 +94,7 @@ class TestGitThreadStore:
         store = GitThreadStore(tmp_path, issue=10, role="reviewer")
         await store.add_messages([ChatMessage("user", "test")])
 
-        expected_file = tmp_path / ".agent-context" / "threads" / "thread-10-reviewer.json"
+        expected_file = tmp_path / ".context-weave" / "threads" / "thread-10-reviewer.json"
         assert expected_file.exists()
 
         data = json.loads(expected_file.read_text())

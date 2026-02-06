@@ -9,7 +9,7 @@ import json
 import pytest
 from click.testing import CliRunner
 
-from context_md.commands.issue import (
+from context_weave.commands.issue import (
     MAX_BODY_LENGTH,
     MAX_LABEL_LENGTH,
     MAX_TITLE_LENGTH,
@@ -22,7 +22,7 @@ from context_md.commands.issue import (
     reopen_cmd,
     show_cmd,
 )
-from context_md.state import State
+from context_weave.state import State
 
 
 @pytest.fixture
@@ -34,7 +34,7 @@ def runner():
 @pytest.fixture
 def mock_state(tmp_path):
     """Create a state with initialized directory."""
-    state_dir = tmp_path / ".agent-context"
+    state_dir = tmp_path / ".context-weave"
     state_dir.mkdir(parents=True, exist_ok=True)
     state = State(tmp_path)
     state.save()
@@ -112,7 +112,7 @@ class TestCreateCommand:
     def test_create_basic_issue(self, runner, tmp_path):
         """Test creating a basic issue."""
         # Setup state
-        state_dir = tmp_path / ".agent-context"
+        state_dir = tmp_path / ".context-weave"
         state_dir.mkdir(parents=True, exist_ok=True)
         state = State(tmp_path)
         state.save()
@@ -211,7 +211,7 @@ class TestCreateCommand:
         )
 
         assert result.exit_code != 0
-        assert "Not in a Context.md repository" in result.output
+        assert "Not in a ContextWeave repository" in result.output
 
 
 class TestListCommand:

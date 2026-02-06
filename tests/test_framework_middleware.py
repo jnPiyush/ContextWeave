@@ -1,11 +1,11 @@
-"""Tests for context_md.framework.middleware -- Middleware stack."""
+"""Tests for context_weave.framework.middleware -- Middleware stack."""
 
 import json
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from context_md.framework.middleware import (
+from context_weave.framework.middleware import (
     MemoryRecordingMiddleware,
     SecurityMiddleware,
     TokenBudgetMiddleware,
@@ -70,7 +70,7 @@ class TestSecurityMiddleware:
 class TestMemoryRecordingMiddleware:
     @pytest.mark.asyncio
     async def test_records_success(self, tmp_path):
-        (tmp_path / ".agent-context").mkdir(parents=True)
+        (tmp_path / ".context-weave").mkdir(parents=True)
 
         middleware = MemoryRecordingMiddleware(tmp_path, issue=1, role="engineer")
         context = MagicMock()
@@ -80,7 +80,7 @@ class TestMemoryRecordingMiddleware:
         assert result == "completed"
 
         # Check memory was updated
-        memory_file = tmp_path / ".agent-context" / "memory.json"
+        memory_file = tmp_path / ".context-weave" / "memory.json"
         if memory_file.exists():
             data = json.loads(memory_file.read_text())
             executions = data.get("executions", [])
@@ -89,7 +89,7 @@ class TestMemoryRecordingMiddleware:
 
     @pytest.mark.asyncio
     async def test_records_failure(self, tmp_path):
-        (tmp_path / ".agent-context").mkdir(parents=True)
+        (tmp_path / ".context-weave").mkdir(parents=True)
 
         middleware = MemoryRecordingMiddleware(tmp_path, issue=1, role="engineer")
         context = MagicMock()
@@ -99,7 +99,7 @@ class TestMemoryRecordingMiddleware:
             await middleware.process(context, next_handler)
 
         # Check failure was recorded
-        memory_file = tmp_path / ".agent-context" / "memory.json"
+        memory_file = tmp_path / ".context-weave" / "memory.json"
         if memory_file.exists():
             data = json.loads(memory_file.read_text())
             executions = data.get("executions", [])

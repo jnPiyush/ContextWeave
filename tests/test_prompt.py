@@ -6,7 +6,7 @@ Coverage target: 80%+
 
 import pytest
 
-from context_md.prompt import ROLE_TEMPLATES, EnhancedPrompt, PromptEngineer
+from context_weave.prompt import ROLE_TEMPLATES, EnhancedPrompt, PromptEngineer
 
 
 class TestEnhancedPrompt:
@@ -57,9 +57,9 @@ class TestEnhancedPrompt:
 
         markdown = prompt.to_markdown()
 
-        assert "### 🎯 Role" in markdown
+        assert "### Role" in markdown
         assert "You are a PM" in markdown
-        assert "### 📋 Task" in markdown
+        assert "### Task" in markdown
         assert "Define requirements" in markdown
 
     def test_to_markdown_full(self):
@@ -81,14 +81,14 @@ class TestEnhancedPrompt:
 
         markdown = prompt.to_markdown()
 
-        assert "### 📥 Inputs" in markdown
-        assert "### 📤 Expected Outputs" in markdown
-        assert "### 🚧 Constraints" in markdown
-        assert "### 🎯 Success Criteria" in markdown
-        assert "### ✓ Quality Checklist" in markdown
-        assert "### 💡 Suggested Approach" in markdown
-        assert "### ⚡ Pitfalls to Avoid" in markdown
-        assert "### 🔄 Handoff to Reviewer" in markdown
+        assert "### Inputs" in markdown
+        assert "### Expected Outputs" in markdown
+        assert "### Constraints" in markdown
+        assert "### Success Criteria" in markdown
+        assert "### Quality Checklist" in markdown
+        assert "### Suggested Approach" in markdown
+        assert "### Pitfalls to Avoid" in markdown
+        assert "### Handoff to Reviewer" in markdown
 
 
 class TestRoleTemplates:

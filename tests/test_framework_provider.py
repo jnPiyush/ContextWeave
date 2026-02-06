@@ -1,14 +1,14 @@
-"""Tests for context_md.framework.context_provider -- Context Provider."""
+"""Tests for context_weave.framework.context_provider -- Context Provider."""
 
 
 import pytest
 
-from context_md.framework.context_provider import ContextMdProvider
+from context_weave.framework.context_provider import ContextWeaveProvider
 
 
-class TestContextMdProvider:
+class TestContextWeaveProvider:
     def test_init(self, tmp_path):
-        provider = ContextMdProvider(
+        provider = ContextWeaveProvider(
             repo_root=tmp_path,
             issue=42,
             role="engineer",
@@ -22,7 +22,7 @@ class TestContextMdProvider:
 
     @pytest.mark.asyncio
     async def test_invoking_returns_context(self, tmp_path):
-        provider = ContextMdProvider(tmp_path, issue=1, role="engineer")
+        provider = ContextWeaveProvider(tmp_path, issue=1, role="engineer")
         result = await provider.invoking()
         # Without agent_framework installed, returns string
         assert isinstance(result, str)
@@ -36,7 +36,7 @@ class TestContextMdProvider:
             "---\nname: Engineer\n---\n\n# Engineer\n\nYou are a software engineer."
         )
 
-        provider = ContextMdProvider(tmp_path, issue=1, role="engineer")
+        provider = ContextWeaveProvider(tmp_path, issue=1, role="engineer")
         result = await provider.invoking()
         assert "Layer 1" in result
         assert "Engineer" in result
@@ -45,7 +45,7 @@ class TestContextMdProvider:
     async def test_invoking_with_memory(self, tmp_path):
         """Test that memory context is included when available."""
         # Setup memory
-        memory_dir = tmp_path / ".agent-context"
+        memory_dir = tmp_path / ".context-weave"
         memory_dir.mkdir(parents=True)
 
         import json
@@ -71,7 +71,7 @@ class TestContextMdProvider:
         }
         (memory_dir / "memory.json").write_text(json.dumps(memory_data))
 
-        provider = ContextMdProvider(
+        provider = ContextWeaveProvider(
             tmp_path, issue=1, role="engineer",
             issue_type="story", labels=["type:story"]
         )
@@ -80,24 +80,24 @@ class TestContextMdProvider:
 
     @pytest.mark.asyncio
     async def test_invoked_is_noop(self, tmp_path):
-        provider = ContextMdProvider(tmp_path, issue=1, role="engineer")
+        provider = ContextWeaveProvider(tmp_path, issue=1, role="engineer")
         # Should not raise
         await provider.invoked()
 
     @pytest.mark.asyncio
     async def test_thread_created_is_noop(self, tmp_path):
-        provider = ContextMdProvider(tmp_path, issue=1, role="engineer")
+        provider = ContextWeaveProvider(tmp_path, issue=1, role="engineer")
         await provider.thread_created()
 
     @pytest.mark.asyncio
     async def test_async_context_manager(self, tmp_path):
-        provider = ContextMdProvider(tmp_path, issue=1, role="engineer")
+        provider = ContextWeaveProvider(tmp_path, issue=1, role="engineer")
         async with provider as p:
             assert p is provider
 
     def test_build_system_instructions_no_agents_dir(self, tmp_path):
         """Test graceful handling when no agent definitions exist."""
-        provider = ContextMdProvider(tmp_path, issue=1, role="engineer")
+        provider = ContextWeaveProvider(tmp_path, issue=1, role="engineer")
         instructions = provider._build_system_instructions()
         # Should return empty or minimal content (not crash)
         assert isinstance(instructions, str)
@@ -105,7 +105,7 @@ class TestContextMdProvider:
     def test_build_system_instructions_with_skills(self, tmp_path):
         """Test that skills are loaded when config has routing."""
         # Setup config
-        config_dir = tmp_path / ".agent-context"
+        config_dir = tmp_path / ".context-weave"
         config_dir.mkdir(parents=True)
 
         import json
@@ -124,7 +124,7 @@ class TestContextMdProvider:
         skill_dir.mkdir(parents=True)
         (skill_dir / "SKILL.md").write_text("# Testing Skill\n\nAlways test your code.")
 
-        provider = ContextMdProvider(
+        provider = ContextWeaveProvider(
             tmp_path, issue=1, role="engineer",
             labels=["default"]
         )

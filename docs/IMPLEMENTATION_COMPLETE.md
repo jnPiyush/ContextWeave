@@ -8,7 +8,7 @@
 
 ## Executive Summary
 
-Successfully implemented **9 critical missing features** identified in the gap analysis, closing the implementation gap between current state and PRD/SPEC requirements. These features enable Context.md to achieve its target of >95% AI agent success rate through automation, self-healing, and comprehensive quality monitoring.
+Successfully implemented **9 critical missing features** identified in the gap analysis, closing the implementation gap between current state and PRD/SPEC requirements. These features enable ContextWeave to achieve its target of >95% AI agent success rate through automation, self-healing, and comprehensive quality monitoring.
 
 ---
 
@@ -26,7 +26,7 @@ Successfully implemented **9 critical missing features** identified in the gap a
 **Capabilities**:
 - ⏱️ Configurable thresholds by issue type (bug: 12h, story: 24h, feature: 48h)
 - 🚨 Automatic escalation with comment explaining issue
-- 📊 Generates stuck report: `.agent-context/stuck-report.json`
+- 📊 Generates stuck report: `.context-weave/stuck-report.json`
 - 🎯 Target: Detect stuck issues within 1 hour ✅
 
 ---
@@ -106,8 +106,8 @@ Successfully implemented **9 critical missing features** identified in the gap a
 - Revision cycle counts
 
 **Generated Reports**:
-- `.agent-context/learning-{YYYY-MM}.json` - Full analysis
-- `.agent-context/instruction-updates.json` - Recommended updates
+- `.context-weave/learning-{YYYY-MM}.json` - Full analysis
+- `.context-weave/instruction-updates.json` - Recommended updates
 
 ---
 
@@ -118,8 +118,8 @@ Successfully implemented **9 critical missing features** identified in the gap a
 - Git hook: `.github/hooks/post-merge`
 
 **Generates**:
-- 📜 Completion certificates: `.agent-context/certificates/CERT-{issue}.json`
-- 📊 Updates metrics: `.agent-context/metrics.json`
+- 📜 Completion certificates: `.context-weave/certificates/CERT-{issue}.json`
+- 📊 Updates metrics: `.context-weave/metrics.json`
 - 🎯 Tracks completions by role
 
 **Certificate Contents**:
@@ -170,8 +170,8 @@ Successfully implemented **9 critical missing features** identified in the gap a
 - 🚨 Detects bottlenecks (queue >5 or wait >3 days)
 
 **Generates**:
-- JSON report: `.agent-context/bottleneck-{YYYY-MM-DD}.json`
-- Text report: `.agent-context/bottleneck-{YYYY-MM-DD}.txt`
+- JSON report: `.context-weave/bottleneck-{YYYY-MM-DD}.json`
+- Text report: `.context-weave/bottleneck-{YYYY-MM-DD}.txt`
 - Recommendations for each bottleneck
 
 **Impact**: Identifies workflow constraints and resource needs
@@ -182,7 +182,7 @@ Successfully implemented **9 critical missing features** identified in the gap a
 
 **Status**: ✅ Complete (Scaffolding)  
 **Implementation**:
-- Module: `context_md/debugmcp.py`
+- Module: `context_weave/debugmcp.py`
 
 **Provides**:
 - `DebugMCPClient` class - Session management, breakpoint setting
@@ -232,7 +232,7 @@ Successfully implemented **9 critical missing features** identified in the gap a
 - `.github/pages/dashboard.js` - Data fetching and Chart.js visualization
 
 ### Modules (1 file)
-- `context_md/debugmcp.py` - DebugMCP client and static analyzer
+- `context_weave/debugmcp.py` - DebugMCP client and static analyzer
 
 ### Documentation (1 file)
 - `README.md` - Updated with automation features section

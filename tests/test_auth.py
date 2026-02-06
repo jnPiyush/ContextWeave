@@ -10,7 +10,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 from click.testing import CliRunner
 
-from context_md.commands.auth import (
+from context_weave.commands.auth import (
     _poll_for_token,
     _request_device_code,
     get_github_token,
@@ -18,7 +18,7 @@ from context_md.commands.auth import (
     logout_cmd,
     status_cmd,
 )
-from context_md.state import State
+from context_weave.state import State
 
 
 @pytest.fixture
@@ -37,7 +37,7 @@ def mock_state(tmp_path):
 class TestDeviceCodeRequest:
     """Test device code request flow."""
 
-    @patch('context_md.commands.auth.urlopen')
+    @patch('context_weave.commands.auth.urlopen')
     def test_request_device_code_success(self, mock_urlopen):
         """Test successful device code request."""
         # Mock response
@@ -60,7 +60,7 @@ class TestDeviceCodeRequest:
         assert result["verification_uri"] == "https://github.com/login/device"
         assert result["interval"] == 5
 
-    @patch('context_md.commands.auth.urlopen')
+    @patch('context_weave.commands.auth.urlopen')
     def test_request_device_code_network_error(self, mock_urlopen):
         """Test device code request with network error."""
         mock_urlopen.side_effect = Exception("Network error")
@@ -72,7 +72,7 @@ class TestDeviceCodeRequest:
 class TestDeviceCodePolling:
     """Test device code polling."""
 
-    @patch('context_md.commands.auth.urlopen')
+    @patch('context_weave.commands.auth.urlopen')
     def test_poll_device_code_success(self, mock_urlopen):
         """Test successful token retrieval."""
         response_data = {
@@ -90,7 +90,7 @@ class TestDeviceCodePolling:
         assert result["access_token"] == "gho_test_token_123"
         assert result["token_type"] == "bearer"
 
-    @patch('context_md.commands.auth.urlopen')
+    @patch('context_weave.commands.auth.urlopen')
     def test_poll_device_code_pending(self, mock_urlopen):
         """Test authorization pending response."""
         response_data = {"error": "authorization_pending"}
@@ -103,7 +103,7 @@ class TestDeviceCodePolling:
 
         assert result.get("error") == "authorization_pending"
 
-    @patch('context_md.commands.auth.urlopen')
+    @patch('context_weave.commands.auth.urlopen')
     def test_poll_device_code_denied(self, mock_urlopen):
         """Test authorization denied."""
         response_data = {"error": "access_denied"}
@@ -116,7 +116,7 @@ class TestDeviceCodePolling:
 
         assert result.get("error") == "access_denied"
 
-    @patch('context_md.commands.auth.urlopen')
+    @patch('context_weave.commands.auth.urlopen')
     def test_poll_device_code_slow_down(self, mock_urlopen):
         """Test slow_down response for rate limiting."""
         response_data = {"error": "slow_down"}
@@ -133,8 +133,8 @@ class TestDeviceCodePolling:
 class TestLoginCommand:
     """Test login command."""
 
-    @patch('context_md.commands.auth._poll_for_token')
-    @patch('context_md.commands.auth._request_device_code')
+    @patch('context_weave.commands.auth._poll_for_token')
+    @patch('context_weave.commands.auth._request_device_code')
     @patch('webbrowser.open')
     def test_login_success(self, mock_browser, mock_request, mock_poll, runner, tmp_path):
         """Test successful login flow."""
@@ -163,8 +163,8 @@ class TestLoginCommand:
         # Login command behavior may vary, just check it doesn't crash
         assert "authentication" in result.output.lower() or "user" in result.output.lower() or result.exit_code in [0, 1]
 
-    @patch('context_md.commands.auth._poll_for_token')
-    @patch('context_md.commands.auth._request_device_code')
+    @patch('context_weave.commands.auth._poll_for_token')
+    @patch('context_weave.commands.auth._request_device_code')
     def test_login_no_browser(self, mock_request, mock_poll, runner, tmp_path):
         """Test login with --no-browser flag."""
         mock_request.return_value = {
@@ -190,9 +190,9 @@ class TestLoginCommand:
         # Should show user code or complete authentication
         assert "USER-CODE" in result.output or result.exit_code in [0, 1]
 
-    @patch('context_md.commands.auth._poll_for_token')
-    @patch('context_md.commands.auth._request_device_code')
-    @patch('context_md.commands.auth.time.sleep')
+    @patch('context_weave.commands.auth._poll_for_token')
+    @patch('context_weave.commands.auth._request_device_code')
+    @patch('context_weave.commands.auth.time.sleep')
     def test_login_authorization_pending(self, mock_sleep, mock_request, mock_poll, runner, tmp_path):
         """Test login with authorization pending (multiple polls)."""
         mock_request.return_value = {
@@ -220,8 +220,8 @@ class TestLoginCommand:
         # Should handle pending state - may succeed or fail
         assert result.exit_code in [0, 1] or mock_poll.call_count >= 2
 
-    @patch('context_md.commands.auth._poll_for_token')
-    @patch('context_md.commands.auth._request_device_code')
+    @patch('context_weave.commands.auth._poll_for_token')
+    @patch('context_weave.commands.auth._request_device_code')
     def test_login_access_denied(self, mock_request, mock_poll, runner, tmp_path):
         """Test login when user denies access."""
         mock_request.return_value = {
@@ -244,7 +244,7 @@ class TestLoginCommand:
         assert result.exit_code != 0
         assert "denied" in result.output.lower() or "error" in result.output.lower()
 
-    @patch('context_md.commands.auth._request_device_code')
+    @patch('context_weave.commands.auth._request_device_code')
     def test_login_request_failure(self, mock_request, runner, tmp_path):
         """Test login when device code request fails."""
         mock_request.side_effect = Exception("Network error")
@@ -298,7 +298,7 @@ class TestStatusCommand:
     """Test auth status command."""
 
     @patch('keyring.get_password')
-    @patch('context_md.commands.auth.urlopen')
+    @patch('context_weave.commands.auth.urlopen')
     def test_status_authenticated(self, mock_urlopen, mock_keyring, runner, tmp_path):
         """Test status when authenticated."""
         mock_keyring.return_value = "gho_test_token_123"
@@ -378,9 +378,9 @@ class TestGetGitHubToken:
 class TestRateLimiting:
     """Test exponential backoff and rate limiting."""
 
-    @patch('context_md.commands.auth._poll_for_token')
-    @patch('context_md.commands.auth._request_device_code')
-    @patch('context_md.commands.auth.time.sleep')
+    @patch('context_weave.commands.auth._poll_for_token')
+    @patch('context_weave.commands.auth._request_device_code')
+    @patch('context_weave.commands.auth.time.sleep')
     def test_exponential_backoff(self, mock_sleep, mock_request, mock_poll, runner, tmp_path):
         """Test that polling uses exponential backoff."""
         mock_request.return_value = {
@@ -407,9 +407,9 @@ class TestRateLimiting:
         # Initial interval is 5, then 7.5, 11.25, etc.
         assert mock_sleep.call_count >= 5
 
-    @patch('context_md.commands.auth._poll_for_token')
-    @patch('context_md.commands.auth._request_device_code')
-    @patch('context_md.commands.auth.time.monotonic')
+    @patch('context_weave.commands.auth._poll_for_token')
+    @patch('context_weave.commands.auth._request_device_code')
+    @patch('context_weave.commands.auth.time.monotonic')
     def test_timeout_after_max_attempts(self, mock_time, mock_request, mock_poll, runner, tmp_path):
         """Test that polling stops after max attempts."""
         mock_request.return_value = {

@@ -3,7 +3,7 @@
 **Date**: February 4, 2026  
 **Tester**: GitHub Copilot Agent  
 **Test Environment**: Windows 11, Python 3.12.10, GitHub CLI  
-**Repository**: jnPiyush/ContextMD  
+**Repository**: jnPiyush/ContextWeave  
 
 ---
 
@@ -28,14 +28,14 @@ Successfully tested all 9 automation features implemented in the 10-layer orches
 | Script Execution | ✅ Pass | Runs successfully with PyGithub |
 | GitHub API Integration | ✅ Pass | Successfully queries repository issues |
 | Threshold Detection | ✅ Pass | No stuck issues detected (1 open issue < 24h) |
-| Report Generation | ✅ Pass | `.agent-context/stuck-report.json` created |
+| Report Generation | ✅ Pass | `.context-weave/stuck-report.json` created |
 | Workflow Registration | ✅ Pass | Registered as "Health Monitoring" (ID: 230634840) |
 | Workflow Execution | ✅ Pass | Run #21691815230 completed in 10s |
 | Scheduled Trigger | ⏰ Pending | Cron schedule: */30 * * * * (every 30 min) |
 
 **Output Sample**:
 ```
-🔍 Detecting stuck issues in jnPiyush/ContextMD...
+🔍 Detecting stuck issues in jnPiyush/ContextWeave...
 ✅ No stuck issues detected
 ```
 
@@ -165,7 +165,7 @@ Copy-Item .github\hooks\post-merge .git\hooks\
 ### Layer 7: Code Inspection ✅
 
 **Component**: DebugMCP Integration  
-**Module**: `context_md/debugmcp.py`
+**Module**: `context_weave/debugmcp.py`
 
 | Test | Status | Details |
 |------|--------|---------|
@@ -198,7 +198,7 @@ Copy-Item .github\hooks\post-merge .git\hooks\
 4. Bottleneck Count
 
 **Dashboard URL** (after activation):  
-`https://jnPiyush.github.io/ContextMD/`
+`https://jnPiyush.github.io/ContextWeave/`
 
 ---
 
@@ -312,7 +312,7 @@ Learning Loop     active .github/workflows/learning-loop.yml
    - Navigate to: Repository Settings → Pages
    - Source: Deploy from a branch
    - Branch: `master`, Folder: `/.github/pages`
-   - Dashboard will be available at: `https://jnPiyush.github.io/ContextMD/`
+   - Dashboard will be available at: `https://jnPiyush.github.io/ContextWeave/`
 
 2. **Install Git Hook Locally**
    ```powershell

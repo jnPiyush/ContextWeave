@@ -10,14 +10,14 @@ from unittest.mock import MagicMock, patch
 import pytest
 from click.testing import CliRunner
 
-from context_md.commands.subagent import (
+from context_weave.commands.subagent import (
     complete_cmd,
     list_cmd,
     recover_cmd,
     spawn_cmd,
     status_cmd,
 )
-from context_md.state import State, WorktreeInfo
+from context_weave.state import State, WorktreeInfo
 
 
 @pytest.fixture
@@ -107,7 +107,7 @@ class TestSubagentCommands:
         data = json.loads(result.output)
         assert data[0]["issue"] == 2
 
-    @patch("context_md.commands.subagent.subprocess.run")
+    @patch("context_weave.commands.subagent.subprocess.run")
     def test_status_cmd_json_output(self, mock_run, runner, temp_git_repo, monkeypatch):
         """Status command returns JSON output with worktree details."""
         worktree_path = temp_git_repo / "worktrees" / "3"
@@ -140,7 +140,7 @@ class TestSubagentCommands:
         assert data["issue"] == 3
         assert data["worktree_exists"] is True
 
-    @patch("context_md.commands.subagent.subprocess.run")
+    @patch("context_weave.commands.subagent.subprocess.run")
     def test_complete_cmd_force_keep_branch(self, mock_run, runner, temp_git_repo):
         """Complete command should remove worktree and update state when forced."""
         worktree_path = temp_git_repo / "worktrees" / "4"
@@ -168,7 +168,7 @@ class TestSubagentCommands:
         assert result.exit_code == 0
         assert "completed" in result.output
 
-    @patch("context_md.commands.subagent.subprocess.run")
+    @patch("context_weave.commands.subagent.subprocess.run")
     def test_recover_cmd_branch_missing(self, mock_run, runner, temp_git_repo):
         """Recover should fail if branch is missing."""
         state = State(temp_git_repo)
@@ -196,7 +196,7 @@ class TestSubagentCommands:
         assert result.exit_code != 0
         assert "not found" in result.output
 
-    @patch("context_md.commands.subagent.subprocess.run")
+    @patch("context_weave.commands.subagent.subprocess.run")
     def test_recover_cmd_worktree_exists(self, mock_run, runner, temp_git_repo):
         """Recover should short-circuit when worktree exists."""
         worktree_path = temp_git_repo / "worktrees" / "6"

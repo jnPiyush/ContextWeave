@@ -106,7 +106,7 @@ This issue has been inactive for **{hours_inactive} hours** without commits or u
 4. Consider breaking into smaller tasks
 
 ---
-*Automated by Context.md Health Monitoring*
+*Automated by ContextWeave Health Monitoring*
 """
     issue.create_comment(comment)
     
@@ -137,7 +137,7 @@ def main() -> int:
         print(f"[WARNING] Found {len(stuck)} stuck issue(s)")
         
         # Save report
-        report_dir = Path(".agent-context")
+        report_dir = Path(".context-weave")
         report_dir.mkdir(exist_ok=True)
         
         report = {

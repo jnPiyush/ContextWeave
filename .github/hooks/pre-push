@@ -1,5 +1,5 @@
 #!/bin/bash
-# Context.md Pre-Push Hook
+# ContextWeave Pre-Push Hook
 # Validates Definition of Done before allowing push to remote
 # Ensures quality gates are met before code reaches main branch
 
@@ -15,7 +15,7 @@ REPO_ROOT=$(git rev-parse --show-toplevel)
 
 echo ""
 echo "========================================"
-echo "  Context.md Pre-Push Validation"
+echo "  ContextWeave Pre-Push Validation"
 echo "========================================"
 echo ""
 
@@ -55,20 +55,20 @@ for issue in $ISSUE_NUMS; do
     echo "----------------------------------------"
     echo ""
 
-    # Check if context-md is available
-    if command -v context-md &> /dev/null; then
+    # Check if context-weave is available
+    if command -v context-weave &> /dev/null; then
         echo "Running Definition of Done validation..."
 
-        # Run DoD validation using context-md
-        if context-md validate $issue --dod 2>&1; then
+        # Run DoD validation using context-weave
+        if context-weave validate $issue --dod 2>&1; then
             echo -e "${GREEN}[OK]${NC} Issue #$issue passes DoD validation"
         else
             echo -e "${RED}[FAIL]${NC} Issue #$issue fails DoD validation"
             VALIDATION_FAILED=true
         fi
     else
-        # Fallback to manual checks if context-md not installed
-        echo -e "${YELLOW}[WARN]${NC} context-md not installed, running basic checks..."
+        # Fallback to manual checks if context-weave not installed
+        echo -e "${YELLOW}[WARN]${NC} context-weave not installed, running basic checks..."
 
         BASIC_CHECKS_PASSED=true
 

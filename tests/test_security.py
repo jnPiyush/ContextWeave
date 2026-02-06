@@ -2,7 +2,7 @@
 
 import json
 
-from context_md.security import (
+from context_weave.security import (
     CommandValidator,
     PathValidator,
     validate_command,

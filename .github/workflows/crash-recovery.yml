@@ -95,7 +95,7 @@ jobs:
             3. Manually re-run workflow
             
             ---
-            *Automated by Context.md Crash Recovery*`
+            *Automated by ContextWeave Crash Recovery*`
                   });
                 } catch (error) {
                   console.log(`Error escalating issue #${issueNum}: ${error.message}`);
@@ -138,7 +138,7 @@ jobs:
             If this retry fails, manual intervention will be required.
             
             ---
-            *Automated by Context.md Crash Recovery*`
+            *Automated by ContextWeave Crash Recovery*`
                 });
                 
                 console.log(`✅ Retried issue #${item.issue}`);

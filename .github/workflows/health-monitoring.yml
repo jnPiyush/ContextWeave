@@ -40,9 +40,9 @@ jobs:
       - name: Report Results
         if: always()
         run: |
-          if [ -f .agent-context/stuck-report.json ]; then
+          if [ -f .context-weave/stuck-report.json ]; then
             echo "📊 Stuck Issues Report"
-            cat .agent-context/stuck-report.json
+            cat .context-weave/stuck-report.json
           else
             echo "✅ No stuck issues detected"
           fi

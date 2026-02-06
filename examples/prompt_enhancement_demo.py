@@ -3,12 +3,12 @@
 Prompt Enhancement Demonstration
 
 This script shows the before/after transformation of user prompts
-using the PromptEngineer class from Context.md.
+using the PromptEngineer class from ContextWeave.
 
-Repository: https://github.com/jnPiyush/ContextMD
+Repository: https://github.com/jnPiyush/ContextWeave
 """
 
-from context_md.prompt import PromptEngineer, EnhancedPrompt
+from context_weave.prompt import PromptEngineer, EnhancedPrompt
 
 # ============================================================================
 # EXAMPLE 1: Simple Bug Fix
@@ -28,7 +28,7 @@ Steps to reproduce:
 4. Page crashes with 500 error
 """
 
-print("\n📝 BEFORE (Raw Issue Description):")
+print("\nBEFORE (Raw Issue Description):")
 print("-" * 40)
 print(raw_bug_prompt)
 
@@ -46,15 +46,15 @@ enhanced = engineer.enhance_prompt(
     }
 )
 
-print("\n✨ AFTER (Enhanced Prompt):")
+print("\nAFTER (Enhanced Prompt):")
 print("-" * 40)
 print(enhanced.to_markdown())
 
 # Validation
 validation = engineer.validate_prompt_completeness(enhanced)
-print(f"\n📊 Quality Score: {validation['completeness_score']:.0%}")
+print(f"\nQuality Score: {validation['completeness_score']:.0%}")
 if validation['warnings']:
-    print("⚠️  Warnings:", ", ".join(validation['warnings']))
+    print("[!] Warnings:", ", ".join(validation['warnings']))
 
 
 # ============================================================================
@@ -70,7 +70,7 @@ Add OAuth2 support for third-party login.
 Should support Google, GitHub, and Microsoft providers.
 """
 
-print("\n📝 BEFORE (Raw Issue Description):")
+print("\nBEFORE (Raw Issue Description):")
 print("-" * 40)
 print(raw_feature_prompt)
 
@@ -86,7 +86,7 @@ enhanced_arch = engineer.enhance_prompt(
     }
 )
 
-print("\n✨ AFTER (Enhanced Prompt):")
+print("\nAFTER (Enhanced Prompt):")
 print("-" * 40)
 print(enhanced_arch.to_markdown())
 
@@ -103,7 +103,7 @@ raw_epic_prompt = """
 Build a comprehensive user authentication system.
 """
 
-print("\n📝 BEFORE (Raw Issue Description):")
+print("\nBEFORE (Raw Issue Description):")
 print("-" * 40)
 print(raw_epic_prompt)
 
@@ -115,7 +115,7 @@ enhanced_pm = engineer.enhance_prompt(
     labels=["type:epic"]
 )
 
-print("\n✨ AFTER (Enhanced Prompt):")
+print("\nAFTER (Enhanced Prompt):")
 print("-" * 40)
 print(enhanced_pm.to_markdown())
 
@@ -133,7 +133,7 @@ cot_prompt = engineer.get_chain_of_thought_prompt(
     task="Implement rate limiting for API endpoints"
 )
 
-print("\n🧠 Chain-of-Thought Prompt:")
+print("\nChain-of-Thought Prompt:")
 print("-" * 40)
 print(cot_prompt)
 
@@ -147,22 +147,21 @@ print("SUMMARY: Raw vs Enhanced Prompts")
 print("=" * 80)
 
 print("""
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                        RAW PROMPT vs ENHANCED PROMPT                         │
-├───────────────────────────────┬─────────────────────────────────────────────┤
-│ Raw Prompt                    │ Enhanced Prompt                             │
-├───────────────────────────────┼─────────────────────────────────────────────┤
-│ ❌ No clear role definition   │ ✅ Role primer sets agent expertise         │
-│ ❌ Vague task description     │ ✅ Specific task with issue reference       │
-│ ❌ Missing context            │ ✅ Dependencies, specs, history included    │
-│ ❌ Unclear expectations       │ ✅ Defined inputs and outputs               │
-│ ❌ No boundaries              │ ✅ Explicit constraints                     │
-│ ❌ No success criteria        │ ✅ Measurable success criteria              │
-│ ❌ No guidance                │ ✅ Approach hints and pitfalls              │
-│ ❌ No workflow awareness      │ ✅ Handoff requirements for next role       │
-├───────────────────────────────┴─────────────────────────────────────────────┤
-│ Result: Higher quality, more consistent agent outputs                       │
-└─────────────────────────────────────────────────────────────────────────────┘
+  RAW PROMPT vs ENHANCED PROMPT
+  =============================
+
+  Raw Prompt                     | Enhanced Prompt
+  -------------------------------|---------------------------------------------
+  [-] No clear role definition   | [+] Role primer sets agent expertise
+  [-] Vague task description     | [+] Specific task with issue reference
+  [-] Missing context            | [+] Dependencies, specs, history included
+  [-] Unclear expectations       | [+] Defined inputs and outputs
+  [-] No boundaries              | [+] Explicit constraints
+  [-] No success criteria        | [+] Measurable success criteria
+  [-] No guidance                | [+] Approach hints and pitfalls
+  [-] No workflow awareness      | [+] Handoff requirements for next role
+
+  Result: Higher quality, more consistent agent outputs
 """)
 
-print("\n✅ Demo complete! See https://github.com/jnPiyush/ContextMD for full documentation.")
+print("\nDemo complete! See https://github.com/jnPiyush/ContextWeave for full documentation.")

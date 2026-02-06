@@ -18,7 +18,7 @@ from typing import Dict, List
 
 def load_instruction_updates() -> List[Dict]:
     """Load instruction updates from learning analysis."""
-    updates_file = Path(".agent-context/instruction-updates.json")
+    updates_file = Path(".context-weave/instruction-updates.json")
     
     if not updates_file.exists():
         print("[INFO] No instruction updates found")
@@ -188,7 +188,7 @@ These updates were automatically generated based on failure pattern analysis.
 3. Approve and merge when satisfied
 
 ---
-*Automated by Context.md Learning Loop*
+*Automated by ContextWeave Learning Loop*
 """
         
         pr = repo.create_pull(

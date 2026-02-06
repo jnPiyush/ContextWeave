@@ -47,13 +47,13 @@ jobs:
       - name: Report Results
         if: always()
         run: |
-          if [ -f .agent-context/learning-*.json ]; then
+          if [ -f .context-weave/learning-*.json ]; then
             echo "📊 Learning Analysis Report"
-            cat .agent-context/learning-*.json | head -30
+            cat .context-weave/learning-*.json | head -30
           fi
           
-          if [ -f .agent-context/instruction-updates.json ]; then
+          if [ -f .context-weave/instruction-updates.json ]; then
             echo ""
             echo "📝 Instruction Updates Generated"
-            cat .agent-context/instruction-updates.json
+            cat .context-weave/instruction-updates.json
           fi

@@ -188,7 +188,7 @@ Run context capture script:
 ./.github/scripts/capture-context.ps1 -Role pm -IssueNumber <EPIC_ID>
 ```
 
-This creates `.agent-context/issue-<ID>-pm.md` and posts summary to GitHub issue.
+This creates `.context-weave/issue-<ID>-pm.md` and posts summary to GitHub issue.
 
 ### Step 2: Update Status to Ready
 

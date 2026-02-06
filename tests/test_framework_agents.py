@@ -1,11 +1,11 @@
-"""Tests for context_md.framework.agents -- Agent Factory."""
+"""Tests for context_weave.framework.agents -- Agent Factory."""
 
 import sys
 from unittest.mock import MagicMock, patch
 
 import pytest
 
-from context_md.framework.agents import (
+from context_weave.framework.agents import (
     ROLE_FILE_MAP,
     AgentDefinition,
     AgentFactory,
@@ -165,7 +165,7 @@ You are a product manager.
         definitions = factory.load_agent_definitions()
         assert definitions == {}
 
-    @patch("context_md.framework.config.get_chat_client")
+    @patch("context_weave.framework.config.get_chat_client")
     def test_create_agent(self, mock_client, setup_agents):
         mock_registry = MagicMock()
         mock_registry.get_tools_for_role.return_value = [MagicMock()]

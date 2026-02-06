@@ -1,4 +1,4 @@
-# Context.md - Gap Analysis Report
+# ContextWeave - Gap Analysis Report
 
 **Generated**: 2026-02-06
 **Scope**: Deep review of implementation vs documentation
@@ -8,7 +8,7 @@
 
 ## Executive Summary
 
-The Context.md project is **well-implemented** with strong alignment between documentation and code. The 4-Layer Context Architecture and 10-Layer Orchestration System are fully functional. However, several gaps and missing features have been identified that should be addressed for production readiness.
+The ContextWeave project is **well-implemented** with strong alignment between documentation and code. The 4-Layer Context Architecture and 10-Layer Orchestration System are fully functional. However, several gaps and missing features have been identified that should be addressed for production readiness.
 
 **Overall Assessment**:
 - ✅ Core Features: **95% Complete**
@@ -67,13 +67,13 @@ The Context.md project is **well-implemented** with strong alignment between doc
 - ⚠️ Status tracking mentioned in workflows but not functional
 
 **Missing Code**:
-- `context_md/commands/sync.py` - No `update_project_status()` function
+- `context_weave/commands/sync.py` - No `update_project_status()` function
 - No GraphQL query/mutation helpers
 - No Projects V2 field ID resolution
 
 **Recommendation**:
 ```python
-# Add to context_md/commands/sync.py
+# Add to context_weave/commands/sync.py
 def update_project_status(
     owner: str,
     repo: str,
@@ -121,7 +121,7 @@ devops)
 **Issue**: Export to PDF requires platform-specific dependencies not documented in installation.
 
 **Current**:
-- ✅ `context_md/commands/export.py` implements export
+- ✅ `context_weave/commands/export.py` implements export
 - ✅ DOCX export works (python-docx)
 - ⚠️ PDF export requires:
   - Windows: `docx2pdf` (COM automation)
@@ -130,7 +130,7 @@ devops)
 
 **Documented in**:
 - README.md line 11 mentions export feature
-- CLI help shows `context-md export --format pdf`
+- CLI help shows `context-weave export --format pdf`
 
 **Current pyproject.toml**:
 ```toml
@@ -180,8 +180,8 @@ export = [
 **Impact**: Low - Local dashboard works, GitHub Pages optional
 
 **Current**:
-- ✅ Dashboard implemented: `context_md/dashboard.py`
-- ✅ Static assets: `context_md/static/`
+- ✅ Dashboard implemented: `context_weave/dashboard.py`
+- ✅ Static assets: `context_weave/static/`
 - ⚠️ `.github/pages/` directory mentioned in README but minimal content
 - ❌ No GitHub Pages workflow for automatic deployment
 
@@ -198,7 +198,7 @@ export = [
 **Impact**: Low - Advanced feature, not core functionality
 
 **Current**:
-- ✅ `context_md/debugmcp.py` exists (7,622 LOC)
+- ✅ `context_weave/debugmcp.py` exists (7,622 LOC)
 - ✅ Basic static analysis implemented
 - ⚠️ Marked as "scaffolding" in exploration report
 - ❌ Requires Microsoft DebugMCP package (not in dependencies)
@@ -234,7 +234,7 @@ export = [
 - Memory lesson effectiveness calculations
 
 **Recommendation**:
-- Run `pytest --cov=context_md --cov-report=html` to identify gaps
+- Run `pytest --cov=context_weave --cov-report=html` to identify gaps
 - Add tests for error conditions
 - Test concurrent operations
 - Target 80% coverage minimum
@@ -498,7 +498,7 @@ export = [
 
 ### 7.1 State Management Scalability
 
-**Current**: JSON file storage in `.agent-context/state.json`
+**Current**: JSON file storage in `.context-weave/state.json`
 
 **Concerns**:
 - Could become bottleneck with 100+ issues
@@ -514,7 +514,7 @@ export = [
 
 ### 7.2 Memory Growth
 
-**Current**: Memory stored in `.agent-context/memory.json`
+**Current**: Memory stored in `.context-weave/memory.json`
 
 **Concerns**:
 - Will grow indefinitely over time
@@ -546,7 +546,7 @@ export = [
 
 ## 8. Positive Findings
 
-Despite the gaps identified, Context.md has many strengths:
+Despite the gaps identified, ContextWeave has many strengths:
 
 ### What's Working Well
 
@@ -578,13 +578,13 @@ Despite the gaps identified, Context.md has many strengths:
 2. **Consider hiring contributor** for GitHub Projects V2 integration (most complex)
 3. **Update IMPLEMENTATION_COMPLETE.md** after addressing gaps
 4. **Add CI/CD pipeline** to automate testing and validation
-5. **Set up GitHub Actions** in the Context.md repo itself (dogfooding)
+5. **Set up GitHub Actions** in the ContextWeave repo itself (dogfooding)
 
 ---
 
 ## 10. Conclusion
 
-**Overall Assessment**: Context.md is a well-architected, largely complete system with minor gaps.
+**Overall Assessment**: ContextWeave is a well-architected, largely complete system with minor gaps.
 
 **Readiness**:
 - **Local Mode**: ✅ Production Ready (works perfectly offline)
@@ -613,16 +613,16 @@ Despite the gaps identified, Context.md has many strengths:
 
 ```bash
 # Check test coverage
-pytest tests/ --cov=context_md --cov-report=html --cov-report=term
+pytest tests/ --cov=context_weave --cov-report=html --cov-report=term
 
 # Check if hooks directory exists
 ls -la .github/hooks/
 
 # Check Projects V2 integration
-grep -r "projectsV2\|GraphQL" context_md/
+grep -r "projectsV2\|GraphQL" context_weave/
 
 # Count TODOs in codebase
-grep -r "TODO\|FIXME" context_md/ | wc -l
+grep -r "TODO\|FIXME" context_weave/ | wc -l
 
 # Check platform compatibility
 python -c "import platform; print(platform.system())"

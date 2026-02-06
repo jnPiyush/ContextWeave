@@ -1,8 +1,8 @@
-# Context.md
+# ContextWeave
 
 <div align="center">
 
-![Context.md Logo](https://img.shields.io/badge/Context.md-AI%20Agent%20Context%20Management-blue?style=for-the-badge&logo=git)
+![ContextWeave Logo](https://img.shields.io/badge/ContextWeave-AI%20Agent%20Context%20Management-blue?style=for-the-badge&logo=git)
 
 **Runtime Context Management for AI Agents**
 
@@ -25,14 +25,14 @@
 
 ---
 
-## 🎯 What is Context.md?
+## 🎯 What is ContextWeave?
 
-**Context.md** is a Git-native runtime context management system designed to dramatically improve AI agent success rates in code generation tasks. It solves the fundamental problem of AI agents lacking proper context, memory, and structured guidance.
+**ContextWeave** is a Git-native runtime context management system designed to dramatically improve AI agent success rates in code generation tasks. It solves the fundamental problem of AI agents lacking proper context, memory, and structured guidance.
 
 ### The Problem
 
 ```
-❌ Without Context.md:
+❌ Without ContextWeave:
    - AI agents generate code without understanding project conventions
    - No memory of previous sessions or lessons learned
    - Vague prompts lead to inconsistent results
@@ -43,7 +43,7 @@
 ### The Solution
 
 ```
-✅ With Context.md:
+✅ With ContextWeave:
    - Structured 4-Layer context provides complete project understanding
    - Persistent memory tracks lessons and patterns across sessions
    - Prompt engineering enhances every request automatically
@@ -55,7 +55,7 @@
 
 ## 🏗️ Architecture
 
-Context.md implements a **4-Layer AI Context Architecture** that provides structured, comprehensive context to AI agents.
+ContextWeave implements a **4-Layer AI Context Architecture** that provides structured, comprehensive context to AI agents.
 
 ### High-Level Architecture
 
@@ -65,7 +65,7 @@ Context.md implements a **4-Layer AI Context Architecture** that provides struct
 ├─────────────────────────────────────────────────────────────────────────────────────┤
 │                                                                                     │
 │    ┌─────────────┐     ┌──────────────┐     ┌─────────────┐     ┌──────────────┐  │
-│    │   GitHub    │────▶│  Context.md  │────▶│  AI Agent   │────▶│   Output     │  │
+│    │   GitHub    │────▶│  ContextWeave  │────▶│  AI Agent   │────▶│   Output     │  │
 │    │   Issues    │     │   CLI Tool   │     │  (Copilot)  │     │  (Code/Docs) │  │
 │    └─────────────┘     └──────────────┘     └─────────────┘     └──────────────┘  │
 │          │                    │                    │                    │          │
@@ -123,7 +123,7 @@ Context.md implements a **4-Layer AI Context Architecture** that provides struct
 │  ┌───────────────────────────────────────────────────────────────────────┐ │
 │  │  LAYER 3: MEMORY                                                      │ │
 │  │  ─────────────────────────────────────────────────────────────────────│ │
-│  │  📁 Source:  .agent-context/memory.json                               │ │
+│  │  📁 Source:  .context-weave/memory.json                               │ │
 │  │  🎯 Purpose: Persistent knowledge across sessions                     │ │
 │  │  📝 Content: Lessons learned, session history, success metrics        │ │
 │  │                                                                       │ │
@@ -153,7 +153,7 @@ Context.md implements a **4-Layer AI Context Architecture** that provides struct
 
 ## 🤖 Automation Features
 
-Context.md implements a **10-Layer Orchestration System** that automates quality monitoring, learning, and validation:
+ContextWeave implements a **10-Layer Orchestration System** that automates quality monitoring, learning, and validation:
 
 ### Layer 1: Backlog Management
 - **Task Creation Validation** - Enforces "standalone task principle"
@@ -197,7 +197,7 @@ Context.md implements a **10-Layer Orchestration System** that automates quality
   - Workflow: `.github/workflows/learning-loop.yml`
 
 ### Layer 6: Visibility
-- **CLI Dashboard** - Real-time status (`context-md status --watch`)
+- **CLI Dashboard** - Real-time status (`context-weave status --watch`)
 - **Web Dashboard** - GitHub Pages with charts
   - 📈 Success rate trends (30 days)
   - 🎯 Issues by role/status
@@ -215,19 +215,19 @@ Context.md implements a **10-Layer Orchestration System** that automates quality
 
 ### Layer 8: Code Inspection
 - **DebugMCP Integration** - Runtime inspection (scaffolding)
-  - Module: `context_md/debugmcp.py`
+  - Module: `context_weave/debugmcp.py`
 - **Static Analysis** - Basic code quality checks
   - Detects: Bare excepts, TODOs, complexity issues
 
 ### Layer 9: Local Fallback
 - **Offline Operation** - Full functionality without GitHub
-- **Local Issue Management** - `context-md issue` commands
+- **Local Issue Management** - `context-weave issue` commands
 - **Auto-sync** - Reconnects and syncs when GitHub available
 
 ### Layer 10: Completion Traceability
 - **Completion Certificates** - Generated on merge
   - Hook: `.github/hooks/post-merge`
-  - Stored: `.agent-context/certificates/`
+  - Stored: `.context-weave/certificates/`
 - **Audit Trail** - Immutable Git commit history
 - **Metrics Tracking** - Success rates, resolution times
 
@@ -301,7 +301,7 @@ Raw prompts are automatically enhanced before being sent to AI agents:
 
 ### Multi-Agent Workflow
 
-Context.md supports a hub-and-spoke multi-agent pattern:
+ContextWeave supports a hub-and-spoke multi-agent pattern:
 
 ```
                             ┌─────────────────┐
@@ -345,8 +345,8 @@ Workflow: PM → UX → Architect → Engineer → Reviewer → Done
 
 ```bash
 # Clone the repository
-git clone https://github.com/jnPiyush/ContextMD.git
-cd ContextMD
+git clone https://github.com/jnPiyush/ContextWeave.git
+cd ContextWeave
 
 # Install with pip
 pip install -e .
@@ -358,8 +358,8 @@ pip install -e ".[dev]"
 ### Verify Installation
 
 ```bash
-context-md --version
-# context-md, version 0.1.0
+context-weave --version
+# context-weave, version 0.1.0
 ```
 
 ---
@@ -370,7 +370,7 @@ context-md --version
 
 ```bash
 cd your-project
-context-md init --mode local
+context-weave init --mode local
 ```
 
 **Modes:**
@@ -383,7 +383,7 @@ context-md init --mode local
 ### 2. Create an Issue
 
 ```bash
-context-md issue create "Add JWT authentication" \
+context-weave issue create "Add JWT authentication" \
   --type feature \
   --label api \
   --label security \
@@ -393,7 +393,7 @@ context-md issue create "Add JWT authentication" \
 ### 3. Generate Context
 
 ```bash
-context-md context generate 1 --role engineer
+context-weave context generate 1 --role engineer
 ```
 
 This generates a complete context file with all 4 layers:
@@ -406,17 +406,17 @@ This generates a complete context file with all 4 layers:
 
 ```bash
 # Spawn a SubAgent with isolated Git worktree
-context-md subagent spawn 1 --role engineer
+context-weave subagent spawn 1 --role engineer
 
 # Work in isolation, then complete
-context-md subagent complete 1
+context-weave subagent complete 1
 ```
 
 ### 5. Validate Before Completion
 
 ```bash
 # Validate Definition of Done
-context-md validate 1 --dod
+context-weave validate 1 --dod
 ```
 
 ---
@@ -426,8 +426,8 @@ context-md validate 1 --dod
 ### Overview
 
 ```
-context-md
-├── init          # Initialize Context.md in repository
+context-weave
+├── init          # Initialize ContextWeave in repository
 ├── config        # View/modify configuration
 ├── issue         # Create/manage local issues
 │   ├── create    # Create new issue
@@ -471,44 +471,44 @@ context-md
 #### Generate Context
 ```bash
 # Generate context for issue #42 as engineer
-context-md context generate 42 --role engineer
+context-weave context generate 42 --role engineer
 
 # Output to specific file
-context-md context generate 42 --output ./context-42.md
+context-weave context generate 42 --output ./context-42.md
 ```
 
 #### Memory Management
 ```bash
 # Show memory summary
-context-md memory show
+context-weave memory show
 
 # Add a lesson learned
-context-md memory lessons add \
+context-weave memory lessons add \
   --issue 42 \
   --category security \
   --lesson "Always validate user input" \
   --outcome failure
 
 # Record execution outcome
-context-md memory record 42 \
+context-weave memory record 42 \
   --role engineer \
   --action "implement feature" \
   --outcome success
 
 # Show success metrics
-context-md memory metrics
+context-weave memory metrics
 ```
 
 #### Validation
 ```bash
 # Validate task quality
-context-md validate 42 --task
+context-weave validate 42 --task
 
 # Run pre-execution checks
-context-md validate 42 --preexec
+context-weave validate 42 --preexec
 
 # Validate Definition of Done
-context-md validate 42 --dod
+context-weave validate 42 --dod
 ```
 
 ---
@@ -516,8 +516,8 @@ context-md validate 42 --dod
 ## 📁 Project Structure
 
 ```
-ContextMD/
-├── context_md/                 # Main package
+ContextWeave/
+├── context_weave/                 # Main package
 │   ├── __init__.py
 │   ├── cli.py                  # CLI entry point
 │   ├── config.py               # Configuration management
@@ -543,7 +543,7 @@ ContextMD/
 ├── tests/                      # Test suite (189 tests)
 │   ├── test_auth.py
 │   ├── test_config.py
-│   ├── test_context_md.py
+│   ├── test_context_weave.py
 │   ├── test_issue.py
 │   ├── test_memory.py
 │   ├── test_prompt.py
@@ -575,7 +575,7 @@ ContextMD/
 pytest tests/ -v
 
 # Run with coverage
-pytest tests/ --cov=context_md --cov-report=html
+pytest tests/ --cov=context_weave --cov-report=html
 
 # Run specific test file
 pytest tests/test_memory.py -v
@@ -678,7 +678,7 @@ clean, secure, maintainable code.
 
 ## 🔐 Security
 
-Context.md follows security best practices:
+ContextWeave follows security best practices:
 
 - ✅ **No hardcoded secrets** - Uses keyring for token storage
 - ✅ **Input sanitization** - All user inputs are validated
@@ -695,8 +695,8 @@ We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guid
 
 ```bash
 # Clone and setup
-git clone https://github.com/jnPiyush/ContextMD.git
-cd ContextMD
+git clone https://github.com/jnPiyush/ContextWeave.git
+cd ContextWeave
 pip install -e ".[dev]"
 
 # Run tests

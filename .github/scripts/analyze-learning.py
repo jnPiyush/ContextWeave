@@ -170,7 +170,7 @@ def main() -> int:
         print("[ERROR] GITHUB_TOKEN environment variable not set")
         return 1
     
-    repo_name = os.environ.get("GITHUB_REPOSITORY", "jnPiyush/ContextMD")
+    repo_name = os.environ.get("GITHUB_REPOSITORY", "jnPiyush/ContextWeave")
     
     print(f"[INFO] Analyzing closed issues in {repo_name}...")
     
@@ -178,7 +178,7 @@ def main() -> int:
         analysis = analyze_closed_issues(repo_name, token, days=30)
         
         # Save analysis report
-        report_dir = Path(".agent-context")
+        report_dir = Path(".context-weave")
         report_dir.mkdir(exist_ok=True)
         
         report_file = report_dir / f"learning-{datetime.now().strftime('%Y-%m')}.json"

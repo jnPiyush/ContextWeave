@@ -28,16 +28,16 @@ gh issue create --title "[Type] Description" --label "type:story"
 gh issue close <ID>
 ```
 
-**Using Context.md CLI:**
+**Using ContextWeave CLI:**
 ```bash
 # Create issue
-context-md issue create "[Type] Description" --type story
+context-weave issue create "[Type] Description" --type story
 
 # List issues
-context-md issue list
+context-weave issue list
 
 # Close issue
-context-md issue close <ID>
+context-weave issue close <ID>
 ```
 
 > ⚠️ **Status Tracking**: Use GitHub Projects V2 **Status** field for GitHub mode.

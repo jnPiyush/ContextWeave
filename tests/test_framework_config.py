@@ -1,4 +1,4 @@
-"""Tests for context_md.framework.config -- LLM provider configuration."""
+"""Tests for context_weave.framework.config -- LLM provider configuration."""
 
 import json
 import sys
@@ -6,7 +6,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from context_md.framework.config import (
+from context_weave.framework.config import (
     LLMConfig,
     LLMProvider,
     load_llm_config,
@@ -92,7 +92,7 @@ class TestLoadSaveLLMConfig:
         assert config.provider == LLMProvider.OPENAI
 
     def test_load_from_file(self, tmp_path):
-        config_dir = tmp_path / ".agent-context"
+        config_dir = tmp_path / ".context-weave"
         config_dir.mkdir()
         config_file = config_dir / "config.json"
         config_file.write_text(json.dumps({
@@ -108,7 +108,7 @@ class TestLoadSaveLLMConfig:
         assert config.provider == LLMProvider.ANTHROPIC
 
     def test_save_config(self, tmp_path):
-        config_dir = tmp_path / ".agent-context"
+        config_dir = tmp_path / ".context-weave"
         config_dir.mkdir()
         config_file = config_dir / "config.json"
         config_file.write_text(json.dumps({"version": "1.0"}))
@@ -148,19 +148,19 @@ class TestResolveApiKey:
 
 
 class TestGetChatClient:
-    @patch("context_md.framework.config.resolve_api_key", return_value="test-key")
+    @patch("context_weave.framework.config.resolve_api_key", return_value="test-key")
     def test_openai_import_error(self, mock_key):
         """When agent_framework is not installed, get_chat_client raises ImportError."""
-        from context_md.framework.config import get_chat_client
+        from context_weave.framework.config import get_chat_client
 
         config = LLMConfig(provider=LLMProvider.OPENAI)
         # This will fail if agent_framework is not installed
         with pytest.raises(ImportError):
             get_chat_client(config)
 
-    @patch("context_md.framework.config.resolve_api_key", return_value="test-key")
+    @patch("context_weave.framework.config.resolve_api_key", return_value="test-key")
     def test_unsupported_provider(self, mock_key):
-        from context_md.framework.config import get_chat_client
+        from context_weave.framework.config import get_chat_client
 
         config = LLMConfig()
         # Monkeypatch an invalid provider
@@ -168,9 +168,9 @@ class TestGetChatClient:
         with pytest.raises(ValueError, match="Unsupported"):
             get_chat_client(config)
 
-    @patch("context_md.framework.config.resolve_api_key", return_value="test-key")
+    @patch("context_weave.framework.config.resolve_api_key", return_value="test-key")
     def test_azure_missing_endpoint(self, mock_key):
-        from context_md.framework.config import get_chat_client
+        from context_weave.framework.config import get_chat_client
 
         config = LLMConfig(provider=LLMProvider.AZURE_OPENAI)
         with pytest.raises((ValueError, ImportError)):

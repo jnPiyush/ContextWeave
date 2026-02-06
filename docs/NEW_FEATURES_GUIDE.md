@@ -1,6 +1,6 @@
 # New Features Implementation Guide
 
-This document describes the newly implemented features for Context.md: Git Hooks Infrastructure and GitHub Projects V2 Integration.
+This document describes the newly implemented features for ContextWeave: Git Hooks Infrastructure and GitHub Projects V2 Integration.
 
 ---
 
@@ -22,8 +22,8 @@ Git hooks provide automated validation and certificate generation at key points 
 
 **Actions**:
 - Extracts issue number from merge commit message
-- Generates completion certificate in `.agent-context/certificates/`
-- Updates metrics in `.agent-context/metrics.json`
+- Generates completion certificate in `.context-weave/certificates/`
+- Updates metrics in `.context-weave/metrics.json`
 - Tracks: commit hash, author, files changed, merge date
 
 **Certificate Format**:
@@ -71,7 +71,7 @@ Git hooks provide automated validation and certificate generation at key points 
 **Example Output**:
 ```
 ========================================
-  Context.md Pre-Commit Checks
+  ContextWeave Pre-Commit Checks
 ========================================
 
 [CHECK 1/4] Scanning for secrets...
@@ -101,7 +101,7 @@ Git hooks provide automated validation and certificate generation at key points 
 
 **Validations**:
 - Extracts issue numbers from commits being pushed
-- Runs `context-md validate <issue> --dod` for each issue
+- Runs `context-weave validate <issue> --dod` for each issue
 - Ensures:
   - Tests are included
   - Code changes present
@@ -119,7 +119,7 @@ cd your-repo
 **Output**:
 ```
 ========================================
-  Context.md Git Hooks Installer
+  ContextWeave Git Hooks Installer
 ========================================
 
 [OK] Installed post-merge
@@ -203,12 +203,12 @@ Full GraphQL integration for updating issue status in GitHub Projects V2. This e
 First, configure your project:
 
 ```bash
-context-md sync setup --owner <owner> --repo <repo> --project <number>
+context-weave sync setup --owner <owner> --repo <repo> --project <number>
 ```
 
 **Example**:
 ```bash
-context-md sync setup --owner jnPiyush --repo ContextMD --project 1
+context-weave sync setup --owner jnPiyush --repo ContextWeave --project 1
 ```
 
 This will:
@@ -219,7 +219,7 @@ This will:
 #### 2.2 Update Issue Status
 
 ```bash
-context-md sync status-update <issue_number> "<status>"
+context-weave sync status-update <issue_number> "<status>"
 ```
 
 **Available Status Values**:
@@ -232,16 +232,16 @@ context-md sync status-update <issue_number> "<status>"
 **Examples**:
 ```bash
 # Mark issue as ready for next phase
-context-md sync status-update 42 "Ready"
+context-weave sync status-update 42 "Ready"
 
 # Start work on issue
-context-md sync status-update 42 "In Progress"
+context-weave sync status-update 42 "In Progress"
 
 # Send to code review
-context-md sync status-update 42 "In Review"
+context-weave sync status-update 42 "In Review"
 
 # Mark as complete
-context-md sync status-update 42 "Done"
+context-weave sync status-update 42 "Done"
 ```
 
 **Output**:
@@ -281,13 +281,13 @@ The Projects V2 integration enables the hub-and-spoke agent pattern documented i
 You can also use the Python API directly:
 
 ```python
-from context_md.commands.sync import update_project_status
+from context_weave.commands.sync import update_project_status
 
 # Update status
 update_project_status(
     token="ghp_...",
     owner="jnPiyush",
-    repo="ContextMD",
+    repo="ContextWeave",
     project_number=1,
     issue_number=42,
     status="Ready"
@@ -301,12 +301,12 @@ update_project_status(
 Retrieves field IDs for a project:
 
 ```python
-from context_md.commands.sync import get_project_field_ids
+from context_weave.commands.sync import get_project_field_ids
 
 fields = get_project_field_ids(
     token="ghp_...",
     owner="jnPiyush",
-    repo="ContextMD",
+    repo="ContextWeave",
     project_number=1
 )
 
@@ -329,7 +329,7 @@ fields = get_project_field_ids(
 Execute raw GraphQL queries:
 
 ```python
-from context_md.commands.sync import _github_graphql
+from context_weave.commands.sync import _github_graphql
 
 query = """
 query($owner: String!, $repo: String!) {
@@ -347,7 +347,7 @@ query($owner: String!, $repo: String!) {
 data = _github_graphql(
     token="ghp_...",
     query=query,
-    variables={"owner": "jnPiyush", "repo": "ContextMD"}
+    variables={"owner": "jnPiyush", "repo": "ContextWeave"}
 )
 ```
 
@@ -366,7 +366,7 @@ Error: Issue #42 not found in project #1
 Error: Invalid status 'Pending'. Available: Backlog, In Progress, In Review, Ready, Done
 
 # Authentication error
-Error: Not authenticated with GitHub. Run: context-md auth login
+Error: Not authenticated with GitHub. Run: context-weave auth login
 ```
 
 ### Authentication
@@ -375,7 +375,7 @@ Projects V2 integration requires authentication:
 
 **Option 1: OAuth (Recommended)**
 ```bash
-context-md auth login
+context-weave auth login
 ```
 
 **Option 2: GitHub CLI**
@@ -403,7 +403,7 @@ Your GitHub token needs:
 1. Go to your GitHub Projects
 2. Find the project number (in URL: `projects/1`)
 3. Ensure project is linked to the repository
-4. Re-run setup: `context-md sync setup --project <number>`
+4. Re-run setup: `context-weave sync setup --project <number>`
 
 #### "Status field not found"
 
@@ -444,11 +444,11 @@ git checkout master
 git merge test/issue-99
 
 # Check certificate generated
-ls .agent-context/certificates/
+ls .context-weave/certificates/
 # Should see: CERT-99-<hash>.md
 
 # Check metrics updated
-cat .agent-context/metrics.json
+cat .context-weave/metrics.json
 ```
 
 #### Test Pre-Commit Hook
@@ -482,7 +482,7 @@ git push origin test/no-tests
 
 ```bash
 # Setup project
-context-md sync setup --owner <owner> --repo <repo> --project 1
+context-weave sync setup --owner <owner> --repo <repo> --project 1
 
 # Create test issue on GitHub
 gh issue create --title "Test Projects V2" --label "type:story"
@@ -491,13 +491,13 @@ gh issue create --title "Test Projects V2" --label "type:story"
 # Add issue to project (via GitHub UI or gh CLI)
 
 # Test status update
-context-md sync status-update 50 "In Progress"
+context-weave sync status-update 50 "In Progress"
 # Check GitHub Projects UI - status should update
 
 # Test all status transitions
-context-md sync status-update 50 "Ready"
-context-md sync status-update 50 "In Review"
-context-md sync status-update 50 "Done"
+context-weave sync status-update 50 "Ready"
+context-weave sync status-update 50 "In Review"
+context-weave sync status-update 50 "Done"
 ```
 
 ---
@@ -527,7 +527,7 @@ jobs:
 
       - name: Update status to In Progress
         run: |
-          context-md sync status-update ${{ inputs.issue_number }} "In Progress"
+          context-weave sync status-update ${{ inputs.issue_number }} "In Progress"
 
       - name: Run agent work
         run: |
@@ -536,7 +536,7 @@ jobs:
       - name: Update status to Ready
         if: success()
         run: |
-          context-md sync status-update ${{ inputs.issue_number }} "Ready"
+          context-weave sync status-update ${{ inputs.issue_number }} "Ready"
 
       - name: Update status to needs help
         if: failure()
@@ -550,7 +550,7 @@ jobs:
 
 ### Existing Repositories
 
-If you have an existing Context.md setup:
+If you have an existing ContextWeave setup:
 
 1. **Install Git Hooks**:
    ```bash
@@ -559,17 +559,17 @@ If you have an existing Context.md setup:
 
 2. **Configure Projects V2**:
    ```bash
-   context-md sync setup --project <number>
+   context-weave sync setup --project <number>
    ```
 
 3. **Update Workflows** (if using GitHub Actions):
-   - Add `context-md sync status-update` commands
+   - Add `context-weave sync status-update` commands
    - Remove manual label-based status tracking
 
 4. **Test Integration**:
    ```bash
    # Test status update
-   context-md sync status-update <test-issue> "Ready"
+   context-weave sync status-update <test-issue> "Ready"
    ```
 
 ### From Label-Based Status to Projects V2
@@ -583,7 +583,7 @@ gh issue edit 42 --add-label "status:in-progress"
 
 **After**:
 ```bash
-context-md sync status-update 42 "In Progress"
+context-weave sync status-update 42 "In Progress"
 ```
 
 **Benefits**:
@@ -617,7 +617,7 @@ context-md sync status-update 42 "In Progress"
 **A**: Not via CLI, but you can script it:
 ```bash
 for issue in 42 43 44; do
-  context-md sync status-update $issue "Ready"
+  context-weave sync status-update $issue "Ready"
 done
 ```
 
@@ -640,9 +640,9 @@ If you need to revert these features:
 ### Revert sync.py Changes
 
 ```bash
-git log --oneline -- context_md/commands/sync.py
+git log --oneline -- context_weave/commands/sync.py
 # Find commit before Projects V2 integration
-git checkout <commit-hash> -- context_md/commands/sync.py
+git checkout <commit-hash> -- context_weave/commands/sync.py
 ```
 
 ### Continue Using GitHub CLI
@@ -666,6 +666,6 @@ gh project item-edit --id <item-id> --field-id <status-field-id> --single-select
 
 ---
 
-**Questions?** Open an issue at https://github.com/jnPiyush/ContextMD/issues
+**Questions?** Open an issue at https://github.com/jnPiyush/ContextWeave/issues
 
 **Documentation**: See README.md and AGENTS.md for more details.

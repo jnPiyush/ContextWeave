@@ -2,7 +2,7 @@
 
 const GITHUB_API = 'https://api.github.com';
 const REPO_OWNER = 'jnPiyush';
-const REPO_NAME = 'ContextMD';
+const REPO_NAME = 'ContextWeave';
 
 let successChart = null;
 let roleChart = null;

@@ -2,26 +2,26 @@
 
 ## Overview
 
-The Context.md Real-Time Dashboard provides live monitoring of agent status through a web-based interface with WebSocket updates.
+The ContextWeave Real-Time Dashboard provides live monitoring of agent status through a web-based interface with WebSocket updates.
 
 ## Quick Start
 
 ```bash
 # Start dashboard (opens browser automatically)
-context-md dashboard
+context-weave dashboard
 
 # Start on custom port
-context-md dashboard --port 8080
+context-weave dashboard --port 8080
 
 # Start without opening browser
-context-md dashboard --no-browser
+context-weave dashboard --no-browser
 ```
 
 ## Features
 
 ### Real-Time Updates
 - **Live Status**: Agent status updates pushed instantly via WebSocket
-- **No Polling**: Event-driven updates when `.agent-context/state.json` changes
+- **No Polling**: Event-driven updates when `.context-weave/state.json` changes
 - **Auto-Reconnect**: Automatically reconnects if connection is lost
 
 ### Agent Cards
@@ -49,7 +49,7 @@ Each active agent displays:
 ### Starting the Dashboard
 
 ```bash
-$ context-md dashboard
+$ context-weave dashboard
 [SUCCESS] Starting dashboard server...
   Host: localhost
   Port: 8765
@@ -83,14 +83,14 @@ The dashboard supports multiple concurrent agents:
 
 ```bash
 # Use custom port
-context-md dashboard --port 3000
+context-weave dashboard --port 3000
 ```
 
 ### Host Configuration
 
 ```bash
 # Listen on all interfaces (use with caution)
-context-md dashboard --host 0.0.0.0
+context-weave dashboard --host 0.0.0.0
 ```
 
 **Security Note**: Only use `0.0.0.0` on trusted networks. Default `localhost` restricts access to local machine.
@@ -99,17 +99,17 @@ context-md dashboard --host 0.0.0.0
 
 ### Components
 
-1. **WebSocket Server** (`context_md/dashboard.py`)
+1. **WebSocket Server** (`context_weave/dashboard.py`)
    - Async server using `websockets` library
    - Serves static files via HTTP
    - Broadcasts state updates to connected clients
 
 2. **File Watcher**
-   - Monitors `.agent-context/` directory
+   - Monitors `.context-weave/` directory
    - Detects state changes using `watchdog`
    - Triggers broadcasts on modifications
 
-3. **Frontend** (`context_md/static/`)
+3. **Frontend** (`context_weave/static/`)
    - `dashboard.html` - UI structure
    - `dashboard.css` - Dark mode styling
    - `dashboard.js` - WebSocket client
@@ -144,17 +144,17 @@ context-md dashboard --host 0.0.0.0
 **Error**: `Address already in use`
 ```bash
 # Use different port
-context-md dashboard --port 8766
+context-weave dashboard --port 8766
 ```
 
 ### No Updates Showing
 
-1. Check if Context.md is initialized:
+1. Check if ContextWeave is initialized:
    ```bash
-   context-md status
+   context-weave status
    ```
 
-2. Verify `.agent-context/` directory exists
+2. Verify `.context-weave/` directory exists
 
 3. Check browser console for WebSocket errors
 
@@ -169,7 +169,7 @@ If "Disconnected" status shown:
 
 ```bash
 # Manually open: http://localhost:8765
-context-md dashboard --no-browser
+context-weave dashboard --no-browser
 ```
 
 ## Keyboard Shortcuts
@@ -187,8 +187,8 @@ context-md dashboard --no-browser
 ## Integration with Workflows
 
 The dashboard automatically integrates with:
-- `context-md subagent spawn` - Shows new agents instantly
-- `context-md status` - Same data, different presentation
+- `context-weave subagent spawn` - Shows new agents instantly
+- `context-weave status` - Same data, different presentation
 - Git operations - Detects commits and state changes
 
 ## Performance
@@ -230,10 +230,10 @@ For remote access, consider:
 
 ```bash
 # Terminal 1: Start dashboard
-context-md dashboard
+context-weave dashboard
 
 # Terminal 2: Spawn agent
-context-md subagent spawn 123 engineer
+context-weave subagent spawn 123 engineer
 
 # Dashboard shows: Issue #123 Engineer card appears
 ```
@@ -242,25 +242,25 @@ context-md subagent spawn 123 engineer
 
 ```bash
 # Start dashboard
-context-md dashboard
+context-weave dashboard
 
 # Spawn multiple agents
-context-md subagent spawn 100 pm
-context-md subagent spawn 101 engineer
-context-md subagent spawn 102 reviewer
+context-weave subagent spawn 100 pm
+context-weave subagent spawn 101 engineer
+context-weave subagent spawn 102 reviewer
 
 # Dashboard shows: 3 agent cards with real-time updates
 ```
 
 ## Related Commands
 
-- `context-md status` - CLI status view
-- `context-md status --watch` - CLI watch mode (polling)
-- `context-md subagent list` - List active agents
-- `context-md subagent status <issue>` - Individual agent status
+- `context-weave status` - CLI status view
+- `context-weave status --watch` - CLI watch mode (polling)
+- `context-weave subagent list` - List active agents
+- `context-weave subagent status <issue>` - Individual agent status
 
 ## Support
 
 For issues or questions:
-- GitHub Issues: https://github.com/jnPiyush/ContextMD/issues
-- Check logs: `~/.context-md/logs/context-md.log`
+- GitHub Issues: https://github.com/jnPiyush/ContextWeave/issues
+- Check logs: `~/.context-weave/logs/context-weave.log`

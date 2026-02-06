@@ -2,14 +2,14 @@
 
 **Date:** January 30, 2026  
 **Reviewer:** AI Code Review Agent  
-**Project:** Context.md CLI  
+**Project:** ContextWeave CLI  
 **Coverage:** 54% (Target: 80%)
 
 ---
 
 ## Executive Summary
 
-Context.md is a well-architected CLI tool for managing AI agent runtime context using Git-native state management. The codebase demonstrates solid design patterns but has several areas requiring attention for production readiness.
+ContextWeave is a well-architected CLI tool for managing AI agent runtime context using Git-native state management. The codebase demonstrates solid design patterns but has several areas requiring attention for production readiness.
 
 ### Quality Scorecard
 
@@ -30,7 +30,7 @@ Context.md is a well-architected CLI tool for managing AI agent runtime context 
 ### 1.1 Security Vulnerabilities
 
 #### 1.1.1 Token Exposure Risk in Debug Mode
-**File:** [context_md/commands/auth.py](../context_md/commands/auth.py#L343-L355)
+**File:** [context_weave/commands/auth.py](../context_weave/commands/auth.py#L343-L355)
 **Severity:** HIGH
 
 ```python
@@ -55,7 +55,7 @@ if show:
 ```
 
 #### 1.1.2 Missing Input Sanitization on Issue Titles
-**File:** [context_md/commands/issue.py](../context_md/commands/issue.py#L52-L93)
+**File:** [context_weave/commands/issue.py](../context_weave/commands/issue.py#L52-L93)
 **Severity:** MEDIUM
 
 Issue titles are stored directly without sanitization, potentially allowing:
@@ -74,12 +74,12 @@ def sanitize_title(title: str) -> str:
 ```
 
 #### 1.1.3 OAuth Client ID Hardcoded
-**File:** [context_md/commands/auth.py](../context_md/commands/auth.py#L31-L35)
+**File:** [context_weave/commands/auth.py](../context_weave/commands/auth.py#L31-L35)
 **Severity:** MEDIUM
 
 ```python
 GITHUB_CLIENT_ID = os.getenv(
-    "CONTEXT_MD_GITHUB_CLIENT_ID",
+    "CONTEXT_WEAVE_GITHUB_CLIENT_ID",
     "Ov23liUwXgKjNxHiXmpt"  # Default public client for OSS
 )
 ```
@@ -107,7 +107,7 @@ except Exception as e:
 from keyring.errors import KeyringError, PasswordNotFoundError
 
 try:
-    token = keyring.get_password("context-md", "github_token")
+    token = keyring.get_password("context-weave", "github_token")
 except PasswordNotFoundError:
     return None
 except KeyringError as e:
@@ -134,7 +134,7 @@ subprocess.run(
 ```
 
 #### 1.2.3 Missing Timeout on Network Operations
-**File:** [context_md/commands/sync.py](../context_md/commands/sync.py#L440-L460)
+**File:** [context_weave/commands/sync.py](../context_weave/commands/sync.py#L440-L460)
 **Severity:** MEDIUM
 
 Some `urlopen` calls have timeout, but the timeout value (30s) may be too long for interactive CLI.
@@ -172,7 +172,7 @@ NETWORK_TIMEOUT = config.get("network.timeout", 15)  # Default 15s
 
 ### 2.1 Missing Retry Logic for Network Operations
 
-**File:** [context_md/commands/auth.py](../context_md/commands/auth.py), [sync.py](../context_md/commands/sync.py)
+**File:** [context_weave/commands/auth.py](../context_weave/commands/auth.py), [sync.py](../context_weave/commands/sync.py)
 
 Network operations lack proper retry logic with exponential backoff.
 
@@ -220,7 +220,7 @@ if not check_connectivity():
 
 ### 2.3 Missing Rate Limit Handling
 
-**File:** [context_md/commands/sync.py](../context_md/commands/sync.py)
+**File:** [context_weave/commands/sync.py](../context_weave/commands/sync.py)
 
 GitHub API rate limits (60/hour unauthenticated, 5000/hour authenticated) are not tracked.
 
@@ -242,7 +242,7 @@ def _github_api_get(token: str, endpoint: str) -> Any:
 
 ### 2.4 Configuration Validation Missing
 
-**File:** [context_md/config.py](../context_md/config.py)
+**File:** [context_weave/config.py](../context_weave/config.py)
 
 No schema validation for configuration files. Malformed config silently uses defaults.
 
@@ -313,9 +313,9 @@ def _check_gh_cli_auth():  # Should be -> Optional[str]
 
 **Issue:** GitHub API helper functions are duplicated between auth.py and sync.py.
 
-**Recommendation:** Create shared module `context_md/github_api.py`:
+**Recommendation:** Create shared module `context_weave/github_api.py`:
 ```python
-# context_md/github_api.py
+# context_weave/github_api.py
 """Shared GitHub API utilities."""
 
 def api_get(token: str, endpoint: str, timeout: int = 30) -> Any: ...
@@ -355,9 +355,9 @@ No way to view full configuration or reset to defaults.
 
 **Recommendation:** Add commands:
 ```bash
-context-md config show          # Show all config
-context-md config reset         # Reset to defaults
-context-md config validate      # Validate config file
+context-weave config show          # Show all config
+context-weave config reset         # Reset to defaults
+context-weave config validate      # Validate config file
 ```
 
 ### 4.4 No Dry-Run Support on Destructive Operations
@@ -439,7 +439,7 @@ def test_issue_create_writes_to_state(self, tmp_path, runner):
     # ... create issue ...
     
     # Verify state was actually written
-    state_file = tmp_path / ".agent-context" / "state.json"
+    state_file = tmp_path / ".context-weave" / "state.json"
     assert state_file.exists()
     
     with open(state_file) as f:

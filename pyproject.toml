@@ -3,13 +3,13 @@ requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "context-md"
+name = "context-weave"
 version = "0.1.0"
 description = "Runtime context management for AI agents - Git-native, zero dependencies"
 readme = "README.md"
 license = {text = "MIT"}
 authors = [
-    {name = "Context.md Team", email = "context-md@example.com"}
+    {name = "ContextWeave Team", email = "context-weave@example.com"}
 ]
 keywords = ["ai", "agents", "context", "git", "automation", "devtools"]
 classifiers = [
@@ -60,20 +60,20 @@ agent-anthropic = [
 ]
 
 [project.scripts]
-context-md = "context_md.cli:main"
+context-weave = "context_weave.cli:main"
 
 [project.urls]
-Homepage = "https://github.com/jnPiyush/ContextMD"
-Documentation = "https://github.com/jnPiyush/ContextMD/blob/main/docs/architecture/ARCHITECTURE-CONTEXT-MD.md"
-Repository = "https://github.com/jnPiyush/ContextMD"
-Issues = "https://github.com/jnPiyush/ContextMD/issues"
+Homepage = "https://github.com/jnPiyush/ContextWeave"
+Documentation = "https://github.com/jnPiyush/ContextWeave/blob/main/docs/architecture/ARCHITECTURE-CONTEXT-WEAVE.md"
+Repository = "https://github.com/jnPiyush/ContextWeave"
+Issues = "https://github.com/jnPiyush/ContextWeave/issues"
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["context_md*"]
+include = ["context_weave*"]
 
 [tool.setuptools.package-data]
-context_md = ["static/*"]
+context_weave = ["static/*"]
 
 [tool.ruff]
 target-version = "py310"
@@ -93,7 +93,7 @@ ignore = [
 ]
 
 [tool.ruff.lint.isort]
-known-first-party = ["context_md"]
+known-first-party = ["context_weave"]
 
 [tool.mypy]
 python_version = "3.10"
@@ -107,7 +107,7 @@ python_files = ["test_*.py"]
 addopts = "-v --tb=short"
 
 [tool.coverage.run]
-source = ["context_md"]
+source = ["context_weave"]
 branch = true
 
 [tool.coverage.report]

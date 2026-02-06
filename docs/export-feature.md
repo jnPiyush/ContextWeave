@@ -2,7 +2,7 @@
 
 ## Overview
 
-The export feature allows you to convert Context.md markdown deliverables (PRD, ADR, Specs, Reviews, UX designs) into professional DOCX and PDF formats for stakeholder distribution.
+The export feature allows you to convert ContextWeave markdown deliverables (PRD, ADR, Specs, Reviews, UX designs) into professional DOCX and PDF formats for stakeholder distribution.
 
 ## Installation
 
@@ -30,26 +30,26 @@ brew install --cask libreoffice    # macOS
 
 ```bash
 # Export to DOCX
-context-md export document docs/prd/PRD-123.md --format docx
+context-weave export document docs/prd/PRD-123.md --format docx
 
 # Export to PDF
-context-md export document docs/adr/ADR-456.md --format pdf
+context-weave export document docs/adr/ADR-456.md --format pdf
 
 # Export to both formats
-context-md export document docs/specs/SPEC-789.md --format both
+context-weave export document docs/specs/SPEC-789.md --format both
 
 # Custom output directory
-context-md export document docs/prd/PRD-123.md --format docx --output ./deliverables/
+context-weave export document docs/prd/PRD-123.md --format docx --output ./deliverables/
 ```
 
 ### Export All Issue Deliverables
 
 ```bash
 # Export all documents for an issue
-context-md export issue 123 --format both
+context-weave export issue 123 --format both
 
 # Custom output directory
-context-md export issue 123 --format pdf --output ./exports/issue-123/
+context-weave export issue 123 --format pdf --output ./exports/issue-123/
 ```
 
 This will find and export:
@@ -123,18 +123,18 @@ Export Command
 
 ### Export PRD for Stakeholder Review
 ```bash
-context-md export document docs/prd/PRD-123-User-Auth.md --format pdf --output ./stakeholder-review/
+context-weave export document docs/prd/PRD-123-User-Auth.md --format pdf --output ./stakeholder-review/
 ```
 
 ### Export All Deliverables for Client Handoff
 ```bash
-context-md export issue 456 --format both --output ./client-delivery/release-1.0/
+context-weave export issue 456 --format both --output ./client-delivery/release-1.0/
 ```
 
 ### Batch Export All PRDs
 ```bash
 for file in docs/prd/*.md; do
-    context-md export document "$file" --format docx --output ./prd-library/
+    context-weave export document "$file" --format docx --output ./prd-library/
 done
 ```
 
@@ -182,7 +182,7 @@ Future enhancements will support:
 
 ## Related Issues
 
-- [Issue #3: Document Export Feature](https://github.com/jnPiyush/ContextMD/issues/3)
+- [Issue #3: Document Export Feature](https://github.com/jnPiyush/ContextWeave/issues/3)
 
 ## Testing
 
@@ -191,5 +191,5 @@ Future enhancements will support:
 pytest tests/test_export.py -v
 
 # Test with real documents
-context-md export document docs/prd/PRD-CONTEXT-MD.md --format both --output ./test-exports/
+context-weave export document docs/prd/PRD-CONTEXT-WEAVE.md --format both --output ./test-exports/
 ```

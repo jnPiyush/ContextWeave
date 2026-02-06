@@ -215,7 +215,7 @@ def main() -> int:
         print("[ERROR] GITHUB_TOKEN environment variable not set")
         return 1
     
-    repo_name = os.environ.get("GITHUB_REPOSITORY", "jnPiyush/ContextMD")
+    repo_name = os.environ.get("GITHUB_REPOSITORY", "jnPiyush/ContextWeave")
     
     print(f"[INFO] Detecting workflow bottlenecks in {repo_name}...")
     
@@ -223,7 +223,7 @@ def main() -> int:
         analysis = detect_bottlenecks(repo_name, token)
         
         # Save analysis
-        report_dir = Path(".agent-context")
+        report_dir = Path(".context-weave")
         report_dir.mkdir(exist_ok=True)
         
         report_file = report_dir / f"bottleneck-{datetime.now().strftime('%Y-%m-%d')}.json"

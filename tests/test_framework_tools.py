@@ -1,9 +1,9 @@
-"""Tests for context_md.framework.tools -- Tool Registry."""
+"""Tests for context_weave.framework.tools -- Tool Registry."""
 
 
 import pytest
 
-from context_md.framework.tools import ROLE_TOOLS, ToolRegistry
+from context_weave.framework.tools import ROLE_TOOLS, ToolRegistry
 
 
 class TestToolRegistry:
@@ -133,7 +133,7 @@ class TestToolFunctions:
 
     @pytest.mark.asyncio
     async def test_record_execution(self, tmp_path):
-        (tmp_path / ".agent-context").mkdir()
+        (tmp_path / ".context-weave").mkdir()
 
         registry = ToolRegistry(tmp_path)
         tool = registry.get_tool_by_name("record_execution")

@@ -1,10 +1,10 @@
 # 4-Layer AI Context Architecture
 
-> **Purpose**: Document the foundational architecture for AI agent context management in Context.md.
+> **Purpose**: Document the foundational architecture for AI agent context management in ContextWeave.
 
 ## Overview
 
-Context.md implements a **4-Layer AI Context Architecture** that provides structured context to AI agents for achieving >95% success rate in production code generation.
+ContextWeave implements a **4-Layer AI Context Architecture** that provides structured context to AI agents for achieving >95% success rate in production code generation.
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
@@ -31,7 +31,7 @@ Context.md implements a **4-Layer AI Context Architecture** that provides struct
 │  │  LAYER 3: MEMORY                                                    │   │
 │  │  ──────────────────────────────────────────────────────────────────│   │
 │  │  Purpose: Persistent knowledge across sessions                      │   │
-│  │  Source:  .agent-context/memory.json                               │   │
+│  │  Source:  .context-weave/memory.json                               │   │
 │  │  Content: Lessons learned, session history, success metrics        │   │
 │  └─────────────────────────────────────────────────────────────────────┘   │
 │                              ↓                                              │
@@ -52,7 +52,7 @@ Context.md implements a **4-Layer AI Context Architecture** that provides struct
 
 **Purpose**: Defines the AI agent's role, capabilities, and behavioral constraints.
 
-**Implementation**: [context.py#L177-L178](../context_md/commands/context.py#L177-L178)
+**Implementation**: [context.py#L177-L178](../context_weave/commands/context.py#L177-L178)
 
 ```
 Location: .github/agents/{role}.agent.md
@@ -81,8 +81,8 @@ Roles:    engineer, pm, architect, reviewer, ux
 **Purpose**: Contains the specific task requirements - what the user is asking the agent to do.
 
 **Implementation**: 
-- Raw Extraction: [context.py#L195-L213](../context_md/commands/context.py#L195-L213)
-- Prompt Enhancement: [prompt.py](../context_md/prompt.py)
+- Raw Extraction: [context.py#L195-L213](../context_weave/commands/context.py#L195-L213)
+- Prompt Enhancement: [prompt.py](../context_weave/prompt.py)
 
 ```
 Sources: Git branch name, Git notes, issue metadata
@@ -245,11 +245,11 @@ Implement JWT-based auth for API endpoints
 
 **Purpose**: Provides persistent knowledge that spans across sessions - the "learning loop".
 
-**Implementation**: [memory.py](../context_md/memory.py)
+**Implementation**: [memory.py](../context_weave/memory.py)
 
 ```
-Location: .agent-context/memory.json
-CLI:      context-md memory <subcommand>
+Location: .context-weave/memory.json
+CLI:      context-weave memory <subcommand>
 ```
 
 **Components**:
@@ -315,13 +315,13 @@ Metrics:
 **CLI Commands**:
 ```bash
 # Show memory summary
-context-md memory show
+context-weave memory show
 
 # List lessons learned
-context-md memory lessons list --role engineer --category security
+context-weave memory lessons list --role engineer --category security
 
 # Add a lesson
-context-md memory lessons add \
+context-weave memory lessons add \
     --issue 100 \
     --category security \
     --lesson "Always validate input" \
@@ -329,22 +329,22 @@ context-md memory lessons add \
     --outcome failure
 
 # Record execution outcome
-context-md memory record 100 \
+context-weave memory record 100 \
     --role engineer \
     --action "implement feature" \
     --outcome success
 
 # Show metrics
-context-md memory metrics --role engineer
+context-weave memory metrics --role engineer
 
 # Save session context
-context-md memory session save 100 \
+context-weave memory session save 100 \
     --summary "Completed auth module" \
     --progress "Starting tests" \
     --blocker "Need API key"
 
 # View session history
-context-md memory session show 100 --history
+context-weave memory session show 100 --history
 ```
 
 ---
@@ -353,7 +353,7 @@ context-md memory session show 100 --history
 
 **Purpose**: Grounds the AI in domain knowledge through dynamically loaded skills.
 
-**Implementation**: [context.py#L324-L374](../context_md/commands/context.py#L324-L374)
+**Implementation**: [context.py#L324-L374](../context_weave/commands/context.py#L324-L374)
 
 ```
 Location: .github/skills/{category}/{skill}/SKILL.md
@@ -403,7 +403,7 @@ AI Systems:
 │                      CONTEXT GENERATION FLOW                              │
 ├──────────────────────────────────────────────────────────────────────────┤
 │                                                                          │
-│  INPUT: context-md context generate <issue>                              │
+│  INPUT: context-weave context generate <issue>                              │
 │                                                                          │
 │  1. DETECT ROLE                                                          │
 │     ├─ From worktree info                                                │
@@ -430,7 +430,7 @@ AI Systems:
 │     └─ Estimate token count                                              │
 │                                                                          │
 │  6. ASSEMBLE CONTEXT                                                     │
-│     └─ Write to .agent-context/context-{issue}.md                        │
+│     └─ Write to .context-weave/context-{issue}.md                        │
 │                                                                          │
 │  OUTPUT: Complete context file with all 4 layers                         │
 │                                                                          │
@@ -546,11 +546,11 @@ System context ensures agents follow workflows regardless of task.
 
 | Component | File | Purpose |
 |-----------|------|---------|
-| Context Generation | `context_md/commands/context.py` | Assembles 4 layers |
-| Memory Layer | `context_md/memory.py` | Lessons, sessions, metrics |
-| Memory CLI | `context_md/commands/memory.py` | Memory management commands |
-| Config/Routing | `context_md/config.py` | Skill routing table |
-| State Management | `context_md/state.py` | Git-derived state |
+| Context Generation | `context_weave/commands/context.py` | Assembles 4 layers |
+| Memory Layer | `context_weave/memory.py` | Lessons, sessions, metrics |
+| Memory CLI | `context_weave/commands/memory.py` | Memory management commands |
+| Config/Routing | `context_weave/config.py` | Skill routing table |
+| State Management | `context_weave/state.py` | Git-derived state |
 
 ---
 

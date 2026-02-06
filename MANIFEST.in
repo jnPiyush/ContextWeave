@@ -1,4 +1,4 @@
 include README.md
 include LICENSE
 include pyproject.toml
-recursive-include context_md/static *
+recursive-include context_weave/static *

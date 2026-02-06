@@ -10,8 +10,8 @@ from pathlib import Path
 import pytest
 from click.testing import CliRunner
 
-from context_md.commands.config import config_cmd
-from context_md.config import Config
+from context_weave.commands.config import config_cmd
+from context_weave.config import Config
 
 
 @pytest.fixture
@@ -174,7 +174,7 @@ class TestConfigClass:
     def test_load_corrupted_config(self, tmp_path):
         """Test handling of corrupted config file."""
         # Create corrupted config
-        config_dir = tmp_path / ".agent-context"
+        config_dir = tmp_path / ".context-weave"
         config_dir.mkdir(parents=True, exist_ok=True)
         config_file = config_dir / "config.json"
         config_file.write_text("{ invalid json }")

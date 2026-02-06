@@ -1,7 +1,7 @@
 
-# Context.md runtime state
-.agent-context/state.json
-.agent-context/context-*.md
+# ContextWeave runtime state
+.context-weave/state.json
+.context-weave/context-*.md
 
 # Python artifacts
 __pycache__/

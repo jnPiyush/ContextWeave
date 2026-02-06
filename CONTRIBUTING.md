@@ -28,8 +28,8 @@ Thank you for contributing! This guide ensures all contributors follow the same 
 
 ```powershell
 # Clone the repository
-git clone https://github.com/jnPiyush/ContextMD.git
-cd ContextMD
+git clone https://github.com/jnPiyush/ContextWeave.git
+cd ContextWeave
 
 # Run setup script (installs pre-commit hooks)
 .\install.ps1   # Windows
@@ -259,7 +259,7 @@ npm audit                      # Node.js
 
 ## 📞 Getting Help
 
-- **Questions**: Open a [Discussion](https://github.com/jnPiyush/ContextMD/discussions)
+- **Questions**: Open a [Discussion](https://github.com/jnPiyush/ContextWeave/discussions)
 - **Bugs**: Use the [Bug Report template](.github/ISSUE_TEMPLATE/bug.yml)
 - **Documentation**: Check [docs/](docs/) folder
 - **Skills/Standards**: See [Skills.md](Skills.md)

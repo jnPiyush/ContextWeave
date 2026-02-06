@@ -13,8 +13,8 @@ Implement a web-based real-time dashboard that provides immediate visibility int
 ## 2. Current State Analysis
 
 ### Existing Infrastructure
-- **State Management**: `context_md/state.py` - Tracks worktrees, GitHub sync
-- **Status Collection**: `context_md/commands/status.py` - Gathers agent status
+- **State Management**: `context_weave/state.py` - Tracks worktrees, GitHub sync
+- **Status Collection**: `context_weave/commands/status.py` - Gathers agent status
 - **Watch Mode**: CLI polling every 5 seconds
 - **Data Sources**: Git branches, notes, worktrees
 
@@ -46,12 +46,12 @@ Implement a web-based real-time dashboard that provides immediate visibility int
 │  │  - websockets library                        │  │
 │  │  - Event emitter                             │  │
 │  │  - State broadcaster                         │  │
-│  │  - File watcher (.agent-context/state.json) │  │
+│  │  - File watcher (.context-weave/state.json) │  │
 │  └──────────────────────────────────────────────┘  │
 └─────────────────────────────────────────────────────┘
                         ↕
 ┌─────────────────────────────────────────────────────┐
-│         Existing Context.md Infrastructure           │
+│         Existing ContextWeave Infrastructure           │
 │  - state.py (WorktreeInfo, GitHubConfig)           │
 │  - status.py (_collect_status)                     │
 │  - Git notes (metadata)                            │
@@ -62,7 +62,7 @@ Implement a web-based real-time dashboard that provides immediate visibility int
 ### 3.2 Data Flow
 
 1. **State Changes** (Git operations, status updates)
-2. **File Watch** → Detects `.agent-context/state.json` modifications
+2. **File Watch** → Detects `.context-weave/state.json` modifications
 3. **WebSocket Server** → Collects status via `_collect_status()`
 4. **Broadcast** → Pushes JSON payload to all connected clients
 5. **UI Update** → Dashboard re-renders with new data
@@ -107,7 +107,7 @@ Implement a web-based real-time dashboard that provides immediate visibility int
 
 ### Phase 1: Backend WebSocket Server
 
-**File**: `context_md/dashboard.py`
+**File**: `context_weave/dashboard.py`
 
 ```python
 import asyncio
@@ -130,7 +130,7 @@ class DashboardServer:
 
 ### Phase 2: Frontend Dashboard
 
-**File**: `context_md/static/dashboard.html`
+**File**: `context_weave/static/dashboard.html`
 
 **Features**:
 - Agent status cards with color coding
@@ -147,11 +147,11 @@ class DashboardServer:
 
 ### Phase 3: CLI Integration
 
-**Command**: `context-md dashboard`
+**Command**: `context-weave dashboard`
 
 ```bash
 # Start dashboard server
-context-md dashboard --port 8765
+context-weave dashboard --port 8765
 
 # Opens browser automatically to http://localhost:8765
 ```
@@ -184,7 +184,7 @@ context-md dashboard --port 8765
 ### 6.1 Starting Dashboard
 
 ```bash
-$ context-md dashboard
+$ context-weave dashboard
 [SUCCESS] Dashboard server started at http://localhost:8765
 [SUCCESS] Opening browser...
 ```
@@ -193,7 +193,7 @@ $ context-md dashboard
 
 ```
 ┌────────────────────────────────────────────────────┐
-│  Context.md Real-Time Dashboard          [●LIVE]   │
+│  ContextWeave Real-Time Dashboard          [●LIVE]   │
 ├────────────────────────────────────────────────────┤
 │  Mode: Local   |   Active: 2   |   Stuck: 0       │
 ├────────────────────────────────────────────────────┤
@@ -247,10 +247,10 @@ $ context-md dashboard
 ## 10. Implementation Checklist
 
 - [ ] Install dependencies (websockets, watchdog)
-- [ ] Create `context_md/dashboard.py` server
-- [ ] Create `context_md/static/dashboard.html` UI
-- [ ] Create `context_md/static/dashboard.css` styles
-- [ ] Create `context_md/static/dashboard.js` client
+- [ ] Create `context_weave/dashboard.py` server
+- [ ] Create `context_weave/static/dashboard.html` UI
+- [ ] Create `context_weave/static/dashboard.css` styles
+- [ ] Create `context_weave/static/dashboard.js` client
 - [ ] Add `dashboard` command to CLI
 - [ ] Write unit tests
 - [ ] Write integration tests

@@ -1,19 +1,19 @@
-# Microsoft Agent Framework Analysis for Context.md
+# Microsoft Agent Framework Analysis for ContextWeave
 
 **Date**: 2026-02-06
 **Last Updated**: 2026-02-06
-**Scope**: Deep analysis of adopting Microsoft agent frameworks for Context.md functionality
+**Scope**: Deep analysis of adopting Microsoft agent frameworks for ContextWeave functionality
 **Frameworks Evaluated**: Semantic Kernel, AutoGen (AgentChat + Core), **Microsoft Agent Framework (Unified, NEW)**
 
 ---
 
 ## Executive Summary
 
-Context.md implements a custom hub-and-spoke multi-agent orchestration system using Git as the state backbone. Microsoft offers agent frameworks that overlap with several Context.md subsystems. This report maps Context.md capabilities to framework features, evaluates fit, and recommends a **hybrid adoption strategy**.
+ContextWeave implements a custom hub-and-spoke multi-agent orchestration system using Git as the state backbone. Microsoft offers agent frameworks that overlap with several ContextWeave subsystems. This report maps ContextWeave capabilities to framework features, evaluates fit, and recommends a **hybrid adoption strategy**.
 
 **UPDATE**: Microsoft has released a **new unified Agent Framework** (`github.com/microsoft/agent-framework`) that converges AutoGen and Semantic Kernel into a single platform. This fundamentally changes the recommendation landscape.
 
-**Bottom Line**: The new **Microsoft Agent Framework** is the preferred adoption target over standalone AutoGen or Semantic Kernel. It provides graph-based workflows, context providers (Mem0, Redis), thread suspend/resume, middleware pipeline, and declarative YAML agents -- all directly relevant to Context.md. The recommendation is to adopt the **Agent Framework** for orchestration, tool integration, and session management, while keeping Context.md's Git-native state, memory/learning, prompt engineering, and 4-layer context systems.
+**Bottom Line**: The new **Microsoft Agent Framework** is the preferred adoption target over standalone AutoGen or Semantic Kernel. It provides graph-based workflows, context providers (Mem0, Redis), thread suspend/resume, middleware pipeline, and declarative YAML agents -- all directly relevant to ContextWeave. The recommendation is to adopt the **Agent Framework** for orchestration, tool integration, and session management, while keeping ContextWeave's Git-native state, memory/learning, prompt engineering, and 4-layer context systems.
 
 ---
 
@@ -87,13 +87,13 @@ The new Agent Framework is the **strategic direction** for Microsoft's agent pla
 
 ---
 
-## 2. Feature Mapping: Context.md vs Microsoft Agent Framework
+## 2. Feature Mapping: ContextWeave vs Microsoft Agent Framework
 
-This section maps each Context.md subsystem against the **new unified Agent Framework** (primary) and the legacy frameworks (for reference).
+This section maps each ContextWeave subsystem against the **new unified Agent Framework** (primary) and the legacy frameworks (for reference).
 
 ### 2.1 Agent Orchestration & Routing
 
-| Context.md Current | Agent Framework (NEW) | AutoGen (Legacy) | SK (Legacy) |
+| ContextWeave Current | Agent Framework (NEW) | AutoGen (Legacy) | SK (Legacy) |
 |-|-|-|-|
 | Agent X hub routes by labels/status | **Graph-based workflows** with conditional edges | Swarm with HandoffMessage | HandoffOrchestration |
 | Sequential: PM->UX->Architect->Engineer->Reviewer | **Workflow graph**: nodes = agents, edges = transitions | RoundRobinGroupChat | SequentialOrchestration |
@@ -102,7 +102,7 @@ This section maps each Context.md subsystem against the **new unified Agent Fram
 
 **Analysis**:
 
-The Agent Framework's **graph-based workflows** are the most natural fit for Context.md's orchestration:
+The Agent Framework's **graph-based workflows** are the most natural fit for ContextWeave's orchestration:
 
 ```python
 from agent_framework import Workflow, ChatAgent
@@ -127,7 +127,7 @@ workflow.add_edge("reviewer", "__end__", condition=lambda result: "approved" in 
 result = await workflow.run(task="Implement feature #42", stream=True)
 ```
 
-This maps directly to Context.md's hub-and-spoke pattern, with key advantages:
+This maps directly to ContextWeave's hub-and-spoke pattern, with key advantages:
 - **Conditional edges** replace static label routing with dynamic decisions
 - **Checkpointing** allows resume from any point in the workflow
 - **Streaming** provides real-time visibility into agent progress
@@ -137,7 +137,7 @@ This maps directly to Context.md's hub-and-spoke pattern, with key advantages:
 
 ### 2.2 Agent Definitions & Instructions
 
-| Context.md Current | Agent Framework (NEW) | AutoGen (Legacy) |
+| ContextWeave Current | Agent Framework (NEW) | AutoGen (Legacy) |
 |-|-|-|
 | `.github/agents/{role}.agent.md` with YAML frontmatter | **Declarative agents** (YAML-based definitions) | AssistantAgent with system_message |
 | Constraints (CAN/CANNOT) in markdown | Tool whitelist + middleware enforcement | Tool whitelist per agent |
@@ -164,10 +164,10 @@ context_providers:
       user_id: "project-context"
 ```
 
-This is closer to Context.md's `.agent.md` files than anything in AutoGen or SK. However, Context.md's agent definitions are still **richer**:
+This is closer to ContextWeave's `.agent.md` files than anything in AutoGen or SK. However, ContextWeave's agent definitions are still **richer**:
 
 ```markdown
-# Context.md agent definition uniquely includes:
+# ContextWeave agent definition uniquely includes:
 - Maturity level (stable/beta/scaffold)
 - Trigger conditions (when agent activates)
 - Validation scripts (pre/post execution)
@@ -177,11 +177,11 @@ This is closer to Context.md's `.agent.md` files than anything in AutoGen or SK.
 - Handoff requirements (what to pass to next agent)
 ```
 
-**Recommendation**: **Keep Context.md agent definitions** but add an adapter that generates Agent Framework declarative agent configs at runtime. Context.md `.agent.md` files serve as the source of truth; the adapter produces framework-compatible YAML.
+**Recommendation**: **Keep ContextWeave agent definitions** but add an adapter that generates Agent Framework declarative agent configs at runtime. ContextWeave `.agent.md` files serve as the source of truth; the adapter produces framework-compatible YAML.
 
 ### 2.3 Context & Memory
 
-| Context.md Current | Agent Framework (NEW) | AutoGen (Legacy) | SK (Legacy) |
+| ContextWeave Current | Agent Framework (NEW) | AutoGen (Legacy) | SK (Legacy) |
 |-|-|-|-|
 | `memory.py`: LessonLearned, ExecutionRecord, SessionContext | **Context Providers** (Mem0, Redis, Azure AI Search, Simple) | No persistent memory | Vector memory (experimental) |
 | Lesson effectiveness scoring (0.0-1.0) | No equivalent | No equivalent | No equivalent |
@@ -190,14 +190,14 @@ This is closer to Context.md's `.agent.md` files than anything in AutoGen or SK.
 
 **Analysis**:
 
-The Agent Framework's **Context Providers** are the most relevant new capability for Context.md:
+The Agent Framework's **Context Providers** are the most relevant new capability for ContextWeave:
 
 ```python
 from agent_framework.context import Mem0ContextProvider, AggregateContextProvider
 
 # Context providers inject context before each agent turn
-class ContextMdProvider:
-    """Custom context provider that injects Context.md's 4-layer context."""
+class ContextWeaveProvider:
+    """Custom context provider that injects ContextWeave's 4-layer context."""
 
     async def invoking(self, agent, thread, messages):
         """Called BEFORE each agent turn -- inject context."""
@@ -216,45 +216,45 @@ class ContextMdProvider:
 agent = ChatAgent(
     name="engineer",
     context_providers=[
-        ContextMdProvider(),           # Context.md's 4-layer context
+        ContextWeaveProvider(),           # ContextWeave's 4-layer context
         Mem0ContextProvider(user_id="project"),  # Vector similarity (optional)
     ]
 )
 ```
 
-The **Context Provider lifecycle** (`invoking`/`invoked`) maps naturally to Context.md's architecture:
+The **Context Provider lifecycle** (`invoking`/`invoked`) maps naturally to ContextWeave's architecture:
 - `invoking` = inject 4-layer context before the agent processes
 - `invoked` = record outcomes to memory after the agent responds
 
 Available built-in providers:
 
-| Provider | What It Does | Relevance to Context.md |
+| Provider | What It Does | Relevance to ContextWeave |
 |----------|--------------|------------------------|
 | **Mem0** | Vector-based memory with semantic search | Could enhance Layer 4 (skill retrieval) with similarity search |
 | **Redis** | Key-value context storage | Could cache generated context for faster re-use |
 | **Azure AI Search** | Full-text + vector search over documents | Could power skill document retrieval at scale |
 | **Simple** | In-memory context storage | Useful for session-scoped context |
-| **Aggregate** | Combines multiple providers | Perfect for composing Context.md's 4 layers |
+| **Aggregate** | Combines multiple providers | Perfect for composing ContextWeave's 4 layers |
 
-**However**, Context.md's memory system remains significantly more advanced:
+**However**, ContextWeave's memory system remains significantly more advanced:
 1. **Lesson effectiveness scoring** (0.0-1.0 over time) -- no framework equivalent
 2. **Execution history with error classification** -- no framework equivalent
 3. **Learning loop automation** (monthly pattern analysis -> instruction PRs) -- no framework equivalent
 4. **Contextual lesson relevance scoring** (issue type + role + category) -- no framework equivalent
 
-**Recommendation**: **Keep Context.md's memory system** and implement it as a **custom Context Provider** for the Agent Framework. This gives the best of both worlds: Context.md's advanced learning + the framework's lifecycle hooks. Optionally add Mem0 as a supplementary provider for semantic search over skills.
+**Recommendation**: **Keep ContextWeave's memory system** and implement it as a **custom Context Provider** for the Agent Framework. This gives the best of both worlds: ContextWeave's advanced learning + the framework's lifecycle hooks. Optionally add Mem0 as a supplementary provider for semantic search over skills.
 
 ### 2.4 State Management & Session Continuity
 
-| Context.md Current | Agent Framework (NEW) | AutoGen (Legacy) |
+| ContextWeave Current | Agent Framework (NEW) | AutoGen (Legacy) |
 |-|-|-|
-| `.agent-context/state.json` + Git notes + worktrees | **Threads** with suspend/resume + persistent stores | save_state/load_state (JSON) |
+| `.context-weave/state.json` + Git notes + worktrees | **Threads** with suspend/resume + persistent stores | save_state/load_state (JSON) |
 | Keyring for secrets | Middleware pipeline (auth) | Environment variables |
 | Split state (JSON + Git + GitHub API) | Thread stores (Redis, custom) | Unified JSON state |
 
 **Analysis**:
 
-The Agent Framework's **Thread management** directly addresses Context.md's session continuity needs:
+The Agent Framework's **Thread management** directly addresses ContextWeave's session continuity needs:
 
 ```python
 from agent_framework.threads import Thread, RedisThreadStore
@@ -299,14 +299,14 @@ class GitThreadStore:
         self.state = state
 
     async def save(self, thread_id: str, data: dict):
-        # Save to .agent-context/sessions/ + Git note
-        session_file = self.repo_root / ".agent-context" / "sessions" / f"{thread_id}.json"
+        # Save to .context-weave/sessions/ + Git note
+        session_file = self.repo_root / ".context-weave" / "sessions" / f"{thread_id}.json"
         session_file.parent.mkdir(parents=True, exist_ok=True)
         session_file.write_text(json.dumps(data, indent=2))
         self.state.set_branch_note(thread_id, {"session": str(session_file)})
 
     async def load(self, thread_id: str) -> Optional[dict]:
-        session_file = self.repo_root / ".agent-context" / "sessions" / f"{thread_id}.json"
+        session_file = self.repo_root / ".context-weave" / "sessions" / f"{thread_id}.json"
         if session_file.exists():
             return json.loads(session_file.read_text())
         return None
@@ -318,11 +318,11 @@ This is a major improvement over AutoGen's `save_state()`/`load_state()` because
 - **Thread identity** maps naturally to issue numbers
 - **Automatic state management** (no manual save calls needed)
 
-**Recommendation**: **Adopt Agent Framework Threads** with a custom `GitThreadStore`. This bridges the framework's session management with Context.md's Git-native state, providing automatic suspend/resume without losing the Git audit trail.
+**Recommendation**: **Adopt Agent Framework Threads** with a custom `GitThreadStore`. This bridges the framework's session management with ContextWeave's Git-native state, providing automatic suspend/resume without losing the Git audit trail.
 
 ### 2.5 Prompt Engineering
 
-| Context.md Current | Agent Framework (NEW) | AutoGen (Legacy) | SK (Legacy) |
+| ContextWeave Current | Agent Framework (NEW) | AutoGen (Legacy) | SK (Legacy) |
 |-|-|-|-|
 | PromptEngineer class with role templates | System message + context providers | system_message per agent | Kernel prompt templates |
 | Constraint extraction from raw prompts | No equivalent | No equivalent | No equivalent |
@@ -332,20 +332,20 @@ This is a major improvement over AutoGen's `save_state()`/`load_state()` because
 
 **Analysis**:
 
-No Microsoft framework -- including the new Agent Framework -- provides anything comparable to Context.md's prompt engineering pipeline:
+No Microsoft framework -- including the new Agent Framework -- provides anything comparable to ContextWeave's prompt engineering pipeline:
 
-- **Context.md**: Raw prompt -> role template -> constraint extraction -> success criteria -> approach hints -> pitfalls -> handoff requirements -> completeness validation (scoring)
+- **ContextWeave**: Raw prompt -> role template -> constraint extraction -> success criteria -> approach hints -> pitfalls -> handoff requirements -> completeness validation (scoring)
 - **Agent Framework**: System message + context providers -> LLM
 - **AutoGen**: system_message + task -> agent.run()
 - **SK**: System message + user message -> LLM
 
-The Context Provider mechanism could be used to inject enhanced prompts, but the **enhancement logic itself** must remain in Context.md.
+The Context Provider mechanism could be used to inject enhanced prompts, but the **enhancement logic itself** must remain in ContextWeave.
 
-**Recommendation**: **Keep Context.md prompt engineering entirely**. Implement it within a custom Context Provider so the enhanced prompt is injected into every Agent Framework agent turn automatically.
+**Recommendation**: **Keep ContextWeave prompt engineering entirely**. Implement it within a custom Context Provider so the enhanced prompt is injected into every Agent Framework agent turn automatically.
 
 ### 2.6 Tool Integration
 
-| Context.md Current | Agent Framework (NEW) | AutoGen (Legacy) | SK (Legacy) |
+| ContextWeave Current | Agent Framework (NEW) | AutoGen (Legacy) | SK (Legacy) |
 |-|-|-|-|
 | GitHub CLI (`gh`) via subprocess | **Python function tools** + **MCP integration** | Tools (Python functions, MCP) | Plugins (native, OpenAPI, MCP) |
 | Git commands via subprocess | Declarative tool definitions | tools=[func1, func2] per agent | Kernel.add_plugin() |
@@ -384,7 +384,7 @@ agent = ChatAgent(
 )
 ```
 
-The framework also supports **MCP (Model Context Protocol) integration**, which Context.md already has configured in `.vscode/mcp.json`:
+The framework also supports **MCP (Model Context Protocol) integration**, which ContextWeave already has configured in `.vscode/mcp.json`:
 
 ```python
 from agent_framework.tools import MCPToolProvider
@@ -401,7 +401,7 @@ agent = ChatAgent(
 
 ### 2.7 Middleware Pipeline
 
-| Context.md Current | Agent Framework (NEW) | AutoGen (Legacy) | SK (Legacy) |
+| ContextWeave Current | Agent Framework (NEW) | AutoGen (Legacy) | SK (Legacy) |
 |-|-|-|-|
 | Git hooks (pre-commit, pre-push, post-merge) | **Middleware pipeline** (request/response processing) | No middleware | Plugin filters |
 | Validation scripts (handoff, DoD, alignment) | Middleware intercepts every agent call | No equivalent | Basic filters |
@@ -415,7 +415,7 @@ The Agent Framework introduces a **middleware pipeline** -- a concept new across
 from agent_framework.middleware import Middleware
 
 class ValidationMiddleware(Middleware):
-    """Validates agent actions against Context.md constraints."""
+    """Validates agent actions against ContextWeave constraints."""
 
     async def process(self, request, next_handler):
         agent_name = request.agent.name
@@ -453,7 +453,7 @@ agent = ChatAgent(
 )
 ```
 
-This maps naturally to Context.md's validation infrastructure:
+This maps naturally to ContextWeave's validation infrastructure:
 - **Pre-commit checks** -> SecurityMiddleware
 - **File boundary enforcement** -> ValidationMiddleware
 - **DoD validation** -> CompletionMiddleware
@@ -463,11 +463,11 @@ This maps naturally to Context.md's validation infrastructure:
 
 ### 2.8 Observability
 
-| Context.md Current | Agent Framework (NEW) | AutoGen (Legacy) | SK (Legacy) |
+| ContextWeave Current | Agent Framework (NEW) | AutoGen (Legacy) | SK (Legacy) |
 |-|-|-|-|
-| CLI dashboard (`context-md status --watch`) | **OpenTelemetry integration** + **DevUI** | Console streaming | No built-in |
+| CLI dashboard (`context-weave status --watch`) | **OpenTelemetry integration** + **DevUI** | Console streaming | No built-in |
 | Web dashboard (GitHub Pages) | Traces, spans, metrics out of the box | No equivalent | Application Insights (Azure) |
-| Metrics in `.agent-context/metrics.json` | Standard observability pipeline | No equivalent | Limited |
+| Metrics in `.context-weave/metrics.json` | Standard observability pipeline | No equivalent | Limited |
 
 **Analysis**:
 
@@ -478,7 +478,7 @@ from agent_framework.observability import enable_telemetry
 
 # Enable tracing for all agent operations
 enable_telemetry(
-    service_name="context-md",
+    service_name="context-weave",
     exporter="console"  # or jaeger, zipkin, azure_monitor
 )
 
@@ -508,7 +508,7 @@ It also includes **DevUI** -- a web-based debugger:
 |              (with Microsoft Agent Framework integration)               |
 +----------------------------------------------------------------------+
 |                                                                        |
-|  KEEP (Context.md Native)             ADOPT (Agent Framework)          |
+|  KEEP (ContextWeave Native)             ADOPT (Agent Framework)          |
 |  ========================             ========================          |
 |                                                                        |
 |  [Git-Native State]                  [Graph Workflows]                 |
@@ -518,7 +518,7 @@ It also includes **DevUI** -- a web-based debugger:
 |  - Issue tracking                    - Streaming output                |
 |                                                                        |
 |  [Memory System]                     [Context Providers]               |
-|  - LessonLearned                     - Custom ContextMdProvider        |
+|  - LessonLearned                     - Custom ContextWeaveProvider        |
 |  - ExecutionRecord                   - Mem0 (optional, for skills)     |
 |  - SessionContext                    - Lifecycle hooks (invoking/       |
 |  - Learning loop                       invoked)                        |
@@ -552,14 +552,14 @@ It also includes **DevUI** -- a web-based debugger:
 +----------------------------------------------------------------------+
 ```
 
-### 3.2 What to Keep (Context.md Strengths)
+### 3.2 What to Keep (ContextWeave Strengths)
 
 | Component | Why Keep It |
 |-----------|-------------|
 | **Git-native state** | Unique differentiator. No framework offers Git worktree isolation, branch-per-issue, or git-notes metadata. Offline-capable. |
 | **Memory system** | Most advanced learning system across all frameworks. Lesson effectiveness tracking, error classification, and automated learning loops have no equivalent. |
 | **Prompt engineering** | Secret sauce for >95% success rate. No framework enhances prompts before LLM calls. |
-| **4-layer context** | Comprehensive context assembly. Frameworks only provide system_message + context injection (2 layers). Context.md's structured 4-layer approach is more methodical. |
+| **4-layer context** | Comprehensive context assembly. Frameworks only provide system_message + context injection (2 layers). ContextWeave's structured 4-layer approach is more methodical. |
 | **GitHub integration** | Projects V2, Actions, hooks -- deeply integrated with development workflow. |
 | **Skills library** | 27 domain-specific knowledge documents with smart label routing. No framework equivalent. |
 | **Agent definitions** | Richer than any framework (constraints, file boundaries, validation scripts, maturity levels, handoff specifications). |
@@ -569,7 +569,7 @@ It also includes **DevUI** -- a web-based debugger:
 | Component | What It Provides | Why Adopt |
 |-----------|-----------------|-----------|
 | **Graph Workflows** | Multi-agent orchestration with conditional routing | Replaces static label routing with dynamic graph-based decisions. Checkpointing enables resume. |
-| **Context Providers** | Lifecycle hooks for context injection | Natural integration point for Context.md's 4-layer context. `invoking`/`invoked` hooks align perfectly. |
+| **Context Providers** | Lifecycle hooks for context injection | Natural integration point for ContextWeave's 4-layer context. `invoking`/`invoked` hooks align perfectly. |
 | **Threads** | Session suspend/resume with custom stores | Addresses session continuity gap. Custom GitThreadStore preserves Git audit trail. |
 | **Tools** | Typed Python functions with auto-schema | Replaces hardcoded subprocess calls with structured, LLM-callable tools. |
 | **Middleware** | Request/response pipeline | Agent-level validation complements Git hooks. Enforces constraints programmatically. |
@@ -580,8 +580,8 @@ It also includes **DevUI** -- a web-based debugger:
 
 | Component | Why Skip |
 |-----------|----------|
-| **Agent Framework's built-in memory** | Context.md's structured memory with effectiveness tracking is far superior to Mem0/Redis for this domain |
-| **Declarative agents as source of truth** | Context.md's `.agent.md` files are richer; use framework YAML as a generated output, not the source |
+| **Agent Framework's built-in memory** | ContextWeave's structured memory with effectiveness tracking is far superior to Mem0/Redis for this domain |
+| **Declarative agents as source of truth** | ContextWeave's `.agent.md` files are richer; use framework YAML as a generated output, not the source |
 | **DevUI as primary dashboard** | Evaluate alongside existing dashboard, don't replace it yet |
 | **Standalone AutoGen** | Superseded by Agent Framework; no reason to adopt legacy separately |
 | **Standalone Semantic Kernel** | Superseded by Agent Framework; no reason to adopt legacy separately |
@@ -593,16 +593,16 @@ It also includes **DevUI** -- a web-based debugger:
 
 ### Phase 1: Foundation -- Tool Registry + Agent Wrappers (Low Risk)
 
-Create Agent Framework agents that wrap Context.md's existing functionality:
+Create Agent Framework agents that wrap ContextWeave's existing functionality:
 
 ```python
-# context_md/framework/agents.py
+# context_weave/framework/agents.py
 from agent_framework import ChatAgent
-from context_md.prompt import PromptEngineer
-from context_md.memory import Memory
+from context_weave.prompt import PromptEngineer
+from context_weave.memory import Memory
 
-class ContextMdAgentFactory:
-    """Creates Agent Framework agents using Context.md's enhanced prompts."""
+class ContextWeaveAgentFactory:
+    """Creates Agent Framework agents using ContextWeave's enhanced prompts."""
 
     def __init__(self, repo_root: Path, model_client):
         self.repo_root = repo_root
@@ -613,9 +613,9 @@ class ContextMdAgentFactory:
 
     def create_agent(self, role: str, issue_number: int, issue_type: str,
                      labels: list[str]) -> ChatAgent:
-        """Create an agent with Context.md enhanced prompts and tools."""
+        """Create an agent with ContextWeave enhanced prompts and tools."""
 
-        # Generate enhanced system message using Context.md's pipeline
+        # Generate enhanced system message using ContextWeave's pipeline
         enhanced = self.prompt_engineer.enhance_prompt(
             raw_prompt="",
             role=role,
@@ -634,7 +634,7 @@ class ContextMdAgentFactory:
             model_client=self.model_client,
             system_message=system_message,
             tools=self.tool_registry.get_tools(role),
-            context_providers=[ContextMdProvider(self.repo_root, self.memory)],
+            context_providers=[ContextWeaveProvider(self.repo_root, self.memory)],
             middleware=[ValidationMiddleware(role, self.repo_root)],
         )
 ```
@@ -642,10 +642,10 @@ class ContextMdAgentFactory:
 Tool registry wrapping existing subprocess calls:
 
 ```python
-# context_md/framework/tools.py
+# context_weave/framework/tools.py
 
 class ToolRegistry:
-    """Registry of tools available to Context.md agents."""
+    """Registry of tools available to ContextWeave agents."""
 
     def __init__(self, repo_root: Path):
         self.repo_root = repo_root
@@ -690,13 +690,13 @@ class ToolRegistry:
 Implement graph-based multi-agent orchestration:
 
 ```python
-# context_md/framework/orchestrator.py
+# context_weave/framework/orchestrator.py
 from agent_framework import Workflow
 
 class IssueOrchestrator:
     """Orchestrates multi-agent workflow for an issue using graph workflows."""
 
-    def __init__(self, factory: ContextMdAgentFactory, state: State):
+    def __init__(self, factory: ContextWeaveAgentFactory, state: State):
         self.factory = factory
         self.state = state
 
@@ -759,7 +759,7 @@ class IssueOrchestrator:
 Implement GitThreadStore bridging framework threads with Git-native state:
 
 ```python
-# context_md/framework/thread_store.py
+# context_weave/framework/thread_store.py
 from agent_framework.threads import ThreadStore
 
 class GitThreadStore(ThreadStore):
@@ -768,7 +768,7 @@ class GitThreadStore(ThreadStore):
     def __init__(self, repo_root: Path, state: State):
         self.repo_root = repo_root
         self.state = state
-        self.sessions_dir = repo_root / ".agent-context" / "sessions"
+        self.sessions_dir = repo_root / ".context-weave" / "sessions"
         self.sessions_dir.mkdir(parents=True, exist_ok=True)
 
     async def save(self, thread_id: str, data: dict) -> None:
@@ -802,14 +802,14 @@ class GitThreadStore(ThreadStore):
 
 ### Phase 4: Context Provider + Middleware (Low Risk)
 
-Implement Context.md's 4-layer context as a Context Provider:
+Implement ContextWeave's 4-layer context as a Context Provider:
 
 ```python
-# context_md/framework/context_provider.py
+# context_weave/framework/context_provider.py
 from agent_framework.context import ContextProvider
 
-class ContextMdProvider(ContextProvider):
-    """Injects Context.md's 4-layer context into every agent turn."""
+class ContextWeaveProvider(ContextProvider):
+    """Injects ContextWeave's 4-layer context into every agent turn."""
 
     def __init__(self, repo_root: Path, memory: Memory):
         self.repo_root = repo_root
@@ -849,7 +849,7 @@ class ContextMdProvider(ContextProvider):
 Implement validation as middleware:
 
 ```python
-# context_md/framework/middleware.py
+# context_weave/framework/middleware.py
 from agent_framework.middleware import Middleware
 
 class FileBarrierMiddleware(Middleware):
@@ -880,7 +880,7 @@ class FileBarrierMiddleware(Middleware):
 Add a new CLI command for live orchestration:
 
 ```python
-# Addition to context_md/commands/run.py
+# Addition to context_weave/commands/run.py
 
 @click.command("run")
 @click.argument("issue_number", type=int)
@@ -891,15 +891,15 @@ async def run_cmd(ctx, issue_number, role, stream):
     """Run agent workflow for an issue using Microsoft Agent Framework.
 
     Examples:
-        context-md run 42           # Full workflow
-        context-md run 42 --role engineer  # Single agent
+        context-weave run 42           # Full workflow
+        context-weave run 42 --role engineer  # Single agent
     """
     repo_root = ctx.obj["repo_root"]
     state = ctx.obj["state"]
 
     # Initialize framework
     model_client = create_model_client()  # From config
-    factory = ContextMdAgentFactory(repo_root, model_client)
+    factory = ContextWeaveAgentFactory(repo_root, model_client)
 
     if role:
         # Single agent mode
@@ -914,7 +914,7 @@ async def run_cmd(ctx, issue_number, role, stream):
 ```
 
 **Risk**: Low -- new command, no existing commands modified
-**Value**: Developer can run `context-md run 42` for live multi-agent execution
+**Value**: Developer can run `context-weave run 42` for live multi-agent execution
 
 ---
 
@@ -971,8 +971,8 @@ agents = [
 ```
 
 **Compatibility**:
-- Python 3.10+ (matches Context.md requirement)
-- Async/await based (Context.md is currently sync -- requires gradual migration)
+- Python 3.10+ (matches ContextWeave requirement)
+- Async/await based (ContextWeave is currently sync -- requires gradual migration)
 - Model-agnostic (OpenAI, Azure OpenAI, Anthropic via chat client adapters)
 - Preview release -- API may change before GA
 
@@ -980,8 +980,8 @@ agents = [
 
 | Consideration | Impact | Mitigation |
 |---------------|--------|------------|
-| **Async migration** | Context.md is currently sync | Gradual: start with `run` command only, expand later |
-| **Preview stability** | API may change | Pin version, isolate framework code in `context_md/framework/` |
+| **Async migration** | ContextWeave is currently sync | Gradual: start with `run` command only, expand later |
+| **Preview stability** | API may change | Pin version, isolate framework code in `context_weave/framework/` |
 | **Offline operation** | Framework requires LLM API | Keep existing CLI commands as sync fallback |
 | **Testing** | New async test patterns needed | Add `pytest-asyncio`, create integration test suite |
 
@@ -1005,7 +1005,7 @@ agents = [
 
 ### Per-Feature Recommendation
 
-| Context.md Feature | Recommendation | Target | Confidence |
+| ContextWeave Feature | Recommendation | Target | Confidence |
 |-|-|-|-|
 | Agent orchestration | **ADOPT** | Agent Framework Graph Workflows | High |
 | Tool integration | **ADOPT** | Agent Framework Tools + MCP | High |
@@ -1013,16 +1013,16 @@ agents = [
 | Context injection | **ADOPT** | Agent Framework Context Providers | High |
 | Validation/constraints | **ADOPT** | Agent Framework Middleware | Medium |
 | Observability | **ADOPT** | Agent Framework OpenTelemetry | Medium |
-| Git-native state | **KEEP** | Context.md | Very High |
-| Memory/learning | **KEEP** | Context.md (expose via Context Provider) | Very High |
-| Prompt engineering | **KEEP** | Context.md (expose via Context Provider) | Very High |
-| Context generation | **KEEP** | Context.md (expose via Context Provider) | Very High |
-| Skills library | **KEEP** | Context.md (optional Mem0 for similarity search) | Very High |
-| Agent definitions | **KEEP** | Context.md (generate framework YAML) | High |
-| GitHub integration | **KEEP** | Context.md | Very High |
-| Dashboard | **KEEP** | Context.md (evaluate DevUI as complement) | Medium |
+| Git-native state | **KEEP** | ContextWeave | Very High |
+| Memory/learning | **KEEP** | ContextWeave (expose via Context Provider) | Very High |
+| Prompt engineering | **KEEP** | ContextWeave (expose via Context Provider) | Very High |
+| Context generation | **KEEP** | ContextWeave (expose via Context Provider) | Very High |
+| Skills library | **KEEP** | ContextWeave (optional Mem0 for similarity search) | Very High |
+| Agent definitions | **KEEP** | ContextWeave (generate framework YAML) | High |
+| GitHub integration | **KEEP** | ContextWeave | Very High |
+| Dashboard | **KEEP** | ContextWeave (evaluate DevUI as complement) | Medium |
 | CI/CD workflows | **KEEP** | GitHub Actions | High |
-| Git hooks | **KEEP** | Context.md (complement with middleware) | High |
+| Git hooks | **KEEP** | ContextWeave (complement with middleware) | High |
 
 ### Overall Strategy
 
@@ -1034,7 +1034,7 @@ agents = [
 - Agent-level validation via Middleware pipeline
 - Production observability via OpenTelemetry
 
-**Keep Context.md** for:
+**Keep ContextWeave** for:
 - Git-native state (worktrees, branches, notes)
 - Memory system (lessons, effectiveness tracking, learning loop)
 - Prompt engineering pipeline (>95% success rate enabler)
@@ -1056,14 +1056,14 @@ agents = [
 | Priority | Task | Dependencies |
 |----------|------|-------------|
 | 1 | Add `agent-framework` as optional dependency in pyproject.toml | None |
-| 2 | Create `context_md/framework/` package structure | #1 |
+| 2 | Create `context_weave/framework/` package structure | #1 |
 | 3 | Implement ToolRegistry wrapping existing subprocess calls | #2 |
-| 4 | Implement ContextMdProvider (4-layer context as Context Provider) | #2 |
-| 5 | Implement ContextMdAgentFactory (agent creation with enhanced prompts) | #3, #4 |
+| 4 | Implement ContextWeaveProvider (4-layer context as Context Provider) | #2 |
+| 5 | Implement ContextWeaveAgentFactory (agent creation with enhanced prompts) | #3, #4 |
 | 6 | Implement GitThreadStore for session persistence | #2 |
 | 7 | Implement graph workflow orchestrator | #5, #6 |
 | 8 | Implement middleware (validation, file boundaries, security) | #5 |
-| 9 | Add `context-md run <issue>` CLI command | #7 |
+| 9 | Add `context-weave run <issue>` CLI command | #7 |
 | 10 | Add OpenTelemetry integration | #7 |
 | 11 | Integration testing with real LLM | #9 |
 | 12 | Gradual async migration of existing commands | #9 |
@@ -1072,13 +1072,13 @@ agents = [
 
 ```bash
 # New CLI command
-context-md run 42
+context-weave run 42
 
 # This would:
 # 1. Generate 4-layer context using existing system
 # 2. Create Agent Framework agents with enhanced prompts
 # 3. Register tools from ToolRegistry
-# 4. Inject context via ContextMdProvider
+# 4. Inject context via ContextWeaveProvider
 # 5. Run graph workflow with streaming
 # 6. Persist session to GitThreadStore
 # 7. Record outcomes to memory system
@@ -1098,8 +1098,8 @@ The discovery of Microsoft's **unified Agent Framework** significantly changes t
 | **Orchestration** | AutoGen Swarm | Agent Framework Graph Workflows |
 | **Tools** | AutoGen Tools or SK Plugins | Agent Framework Tools |
 | **State** | AutoGen save_state/load_state | Agent Framework Threads |
-| **Memory** | Keep Context.md (no framework) | Keep Context.md + expose via Context Provider |
-| **Validation** | Keep Context.md hooks | Keep hooks + add Agent Framework Middleware |
+| **Memory** | Keep ContextWeave (no framework) | Keep ContextWeave + expose via Context Provider |
+| **Validation** | Keep ContextWeave hooks | Keep hooks + add Agent Framework Middleware |
 | **Observability** | None planned | Agent Framework OpenTelemetry |
 | **Number of dependencies** | 2 (AutoGen + SK) | 1 (Agent Framework) |
 
@@ -1111,11 +1111,11 @@ The Agent Framework provides a **single, unified integration point** instead of 
 2. **One API to learn** instead of two
 3. **One upgrade path** instead of managing AutoGen + SK compatibility
 4. **Future-proof** -- this is Microsoft's strategic direction
-5. **Better architecture** -- graph workflows, context providers, and middleware are purpose-built for the patterns Context.md needs
+5. **Better architecture** -- graph workflows, context providers, and middleware are purpose-built for the patterns ContextWeave needs
 
-### What Context.md Uniquely Provides
+### What ContextWeave Uniquely Provides
 
-Even with the Agent Framework, Context.md's core value proposition remains unique:
+Even with the Agent Framework, ContextWeave's core value proposition remains unique:
 
 - **Git-native state management** -- No framework treats Git as a first-class state backend
 - **Structured learning with effectiveness tracking** -- The most advanced agent learning system available
@@ -1124,7 +1124,7 @@ Even with the Agent Framework, Context.md's core value proposition remains uniqu
 - **27 domain skill documents** -- Deep technical knowledge library
 - **Rich agent definitions** -- Constraints, file boundaries, maturity levels, validation scripts
 
-**The result is a system that combines the best of both worlds**: Context.md's deep domain expertise in AI agent context management with the Agent Framework's production-grade orchestration, tooling, and observability infrastructure.
+**The result is a system that combines the best of both worlds**: ContextWeave's deep domain expertise in AI agent context management with the Agent Framework's production-grade orchestration, tooling, and observability infrastructure.
 
 ---
 
