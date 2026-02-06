@@ -271,67 +271,29 @@ def _create_word_document_via_mcp(mcp: WordMCPClient, tokens: List, output_path:
 
 
 def _convert_md_to_pdf(md_path: Path, pdf_path: Path) -> None:
-    """Convert markdown to PDF using weasyprint or pandoc."""
-    # Try weasyprint first (better CSS support)
+    """Convert markdown to PDF using pandoc.
+    
+    Note: Direct MD→PDF requires pandoc to be installed.
+    For Windows users, convert to DOCX first, then use docx2pdf.
+    """
     try:
-        import markdown
-        from weasyprint import HTML
-        
-        # Convert MD to HTML
-        with open(md_path, "r", encoding="utf-8") as f:
-            md_content = f.read()
-        
-        html_content = markdown.markdown(md_content, extensions=[
-            "tables", "fenced_code", "codehilite", "toc"
-        ])
-        
-        # Add CSS styling
-        styled_html = f"""
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <meta charset="utf-8">
-            <style>
-                body {{
-                    font-family: Arial, sans-serif;
-                    line-height: 1.6;
-                    max-width: 800px;
-                    margin: 40px auto;
-                    padding: 20px;
-                }}
-                h1, h2, h3 {{ color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 10px; }}
-                code {{ background: #f4f4f4; padding: 2px 5px; border-radius: 3px; }}
-                pre {{ background: #f4f4f4; padding: 15px; border-radius: 5px; overflow-x: auto; }}
-                table {{ border-collapse: collapse; width: 100%; }}
-                th, td {{ border: 1px solid #ddd; padding: 8px; text-align: left; }}
-                th {{ background-color: #3498db; color: white; }}
-            </style>
-        </head>
-        <body>
-            {html_content}
-        </body>
-        </html>
-        """
-        
-        # Convert HTML to PDF
-        HTML(string=styled_html).write_pdf(str(pdf_path))
-        
-    except ImportError:
-        # Fallback to pandoc
-        try:
-            subprocess.run([
-                "pandoc",
-                str(md_path),
-                "-o", str(pdf_path),
-                "--pdf-engine=xelatex",
-                "-V", "geometry:margin=1in"
-            ], check=True)
-        except FileNotFoundError as exc:
-            raise RuntimeError(
-                "PDF conversion requires either:\n"
-                "  1. pip install weasyprint markdown\n"
-                "  2. Install pandoc: https://pandoc.org/installing.html"
-            ) from exc
+        subprocess.run([
+            "pandoc",
+            str(md_path),
+            "-o", str(pdf_path),
+            "--pdf-engine=xelatex",
+            "-V", "geometry:margin=1in"
+        ], check=True)
+    except FileNotFoundError as exc:
+        raise RuntimeError(
+            "PDF conversion requires pandoc:\n"
+            "  Install: https://pandoc.org/installing.html\n"
+            "\n"
+            "Alternative for Windows:\n"
+            "  1. Export to DOCX: context-md export document file.md --format docx\n"
+            "  2. Install docx2pdf: pip install docx2pdf\n"
+            "  3. Convert: python -m docx2pdf file.docx"
+        ) from exc
 
 
 def _convert_docx_to_pdf(docx_path: Path, pdf_path: Path) -> None:
@@ -359,49 +321,12 @@ def _convert_docx_to_pdf(docx_path: Path, pdf_path: Path) -> None:
             except ImportError:
                 logger.warning("docx2pdf not available, using weasyprint fallback")
             
-            # Fallback: Convert DOCX content to PDF via weasyprint
-            try:
-                from docx import Document
-                from weasyprint import HTML
-                
-                # Extract text content from DOCX
-                doc = Document(str(docx_path))
-                paragraphs = []
-                for p in doc.paragraphs:
-                    if p.text:
-                        paragraphs.append(f"<p>{p.text}</p>")
-                
-                html_content = f"""
-                <!DOCTYPE html>
-                <html>
-                <head>
-                    <meta charset="utf-8">
-                    <style>
-                        body {{
-                            font-family: Arial, sans-serif;
-                            line-height: 1.6;
-                            max-width: 800px;
-                            margin: 40px auto;
-                            padding: 20px;
-                        }}
-                        p {{ margin-bottom: 10px; }}
-                    </style>
-                </head>
-                <body>
-                    {''.join(paragraphs)}
-                </body>
-                </html>
-                """
-                
-                HTML(string=html_content).write_pdf(str(pdf_path))
-                logger.info("PDF created using weasyprint from DOCX content")
-                return
-            except (ImportError, OSError) as e:
-                raise RuntimeError(
-                    f"Windows PDF conversion failed: {e}\n"
-                    "Install with: pip install docx2pdf\n"
-                    "Note: Requires Microsoft Word to be installed"
-                ) from e
+            # No fallback available - require docx2pdf
+            raise RuntimeError(
+                "Windows PDF conversion requires docx2pdf:\n"
+                "Install with: pip install docx2pdf\n"
+                "Note: Requires Microsoft Word to be installed"
+            )
         else:
             # Try LibreOffice on Linux/Mac
             subprocess.run([

@@ -10,15 +10,18 @@ The export feature allows you to convert Context.md markdown deliverables (PRD, 
 
 ```bash
 # Core dependencies (required)
-pip install python-docx markdown-it-py weasyprint markdown
+pip install python-docx markdown-it-py markdown
 
-# Optional: For enhanced DOCX to PDF conversion
+# Optional: For DOCX to PDF conversion
 # Windows (requires Microsoft Word)
 pip install docx2pdf
 
 # Linux/macOS (requires LibreOffice)
 sudo apt-get install libreoffice  # Ubuntu/Debian
 brew install --cask libreoffice    # macOS
+
+# Optional: For MD to PDF (cross-platform)
+# Install pandoc: https://pandoc.org/installing.html
 ```
 
 ### Configure Word MCP Server (Optional)
@@ -103,7 +106,7 @@ deliverables/
 Export Command
     ├── markdown-it-py      # Parse markdown structure
     ├── python-docx         # Generate DOCX files
-    ├── weasyprint          # Generate PDF from HTML
+    ├── pandoc              # Generate PDF from markdown (optional)
     └── Word MCP Server     # Advanced Word document manipulation (optional)
 ```
 
@@ -116,10 +119,11 @@ Export Command
 4. Save `.docx` file
 
 ### Markdown → PDF
-1. Convert markdown to HTML using `markdown` library
-2. Add CSS styling for professional appearance
-3. Convert HTML to PDF using `weasyprint`
-4. Save `.pdf` file
+1. Convert markdown to PDF using `pandoc` (requires separate installation)
+2. Pandoc handles styling and formatting
+3. Save `.pdf` file
+
+**Note**: Recommended to export as DOCX and convert to PDF using platform tools.
 
 ### DOCX → PDF (Windows)
 - Uses `docx2pdf` (requires Microsoft Word)
@@ -148,13 +152,19 @@ done
 
 ## Troubleshooting
 
-### "weasyprint installation failed"
+### "PDF conversion requires pandoc"
 ```bash
+# Install pandoc for MD→PDF conversion
+# Visit: https://pandoc.org/installing.html
+
 # Ubuntu/Debian
-sudo apt-get install python3-dev python3-pip python3-setuptools python3-wheel python3-cffi libcairo2 libpango-1.0-0 libpangocairo-1.0-0 libgdk-pixbuf2.0-0 libffi-dev shared-mime-info
+sudo apt-get install pandoc
 
 # macOS
-brew install cairo pango gdk-pixbuf libffi
+brew install pandoc
+
+# Windows
+winget install --id JohnMacFarlane.Pandoc
 ```
 
 ### "PDF conversion requires LibreOffice"
