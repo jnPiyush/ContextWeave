@@ -16,7 +16,7 @@ from context_weave.config import Config
 from context_weave.scaffolds import get_scaffolds_dir
 from context_weave.state import State
 
-# Git hook scripts
+# Git hook scripts - call context-weave CLI for cross-platform support
 PREPARE_COMMIT_MSG_HOOK = '''#!/bin/bash
 # ContextWeave: Auto-add issue reference from branch name
 
@@ -73,33 +73,14 @@ exit 0
 
 POST_COMMIT_HOOK = '''#!/bin/bash
 # ContextWeave: Post-commit activity tracking
-
-BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null)
-
-# Only track on issue branches
-if [[ ! $BRANCH =~ ^issue-([0-9]+) ]]; then
-    exit 0
-fi
-
-ISSUE_NUM="${BASH_REMATCH[1]}"
-TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
-
-# Update Git note with last activity
-# Get current note, update it, write back
-CURRENT_NOTE=$(git notes --ref=context show "refs/heads/$BRANCH" 2>/dev/null || echo '{}')
-echo "$CURRENT_NOTE" | python3 -c "
-import json, sys
-data = json.load(sys.stdin) if sys.stdin.readable() else {}
-data['last_activity'] = '$TIMESTAMP'
-data['commits'] = data.get('commits', 0) + 1
-print(json.dumps(data))
-" 2>/dev/null | git notes --ref=context add -f -F - "refs/heads/$BRANCH" 2>/dev/null || true
+# Git commits on issue branches are automatically tracked via git-log.
+# This hook is a placeholder for future CLI integration.
 
 exit 0
 '''
 
 PRE_PUSH_HOOK = '''#!/bin/bash
-# ContextWeave: Pre-push DoD validation
+# ContextWeave: Pre-push DoD validation via CLI
 
 BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null)
 
@@ -112,11 +93,11 @@ ISSUE_NUM="${BASH_REMATCH[1]}"
 
 # Run DoD validation if context-weave is available
 if command -v context-weave &> /dev/null; then
-    context-weave validate $ISSUE_NUM --dod --quiet
+    context-weave validate dod "$ISSUE_NUM" --quiet
     if [ $? -ne 0 ]; then
         echo ""
         echo "[FAIL] Definition of Done validation failed!"
-        echo "   Run: context-weave validate $ISSUE_NUM --dod --verbose"
+        echo "   Run: context-weave validate dod $ISSUE_NUM --verbose"
         echo ""
         echo "   To bypass (not recommended): git push --no-verify"
         exit 1
@@ -128,7 +109,7 @@ exit 0
 '''
 
 POST_MERGE_HOOK = '''#!/bin/bash
-# ContextWeave: Post-merge cleanup and certificate generation
+# ContextWeave: Post-merge cleanup and certificate generation via CLI
 
 # Get the merged branch (if available from reflog)
 MERGED_BRANCH=$(git reflog -1 | grep -oP "merge \\K[^:]+")
@@ -138,7 +119,7 @@ if [[ $MERGED_BRANCH =~ ^issue-([0-9]+) ]]; then
 
     # Generate completion certificate if context-weave is available
     if command -v context-weave &> /dev/null; then
-        context-weave validate $ISSUE_NUM --certificate --quiet 2>/dev/null || true
+        context-weave validate dod "$ISSUE_NUM" --certificate --quiet 2>/dev/null || true
     fi
 
     echo "[OK] Issue #$ISSUE_NUM merged successfully"
@@ -213,10 +194,6 @@ def init_cmd(ctx: click.Context, mode: str, force: bool) -> None:
     # Create directory structure
     context_dir.mkdir(parents=True, exist_ok=True)
 
-    # Create worktrees directory
-    worktree_base = repo_root / ".." / "worktrees"
-    worktree_base.mkdir(parents=True, exist_ok=True)
-
     # Initialize configuration
     config = Config(repo_root)
     config.mode = mode
@@ -224,6 +201,10 @@ def init_cmd(ctx: click.Context, mode: str, force: bool) -> None:
 
     if verbose:
         click.echo(f"  Created config: {config.config_file}")
+
+    # Create worktrees directory (inside repo, gitignored)
+    worktree_base = repo_root / config.worktree_base
+    worktree_base.mkdir(parents=True, exist_ok=True)
 
     # Initialize state
     state = State(repo_root)
@@ -254,11 +235,13 @@ def init_cmd(ctx: click.Context, mode: str, force: bool) -> None:
         click.echo("   State: .context-weave/state.json")
         click.echo(f"   Hooks: {hooks_installed} installed")
         click.echo(f"   Agents: {scaffolds_deployed} files deployed to .github/")
-        click.echo("   Worktrees: ../worktrees/")
+        click.echo(f"   Worktrees: {config.worktree_base}/")
         click.echo("")
         click.echo("Next steps:")
-        click.echo("  1. Create an issue: context-weave issue create --title 'My task'")
-        click.echo("  2. Spawn a SubAgent: context-weave subagent spawn <issue>")
+        click.echo("  1. Quick start: context-weave start 'My task'")
+        click.echo("  Or step by step:")
+        click.echo("  1. Create an issue: context-weave issue create 'My task'")
+        click.echo("  2. Spawn a SubAgent: context-weave subagent spawn <issue> --role <role>")
         click.echo("  3. Generate context: context-weave context generate <issue>")
 
 
@@ -408,6 +391,7 @@ def update_gitignore(repo_root: Path, verbose: bool, quiet: bool) -> None:
         "# ContextWeave runtime state",
         ".context-weave/state.json",
         ".context-weave/context-*.md",
+        ".context-weave/worktrees/",
     ]
 
     existing_content = ""

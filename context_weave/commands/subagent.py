@@ -65,10 +65,14 @@ def spawn_cmd(ctx: click.Context, issue: int, role: str, title: Optional[str]) -
             f"Use 'context-weave subagent complete {issue}' to finish it first."
         )
 
-    # Generate branch name
+    # Generate branch name (keep under 80 chars to avoid long-path issues)
+    max_branch_length = 80
     branch_suffix = title or f"task-{issue}"
     branch_suffix = re.sub(r'[^a-zA-Z0-9-]', '-', branch_suffix.lower())
-    branch_name = f"issue-{issue}-{branch_suffix}"
+    prefix = f"issue-{issue}-"
+    max_suffix = max_branch_length - len(prefix)
+    branch_suffix = branch_suffix[:max_suffix].rstrip("-")
+    branch_name = f"{prefix}{branch_suffix}"
 
     # Get worktree path
     worktree_path = config.get_worktree_path(issue)
@@ -438,3 +442,103 @@ def recover_cmd(ctx: click.Context, issue: int) -> None:
         click.secho(f"[OK] Worktree recovered at: {worktree_path}", fg="green")
     except subprocess.CalledProcessError as e:
         raise click.ClickException(f"Failed to recover worktree: {e}") from e
+
+
+ROLE_ORDER = ["pm", "architect", "engineer", "reviewer", "ux"]
+ROLE_NEXT = {
+    "pm": "architect",
+    "architect": "engineer",
+    "engineer": "reviewer",
+    "reviewer": None,
+    "ux": "engineer",
+}
+
+
+@subagent_cmd.command("handoff")
+@click.argument("issue", type=int)
+@click.option("--to", "to_role", type=click.Choice(["pm", "architect", "engineer", "reviewer", "ux"]),
+              help="Target role (auto-detected if omitted)")
+@click.option("--skip-validation", is_flag=True, help="Skip DoD check before handoff")
+@click.pass_context
+def handoff_cmd(ctx: click.Context, issue: int, to_role: Optional[str],
+                skip_validation: bool) -> None:
+    """Hand off work to the next role in the workflow.
+
+    Validates DoD for current role, updates status, and generates
+    fresh context for the next role.
+
+    \b
+    Role flow: PM -> Architect -> Engineer -> Reviewer
+    UX Designer can hand off to Engineer at any point.
+
+    \b
+    Examples:
+        context-weave subagent handoff 42
+        context-weave subagent handoff 42 --to reviewer
+    """
+    repo_root = ctx.obj.get("repo_root")
+    if not repo_root:
+        raise click.ClickException("Not in a ContextWeave repository.")
+
+    state = ctx.obj.get("state", State(repo_root))
+    config = ctx.obj.get("config", Config(repo_root))
+
+    worktree = state.get_worktree(issue)
+    if not worktree:
+        raise click.ClickException(f"No active SubAgent for issue #{issue}")
+
+    current_role = worktree.role
+    next_role = to_role or ROLE_NEXT.get(current_role)
+
+    if not next_role:
+        raise click.ClickException(
+            f"No next role after '{current_role}'. Use --to to specify, "
+            "or use 'subagent complete' to finish."
+        )
+
+    click.echo(f"Handing off issue #{issue}: {current_role} -> {next_role}")
+
+    # Validate DoD for current role (unless skipped)
+    if not skip_validation:
+        from context_weave.commands.validate import _run_dod_checks_for_role
+        passed, total = _run_dod_checks_for_role(repo_root, issue, current_role, state)
+        if passed < total:
+            raise click.ClickException(
+                f"DoD validation: {passed}/{total} checks passed.\n"
+                f"Fix issues or use --skip-validation to force handoff."
+            )
+        click.echo(f"  DoD: {passed}/{total} checks passed")
+
+    # Update worktree role in state
+    state.update_worktree_role(issue, next_role)
+    state.save()
+
+    # Update Git note with handoff info
+    metadata = state.get_branch_note(worktree.branch) or {}
+    now = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+    metadata["status"] = "handoff"
+    metadata["role"] = next_role
+    metadata["handoff_from"] = current_role
+    metadata["handoff_to"] = next_role
+    metadata["handoff_at"] = now
+    metadata["last_activity"] = now
+    state.set_branch_note(worktree.branch, metadata)
+
+    # Generate fresh context for the next role
+    click.echo(f"  Generating context for {next_role}...")
+    from context_weave.commands.start import _generate_context
+    _generate_context(
+        issue=issue, repo_root=repo_root, state=state,
+        config=config, role=next_role
+    )
+
+    click.echo("")
+    click.secho(f"[OK] Handed off to {next_role}", fg="green")
+    click.echo("")
+    click.echo(f"  Issue: #{issue}")
+    click.echo(f"  From: {current_role}")
+    click.echo(f"  To: {next_role}")
+    click.echo(f"  Context: .context-weave/context-{issue}.md")
+    click.echo("")
+    click.echo("Next agent should review the updated context and continue work.")
+

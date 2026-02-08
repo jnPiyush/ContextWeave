@@ -8,11 +8,13 @@ Usage:
 """
 
 import json
+import logging
 import subprocess
+import time
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, Optional
-from urllib.error import HTTPError
+from typing import Any, Dict, List, Optional
+from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
 import click
@@ -21,6 +23,11 @@ from context_weave.config import Config
 from context_weave.state import State
 
 GITHUB_API_URL = "https://api.github.com"
+
+logger = logging.getLogger(__name__)
+
+MAX_RETRIES = 3
+RETRY_BACKOFF = 1.0  # seconds, doubled each retry
 
 
 @click.group("sync", invoke_without_command=True)
@@ -419,48 +426,85 @@ def _get_auth_token(state: State) -> Optional[str]:
     return None
 
 
-def _github_api_get(token: str, endpoint: str) -> Any:
-    """Make an authenticated GET request to GitHub API.
+def _github_request_with_retry(request: Request, timeout: int = 30) -> Dict[str, Any]:
+    """Execute an HTTP request with retry logic for transient failures.
 
-    Args:
-        token: GitHub access token
-        endpoint: API endpoint (e.g., "/repos/owner/repo/issues")
-
-    Returns:
-        Parsed JSON response
-
-    Raises:
-        HTTPError: If request fails
+    Retries on 5xx errors and network errors with exponential backoff.
+    Returns a dict with 'data' (parsed JSON) and 'headers' (captured before
+    the connection closes).
     """
+    last_error = None
+    for attempt in range(MAX_RETRIES):
+        try:
+            with urlopen(request, timeout=timeout) as response:
+                body = json.loads(response.read().decode())
+                # Capture headers before context manager closes
+                headers = dict(response.headers.items())
+                return {"data": body, "headers": headers}
+        except HTTPError as e:
+            if e.code >= 500:
+                last_error = e
+                wait = RETRY_BACKOFF * (2 ** attempt)
+                logger.warning("GitHub API %s error, retrying in %.1fs...", e.code, wait)
+                time.sleep(wait)
+                continue
+            raise
+        except (URLError, OSError) as e:
+            last_error = e
+            wait = RETRY_BACKOFF * (2 ** attempt)
+            logger.warning("Network error: %s, retrying in %.1fs...", e, wait)
+            time.sleep(wait)
+            continue
+
+    raise last_error  # type: ignore[misc]
+
+
+def _github_api_get(token: str, endpoint: str) -> Any:
+    """Make an authenticated GET request to GitHub API with pagination.
+
+    Automatically follows Link headers to fetch all pages.
+    """
+    all_results: List[Any] = []
     url = f"{GITHUB_API_URL}{endpoint}"
 
-    request = Request(
-        url,
-        headers={
-            "Accept": "application/vnd.github+json",
-            "Authorization": f"Bearer {token}",
-            "X-GitHub-Api-Version": "2022-11-28"
-        }
-    )
+    while url:
+        request = Request(
+            url,
+            headers={
+                "Accept": "application/vnd.github+json",
+                "Authorization": f"Bearer {token}",
+                "X-GitHub-Api-Version": "2022-11-28"
+            }
+        )
 
-    with urlopen(request, timeout=30) as response:
-        return json.loads(response.read().decode())
+        result = _github_request_with_retry(request)
+        data = result["data"]
+
+        if isinstance(data, list):
+            all_results.extend(data)
+        else:
+            return data  # Single object, no pagination needed
+
+        # Check for next page via Link header
+        link_header = result["headers"].get("Link", "")
+        url = _parse_next_link(link_header)
+
+    return all_results
+
+
+def _parse_next_link(link_header: str) -> Optional[str]:
+    """Parse the 'next' URL from a GitHub Link header."""
+    if not link_header:
+        return None
+    for part in link_header.split(","):
+        if 'rel="next"' in part:
+            url = part.split(";")[0].strip().strip("<>")
+            return url
+    return None
 
 
 def _github_api_post(token: str, endpoint: str, data: Dict[str, Any]) -> Any:
-    """Make an authenticated POST request to GitHub API.
-
-    Args:
-        token: GitHub access token
-        endpoint: API endpoint
-        data: JSON data to post
-
-    Returns:
-        Parsed JSON response
-
-    Raises:
-        HTTPError: If request fails
-    """
+    """Make an authenticated POST request to GitHub API with retries."""
     url = f"{GITHUB_API_URL}{endpoint}"
 
     request = Request(
@@ -475,12 +519,11 @@ def _github_api_post(token: str, endpoint: str, data: Dict[str, Any]) -> Any:
         method="POST"
     )
 
-    with urlopen(request, timeout=30) as response:
-        return json.loads(response.read().decode())
+    return _github_request_with_retry(request)["data"]
 
 
 def _github_graphql(token: str, query: str, variables: Optional[Dict[str, Any]] = None) -> Any:
-    """Execute a GraphQL query against GitHub API.
+    """Execute a GraphQL query against GitHub API with retries.
 
     Args:
         token: GitHub access token
@@ -488,20 +531,18 @@ def _github_graphql(token: str, query: str, variables: Optional[Dict[str, Any]] 
         variables: Optional query variables
 
     Returns:
-        Parsed GraphQL response
+        Parsed GraphQL response data
 
     Raises:
-        HTTPError: If request fails
+        HTTPError: If request fails after retries
         ValueError: If GraphQL returns errors
     """
-    url = "https://api.github.com/graphql"
-
-    payload = {"query": query}
+    payload: Dict[str, Any] = {"query": query}
     if variables:
         payload["variables"] = variables
 
     request = Request(
-        url,
+        f"{GITHUB_API_URL}/graphql",
         data=json.dumps(payload).encode(),
         headers={
             "Authorization": f"Bearer {token}",
@@ -510,8 +551,7 @@ def _github_graphql(token: str, query: str, variables: Optional[Dict[str, Any]] 
         method="POST"
     )
 
-    with urlopen(request, timeout=30) as response:
-        result = json.loads(response.read().decode())
+    result = _github_request_with_retry(request)["data"]
 
     if "errors" in result:
         error_messages = [err.get("message", str(err)) for err in result["errors"]]

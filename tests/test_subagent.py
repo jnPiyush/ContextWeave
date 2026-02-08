@@ -11,12 +11,15 @@ import pytest
 from click.testing import CliRunner
 
 from context_weave.commands.subagent import (
+    ROLE_NEXT,
     complete_cmd,
+    handoff_cmd,
     list_cmd,
     recover_cmd,
     spawn_cmd,
     status_cmd,
 )
+from context_weave.config import Config
 from context_weave.state import State, WorktreeInfo
 
 
@@ -223,3 +226,97 @@ class TestSubagentCommands:
 
         assert result.exit_code == 0
         assert "no recovery needed" in result.output.lower()
+
+
+class TestHandoffCommand:
+
+    def test_handoff_no_active_subagent(self, runner, temp_git_repo):
+        """Handoff should fail when no subagent exists for the issue."""
+        state = State(temp_git_repo)
+        state.save()
+        config = Config(temp_git_repo)
+        config.save()
+
+        result = runner.invoke(
+            handoff_cmd,
+            ["42"],
+            obj={"repo_root": temp_git_repo, "state": state, "config": config},
+        )
+
+        assert result.exit_code != 0
+        assert "No active SubAgent" in result.output
+
+    def test_handoff_no_next_role(self, runner, temp_git_repo):
+        """Handoff should fail when current role has no automatic next role."""
+        state = State(temp_git_repo)
+        state.add_worktree(WorktreeInfo(
+            issue=10, branch="issue-10-review",
+            path=str(temp_git_repo / "wt" / "10"), role="reviewer"
+        ))
+        state.save()
+        config = Config(temp_git_repo)
+        config.save()
+
+        result = runner.invoke(
+            handoff_cmd,
+            ["10", "--skip-validation"],
+            obj={"repo_root": temp_git_repo, "state": state, "config": config},
+        )
+
+        assert result.exit_code != 0
+        assert "No next role" in result.output
+
+    @patch("context_weave.commands.start._generate_context")
+    def test_handoff_updates_role(self, mock_gen, runner, temp_git_repo):
+        """Handoff should update the worktree role in state."""
+        state = State(temp_git_repo)
+        state.add_worktree(WorktreeInfo(
+            issue=11, branch="issue-11-design",
+            path=str(temp_git_repo / "wt" / "11"), role="architect"
+        ))
+        state.save()
+        config = Config(temp_git_repo)
+        config.save()
+
+        result = runner.invoke(
+            handoff_cmd,
+            ["11", "--skip-validation"],
+            obj={"repo_root": temp_git_repo, "state": state, "config": config},
+        )
+
+        assert result.exit_code == 0
+        assert "Handed off to engineer" in result.output
+
+        # Verify role was updated
+        state_reloaded = State(temp_git_repo)
+        wt = state_reloaded.get_worktree(11)
+        assert wt.role == "engineer"
+
+    @patch("context_weave.commands.start._generate_context")
+    def test_handoff_explicit_role(self, mock_gen, runner, temp_git_repo):
+        """Handoff should accept explicit --to role."""
+        state = State(temp_git_repo)
+        state.add_worktree(WorktreeInfo(
+            issue=12, branch="issue-12-task",
+            path=str(temp_git_repo / "wt" / "12"), role="engineer"
+        ))
+        state.save()
+        config = Config(temp_git_repo)
+        config.save()
+
+        result = runner.invoke(
+            handoff_cmd,
+            ["12", "--to", "ux", "--skip-validation"],
+            obj={"repo_root": temp_git_repo, "state": state, "config": config},
+        )
+
+        assert result.exit_code == 0
+        assert "Handed off to ux" in result.output
+
+    def test_role_next_mapping(self):
+        """Verify the role flow mapping is correct."""
+        assert ROLE_NEXT["pm"] == "architect"
+        assert ROLE_NEXT["architect"] == "engineer"
+        assert ROLE_NEXT["engineer"] == "reviewer"
+        assert ROLE_NEXT["reviewer"] is None
+        assert ROLE_NEXT["ux"] == "engineer"

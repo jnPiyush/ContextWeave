@@ -30,6 +30,9 @@ gh issue close <ID>
 
 **Using ContextWeave CLI:**
 ```bash
+# Quick-start: create issue + spawn subagent + generate context
+context-weave start "Title" --type story --role engineer
+
 # Create issue
 context-weave issue create "[Type] Description" --type story
 
@@ -38,6 +41,13 @@ context-weave issue list
 
 # Close issue
 context-weave issue close <ID>
+
+# Hand off to next role (auto-detected or explicit)
+context-weave subagent handoff <ID>
+context-weave subagent handoff <ID> --to reviewer
+
+# Check repository health
+context-weave doctor
 ```
 
 > ⚠️ **Status Tracking**: Use GitHub Projects V2 **Status** field for GitHub mode.
@@ -258,9 +268,21 @@ All AgentX core agents are currently **stable** (production-ready).
 ## Handoff Flow
 
 ```
-PM → UX → Architect → Engineer → DevOps Engineer → Reviewer → Done
-     ↑         ↑                      ↑
+PM -> UX -> Architect -> Engineer -> DevOps Engineer -> Reviewer -> Done
+     ^         ^                      ^
    (optional) (optional)         (optional, needs:devops)
+```
+
+**Using ContextWeave CLI:**
+```bash
+# Auto-detect next role from the workflow chain above
+context-weave subagent handoff <issue>
+
+# Override with explicit target role
+context-weave subagent handoff <issue> --to <role>
+
+# Skip DoD validation (force handoff)
+context-weave subagent handoff <issue> --skip-validation
 ```
 
 | Phase | Status Transition | Meaning |

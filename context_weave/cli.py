@@ -39,10 +39,12 @@ from context_weave.commands import (
     config,
     context,
     dashboard,
+    doctor,
     export,
     init,
     issue,
     memory,
+    start,
     status,
     subagent,
     sync,
@@ -131,6 +133,8 @@ cli.add_command(validate.validate_cmd, name="validate")
 cli.add_command(status.status_cmd, name="status")
 cli.add_command(dashboard.dashboard_cmd, name="dashboard")  # Real-time web dashboard
 cli.add_command(sync.sync_cmd, name="sync")
+cli.add_command(start.start_cmd, name="start")  # Quick-start workflow
+cli.add_command(doctor.doctor_cmd, name="doctor")  # Diagnostics
 
 # Conditionally register agent framework command
 try:

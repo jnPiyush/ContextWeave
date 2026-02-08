@@ -160,16 +160,42 @@ class Memory:
 
     # ============ Lessons Learned ============
 
+    @staticmethod
+    def _word_set(text: str) -> set:
+        """Extract a set of lowercase words from text for similarity comparison."""
+        return set(text.lower().split())
+
+    @staticmethod
+    def _similarity(a: str, b: str) -> float:
+        """Jaccard similarity between two strings (word-level). 0.0-1.0."""
+        words_a = Memory._word_set(a)
+        words_b = Memory._word_set(b)
+        if not words_a or not words_b:
+            return 0.0
+        intersection = words_a & words_b
+        union = words_a | words_b
+        return len(intersection) / len(union)
+
+    SIMILARITY_THRESHOLD = 0.6  # Merge lessons above this similarity
+
     def add_lesson(self, lesson: LessonLearned) -> None:
-        """Add a new lesson learned."""
+        """Add a new lesson, merging with near-duplicates if found."""
         lessons = self._data.get("lessons", [])
 
-        # Check for similar existing lesson
+        # Check for similar existing lesson (exact match or fuzzy)
         for existing in lessons:
-            if (existing.get("category") == lesson.category and
-                existing.get("lesson") == lesson.lesson):
-                # Update existing lesson's applied count
+            if existing.get("category") != lesson.category:
+                continue
+            # Exact match or high similarity -> merge
+            if (existing.get("lesson") == lesson.lesson or
+                    self._similarity(existing.get("lesson", ""), lesson.lesson) >= self.SIMILARITY_THRESHOLD):
                 existing["applied_count"] = existing.get("applied_count", 0) + 1
+                # Keep the longer (more detailed) lesson text
+                if len(lesson.lesson) > len(existing.get("lesson", "")):
+                    existing["lesson"] = lesson.lesson
+                # Blend effectiveness toward the new outcome
+                if lesson.outcome == "success":
+                    existing["effectiveness"] = min(1.0, existing.get("effectiveness", 1.0) + 0.05)
                 self.save()
                 return
 
@@ -177,7 +203,7 @@ class Memory:
 
         # Prune to MAX_LESSONS, keeping most effective
         if len(lessons) > self.MAX_LESSONS:
-            lessons.sort(key=lambda x: x.get("effectiveness", 0) * x.get("applied_count", 1), reverse=True)
+            lessons.sort(key=lambda x: x.get("effectiveness", 0) * (x.get("applied_count", 0) + 1), reverse=True)
             self._data["lessons"] = lessons[:self.MAX_LESSONS]
         else:
             self._data["lessons"] = lessons

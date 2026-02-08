@@ -13,8 +13,6 @@ from pathlib import Path
 from typing import List, Optional
 
 import click
-from docx import Document
-from docx.shared import Pt, RGBColor
 
 logger = logging.getLogger(__name__)
 
@@ -208,6 +206,15 @@ def _convert_md_to_docx(md_path: Path, docx_path: Path, _template: Optional[Path
 def _create_word_document_direct(tokens: List, output_path: Path,
                                   document_title: str) -> None:
     """Create Word document using python-docx directly."""
+    try:
+        from docx import Document
+        from docx.shared import Pt, RGBColor
+    except ImportError as exc:
+        raise ImportError(
+            "python-docx is required for DOCX export.\n"
+            "Install with: pip install python-docx"
+        ) from exc
+
     logger.info("Creating Word document: %s", output_path)
 
     # Create new document

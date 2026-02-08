@@ -37,7 +37,7 @@ GITHUB_CLIENT_ID = os.getenv(
 )
 GITHUB_DEVICE_CODE_URL = "https://github.com/login/device/code"
 GITHUB_TOKEN_URL = "https://github.com/login/oauth/access_token"
-GITHUB_API_URL = "https://api.github.com"
+GITHUB_API_URL = "https://api.github.com"  # Used by helper functions below
 
 # Scopes needed for ContextWeave operations
 GITHUB_SCOPES = "repo read:org read:user"

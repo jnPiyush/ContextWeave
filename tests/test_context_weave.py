@@ -115,7 +115,7 @@ class TestConfig:
         """Test default configuration."""
         config = Config(temp_git_repo)
         assert config.mode == "local"
-        assert config.worktree_base == "../worktrees"
+        assert config.worktree_base == ".context-weave/worktrees"
 
     def test_skill_routing(self, temp_git_repo):
         """Test skill routing for labels."""

@@ -23,19 +23,49 @@ class Config:
 
     CONFIG_FILE = "config.json"
 
+    # Maps human-readable skill names to their numeric IDs.
+    # Users can use either form in config; names are resolved at lookup time.
+    SKILL_NAME_TO_NUMBER = {
+        "core-principles": "#01",
+        "testing": "#02",
+        "error-handling": "#03",
+        "security": "#04",
+        "performance": "#05",
+        "database": "#06",
+        "scalability": "#07",
+        "code-organization": "#08",
+        "api-design": "#09",
+        "configuration": "#10",
+        "documentation": "#11",
+        "version-control": "#12",
+        "type-safety": "#13",
+        "dependency-management": "#14",
+        "logging-monitoring": "#15",
+        "remote-git-operations": "#16",
+        "ai-agent-development": "#17",
+        "code-review-and-audit": "#18",
+        "csharp": "#19",
+        "python": "#20",
+        "frontend-ui": "#21",
+        "react": "#22",
+        "blazor": "#23",
+        "postgresql": "#24",
+        "sql-server": "#25",
+    }
+
     DEFAULT_CONFIG = {
         "version": "1.0",
         "mode": "local",
-        "worktree_base": "../worktrees",
+        "worktree_base": ".context-weave/worktrees",
         "skill_routing": {
-            "api": ["#09", "#04", "#02", "#11"],
-            "database": ["#06", "#04", "#02"],
-            "security": ["#04", "#10", "#02", "#13", "#15"],
-            "frontend": ["#21", "#22", "#02", "#11"],
-            "bug": ["#03", "#02", "#15"],
-            "performance": ["#05", "#06", "#02", "#15"],
-            "ai": ["#17", "#04"],
-            "default": ["#02", "#04", "#11"]
+            "api": ["api-design", "security", "testing", "documentation"],
+            "database": ["database", "security", "testing"],
+            "security": ["security", "configuration", "testing", "type-safety", "logging-monitoring"],
+            "frontend": ["frontend-ui", "react", "testing", "documentation"],
+            "bug": ["error-handling", "testing", "logging-monitoring"],
+            "performance": ["performance", "database", "testing", "logging-monitoring"],
+            "ai": ["ai-agent-development", "security"],
+            "default": ["testing", "security", "documentation"]
         },
         "validation": {
             "stuck_threshold_hours": {
@@ -126,26 +156,39 @@ class Config:
     @property
     def worktree_base(self) -> str:
         """Get worktree base directory (relative to repo root)."""
-        return self._data.get("worktree_base", "../worktrees")
+        return self._data.get("worktree_base", ".context-weave/worktrees")
 
     def get_worktree_path(self, issue: int) -> Path:
         """Get full worktree path for an issue."""
         base = self.repo_root / self.worktree_base
         return base / str(issue)
 
+    def _resolve_skill(self, skill: str) -> str:
+        """Resolve a skill name or number to its #XX number form.
+
+        Accepts both 'testing' (name) and '#02' (number) formats.
+        """
+        if skill.startswith("#"):
+            return skill  # Already a number
+        return self.SKILL_NAME_TO_NUMBER.get(skill, skill)
+
     def get_skills_for_labels(self, labels: list) -> list:
-        """Get skill numbers for a set of labels."""
+        """Get skill numbers for a set of labels.
+
+        Skill routing values can be human-readable names (e.g. 'testing')
+        or legacy #XX numbers. Both are resolved to #XX for loading.
+        """
         routing = self._data.get("skill_routing", {})
         skills = set()
 
         for label in labels:
             label_lower = label.lower()
             if label_lower in routing:
-                skills.update(routing[label_lower])
+                skills.update(self._resolve_skill(s) for s in routing[label_lower])
 
         # Add default skills if no specific matches
         if not skills:
-            skills.update(routing.get("default", []))
+            skills.update(self._resolve_skill(s) for s in routing.get("default", []))
 
         return sorted(skills)
 

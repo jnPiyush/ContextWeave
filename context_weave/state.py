@@ -166,6 +166,14 @@ class State:
                 return w
         return None
 
+    def update_worktree_role(self, issue: int, new_role: str) -> bool:
+        """Update the role of an existing worktree entry."""
+        for w in self._data.get("worktrees", []):
+            if w.get("issue") == issue:
+                w["role"] = new_role
+                return True
+        return False
+
     @property
     def github(self) -> GitHubConfig:
         """Get GitHub configuration."""

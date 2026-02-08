@@ -11,7 +11,7 @@ Usage:
 import json
 import logging
 import subprocess
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import List, Optional, Tuple
 
@@ -237,6 +237,25 @@ def validate_all_cmd(ctx: click.Context, issue: int, verbose: bool) -> None:
     ctx.invoke(validate_dod_cmd, issue=issue, verbose=verbose)
 
 
+def _check_doc_content(path: Path, min_length: int, required_headings: list) -> Tuple[bool, str]:
+    """Check a doc file exists and has substantive content.
+
+    Returns (passed, remediation).
+    """
+    if not path.exists():
+        return False, f"Create file at {path}"
+
+    content = path.read_text(encoding="utf-8", errors="ignore")
+    if len(content.strip()) < min_length:
+        return False, f"File too short ({len(content.strip())} chars, need {min_length}+): {path.name}"
+
+    missing = [h for h in required_headings if h.lower() not in content.lower()]
+    if missing:
+        return False, f"Missing sections in {path.name}: {', '.join(missing)}"
+
+    return True, ""
+
+
 def _run_dod_check(repo_root: Path, issue: int, _role: str, check_id: str, state: State) -> Tuple[bool, str]:
     """Run a specific DoD check and return (passed, remediation).
 
@@ -250,23 +269,23 @@ def _run_dod_check(repo_root: Path, issue: int, _role: str, check_id: str, state
 
     if check_id == "prd_exists":
         path = repo_root / "docs" / "prd" / f"PRD-{issue}.md"
-        return path.exists(), f"Create PRD at {path}"
+        return _check_doc_content(path, 300, ["## Acceptance Criteria"])
 
     elif check_id == "adr_exists":
         path = repo_root / "docs" / "adr" / f"ADR-{issue}.md"
-        return path.exists(), f"Create ADR at {path}"
+        return _check_doc_content(path, 200, ["## Decision", "## Status"])
 
     elif check_id == "spec_exists":
         path = repo_root / "docs" / "specs" / f"SPEC-{issue}.md"
-        return path.exists(), f"Create Tech Spec at {path}"
+        return _check_doc_content(path, 200, ["## Overview"])
 
     elif check_id == "review_doc":
         path = repo_root / "docs" / "reviews" / f"REVIEW-{issue}.md"
-        return path.exists(), f"Create Review at {path}"
+        return _check_doc_content(path, 100, [])
 
     elif check_id == "ux_doc":
         path = repo_root / "docs" / "ux" / f"UX-{issue}.md"
-        return path.exists(), f"Create UX Design at {path}"
+        return _check_doc_content(path, 100, [])
 
     elif check_id == "code_committed":
         worktree = state.get_worktree(issue)
@@ -286,32 +305,33 @@ def _run_dod_check(repo_root: Path, issue: int, _role: str, check_id: str, state
             return False, f"Could not check git status: {e}"
 
     elif check_id == "tests_passing":
-        # Try to run tests
+        # Try to actually run tests
         try:
-            # Try pytest first
             result = subprocess.run(
-                ["pytest", "--co", "-q"],
-                cwd=repo_root, capture_output=True, text=True, timeout=30,
+                ["pytest", "-x", "-q", "--tb=no"],
+                cwd=repo_root, capture_output=True, text=True, timeout=120,
                 check=False
             )
             if result.returncode == 0:
                 return True, ""
-        except (subprocess.TimeoutExpired, FileNotFoundError) as e:
-            logger.debug("pytest check failed: %s", e)
+            return False, "Tests failing. Run: pytest"
+        except (subprocess.TimeoutExpired, FileNotFoundError):
+            pass
 
         # Try dotnet test
         try:
             result = subprocess.run(
-                ["dotnet", "test", "--list-tests"],
-                cwd=repo_root, capture_output=True, text=True, timeout=30,
+                ["dotnet", "test", "--no-build", "-v", "q"],
+                cwd=repo_root, capture_output=True, text=True, timeout=120,
                 check=False
             )
             if result.returncode == 0:
                 return True, ""
-        except (subprocess.TimeoutExpired, FileNotFoundError) as e:
-            logger.debug("dotnet test check failed: %s", e)
+            return False, "Tests failing. Run: dotnet test"
+        except (subprocess.TimeoutExpired, FileNotFoundError):
+            pass
 
-        return True, "Unable to verify - check manually"  # Can't verify, assume OK
+        return True, "Unable to verify - check manually"
 
     elif check_id == "no_lint_errors":
         # Try ruff/pylint for Python
@@ -357,13 +377,30 @@ def _display_validation_results(results: List[Tuple[str, bool, str]], title: str
         click.echo("Fix the issues above before proceeding.")
 
 
+def _run_dod_checks_for_role(repo_root: Path, issue: int, role: str, state: State) -> tuple:
+    """Run DoD checks for a role and return (passed_count, total_count).
+
+    Used by handoff command to validate before role transition.
+    """
+    checklist = DOD_CHECKLISTS.get(role, DOD_CHECKLISTS["engineer"])
+    passed_count = 0
+    total = len(checklist["checks"])
+
+    for check_id, _description in checklist["checks"]:
+        ok, _remediation = _run_dod_check(repo_root, issue, role, check_id, state)
+        if ok:
+            passed_count += 1
+
+    return passed_count, total
+
+
 def _generate_certificate(repo_root: Path, issue: int, role: str, results: List) -> None:
     """Generate a completion certificate."""
     cert_dir = repo_root / ".context-weave" / "certificates"
     cert_dir.mkdir(parents=True, exist_ok=True)
 
-    timestamp = datetime.utcnow().isoformat() + "Z"
-    cert_id = f"CERT-{issue}-{datetime.utcnow().strftime('%Y%m%d%H%M')}"
+    timestamp = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+    cert_id = f"CERT-{issue}-{datetime.now(timezone.utc).strftime('%Y%m%d%H%M')}"
 
     certificate = {
         "id": cert_id,

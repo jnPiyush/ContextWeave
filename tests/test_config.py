@@ -36,7 +36,7 @@ class TestConfigClass:
         config = Config(tmp_path)
 
         assert config.mode == "local"
-        assert config.worktree_base == "../worktrees"
+        assert config.worktree_base == ".context-weave/worktrees"
         assert "api" in config._data.get("skill_routing", {})
         assert "bug" in config._data.get("validation", {}).get("stuck_threshold_hours", {})
 
