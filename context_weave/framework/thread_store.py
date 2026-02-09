@@ -196,7 +196,7 @@ class GitThreadStore:
     def list_threads(repo_root: Path) -> List[Dict[str, Any]]:
         """List all stored threads."""
         threads_dir = repo_root / ".context-weave" / GitThreadStore.THREADS_DIR
-        threads = []
+        threads: List[Dict[str, Any]] = []
 
         if not threads_dir.exists():
             return threads

@@ -8,7 +8,7 @@ Usage:
 """
 
 import json
-from typing import Optional
+from typing import Optional, Union
 
 import click
 
@@ -96,7 +96,7 @@ def config_cmd(ctx: click.Context, key: Optional[str], value: Optional[str],
                 click.echo(f"{key}: {result}")
 
 
-def _convert_value(value: str):
+def _convert_value(value: str) -> Union[bool, int, float, list[str], str]:
     """Convert string value to appropriate type."""
     # Boolean
     if value.lower() in ("true", "yes", "1", "on"):

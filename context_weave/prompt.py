@@ -101,7 +101,7 @@ class EnhancedPrompt:
 
 
 # Role-specific prompt templates
-ROLE_TEMPLATES = {
+ROLE_TEMPLATES: Dict[str, Dict[str, Any]] = {
     "pm": {
         "role_primer": (
             "You are a **Product Manager Agent** responsible for defining clear, "
@@ -283,8 +283,8 @@ class PromptEngineer:
     to role-based agents, improving clarity and completeness.
     """
 
-    def __init__(self):
-        self.templates = ROLE_TEMPLATES
+    def __init__(self) -> None:
+        self.templates: Dict[str, Dict[str, Any]] = ROLE_TEMPLATES
 
     def enhance_prompt(
         self,
@@ -293,7 +293,7 @@ class PromptEngineer:
         issue_number: int,
         issue_type: str,
         labels: List[str],
-        context: Dict[str, Any] = None
+        context: Optional[Dict[str, Any]] = None
     ) -> EnhancedPrompt:
         """
         Enhance a raw prompt for a specific role.
