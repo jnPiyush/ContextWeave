@@ -16,7 +16,10 @@
 ## 📦 Installation
 
 ```bash
-# Install from source
+# Install from GitHub
+pip install git+https://github.com/jnPiyush/ContextWeave.git
+
+# Or install from source (development)
 pip install -e .
 
 # Or with dev dependencies
@@ -37,6 +40,9 @@ context-weave context generate 456
 
 # Check status
 context-weave status
+
+# Diagnose issues
+context-weave doctor
 
 # Validate Definition of Done
 context-weave validate 456 --dod

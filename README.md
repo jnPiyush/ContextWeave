@@ -10,7 +10,7 @@
 
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Tests](https://img.shields.io/badge/tests-358%20passing-brightgreen.svg)](./tests)
+[![Tests](https://img.shields.io/badge/tests-passing-brightgreen.svg)](./tests)
 [![Coverage](https://img.shields.io/badge/coverage-68%25-yellowgreen.svg)](./htmlcov)
 [![Automation](https://img.shields.io/badge/automation-10%20layers-blue.svg)](./.github/workflows)
 
@@ -342,20 +342,20 @@ Workflow: PM → UX → Architect → Engineer → Reviewer → Done
 - **Git 2.20+** (for worktree and notes support)
 - **VS Code** with GitHub Copilot (for sub-agent dropdown)
 
-### Install from PyPI
+### Install from GitHub
 
 ```bash
-pip install context-weave
+pip install git+https://github.com/jnPiyush/ContextWeave.git
 ```
 
-### Install from Source
+### Install from Source (Development)
 
 ```bash
 # Clone the repository
 git clone https://github.com/jnPiyush/ContextWeave.git
 cd ContextWeave
 
-# Install with pip
+# Install in editable mode
 pip install -e .
 
 # Or with development dependencies
@@ -366,7 +366,7 @@ pip install -e ".[dev]"
 
 ```bash
 context-weave --version
-# context-weave, version 0.1.0
+# context-weave, version 2.0.0
 ```
 
 ### Initialize in Your Project
@@ -465,6 +465,10 @@ context-weave validate 1 --dod
 ```
 context-weave
 ├── init          # Initialize ContextWeave in repository
+├── auth          # GitHub OAuth authentication
+│   ├── login     # Authenticate with GitHub
+│   ├── logout    # Remove authentication
+│   └── status    # Show auth status
 ├── config        # View/modify configuration
 ├── issue         # Create/manage local issues
 │   ├── create    # Create new issue
@@ -496,10 +500,10 @@ context-weave
 │   ├── setup     # Configure GitHub sync
 │   ├── pull      # Pull from GitHub
 │   └── push      # Push to GitHub
-├── auth          # GitHub authentication
-│   ├── login     # Authenticate with GitHub
-│   ├── logout    # Remove authentication
-│   └── status    # Show auth status
+├── start         # Quick-start: create issue + spawn subagent + generate context
+├── export        # Export markdown documents to DOCX and PDF formats
+├── doctor        # Diagnose and fix common ContextWeave issues
+├── dashboard     # Start real-time web dashboard (experimental)
 └── status        # Show current status
 ```
 
@@ -578,18 +582,27 @@ ContextWeave/
 │   │   ├── auth.py             # GitHub OAuth authentication
 │   │   ├── config.py           # Config commands
 │   │   ├── context.py          # Context generation
+│   │   ├── dashboard.py        # Dashboard commands
+│   │   ├── doctor.py           # Diagnostics & repair
+│   │   ├── export.py           # DOCX/PDF export
 │   │   ├── init.py             # Repository initialization + scaffold deploy
 │   │   ├── issue.py            # Issue management
 │   │   ├── memory.py           # Memory CLI commands
+│   │   ├── start.py            # Quick-start workflow
 │   │   ├── status.py           # Status display
 │   │   ├── subagent.py         # SubAgent management
 │   │   ├── sync.py             # GitHub sync
 │   │   └── validate.py         # Validation commands
-│   ├── framework/              # Microsoft Agent Framework integration
+│   ├── framework/              # Microsoft Agent Framework integration (optional)
+│   │   ├── __init__.py         # Feature flag (AGENT_FRAMEWORK_AVAILABLE)
 │   │   ├── agents.py           # Agent definitions
+│   │   ├── config.py           # Framework configuration
+│   │   ├── context_provider.py # Context provider
+│   │   ├── middleware.py       # Middleware pipeline
 │   │   ├── orchestrator.py     # Multi-agent orchestrator
-│   │   ├── tools.py            # Tool definitions
-│   │   └── ...
+│   │   ├── run.py              # Run CLI command
+│   │   ├── thread_store.py     # Thread storage
+│   │   └── tools.py            # Tool definitions
 │   └── static/                 # Web dashboard assets
 │       ├── dashboard.html
 │       ├── dashboard.css
@@ -599,17 +612,20 @@ ContextWeave/
 │       └── 4-LAYER-CONTEXT-ARCHITECTURE.md
 ├── examples/
 │   └── prompt_enhancement_demo.py
-├── tests/                      # Test suite (358 tests)
+├── tests/                      # Test suite
 │   ├── test_auth.py
 │   ├── test_config.py
 │   ├── test_context_weave.py
+│   ├── test_doctor.py
 │   ├── test_issue.py
 │   ├── test_memory.py
 │   ├── test_prompt.py
 │   ├── test_security.py
+│   ├── test_start.py
+│   ├── test_subagent.py
 │   ├── test_sync.py
 │   ├── test_validate.py
-│   └── test_framework_*.py    # Framework tests
+│   └── test_framework_*.py    # Framework integration tests
 ├── .github/
 │   ├── agents/                 # Role-specific agent definitions
 │   │   ├── agent-x.agent.md    # Hub coordinator
@@ -650,8 +666,8 @@ pytest tests/test_memory.py -v
 ```
 
 **Current Status:**
-- ✅ 358 tests passing
-- 📊 ~68% code coverage
+- Tests passing
+- ~68% code coverage
 
 ---
 
@@ -766,6 +782,9 @@ We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guid
 git clone https://github.com/jnPiyush/ContextWeave.git
 cd ContextWeave
 pip install -e ".[dev]"
+
+# Or install directly for contributing
+pip install git+https://github.com/jnPiyush/ContextWeave.git
 
 # Run tests
 pytest tests/ -v
