@@ -348,20 +348,6 @@ Workflow: PM → UX → Architect → Engineer → Reviewer → Done
 pip install git+https://github.com/jnPiyush/ContextWeave.git
 ```
 
-### Install from Source (Development)
-
-```bash
-# Clone the repository
-git clone https://github.com/jnPiyush/ContextWeave.git
-cd ContextWeave
-
-# Install in editable mode
-pip install -e .
-
-# Or with development dependencies
-pip install -e ".[dev]"
-```
-
 ### Verify Installation
 
 ```bash

@@ -16,14 +16,7 @@
 ## 📦 Installation
 
 ```bash
-# Install from GitHub
 pip install git+https://github.com/jnPiyush/ContextWeave.git
-
-# Or install from source (development)
-pip install -e .
-
-# Or with dev dependencies
-pip install -e ".[dev]"
 ```
 
 ## 🚀 Quick Start
