@@ -56,7 +56,8 @@ def export_document_cmd(_ctx: click.Context, filepath: str, output_format: str,
     if output_format in ["docx", "both"]:
         docx_path = output_dir / f"{base_name}.docx"
         try:
-            _convert_md_to_docx(filepath_obj, docx_path, template)
+            template_path = Path(template) if template else None
+            _convert_md_to_docx(filepath_obj, docx_path, template_path)
             click.echo(f"[SUCCESS] DOCX created: {docx_path}")
         except (OSError, RuntimeError, ImportError) as e:
             click.echo(f"[ERROR] DOCX conversion failed: {e}", err=True)
@@ -171,7 +172,7 @@ def _extract_table_from_tokens(tokens: List, start_index: int) -> Optional[List[
 
 def _find_issue_documents(repo_root: Path, issue_number: int) -> List[Path]:
     """Find all deliverable documents for an issue."""
-    docs = []
+    docs: List[Path] = []
 
     # Search patterns
     patterns = [

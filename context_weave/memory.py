@@ -452,4 +452,4 @@ class Memory:
     @property
     def metrics(self) -> Dict[str, Any]:
         """Get current metrics."""
-        return self._data.get("metrics", {})
+        return dict(self._data.get("metrics", {}))

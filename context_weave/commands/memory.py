@@ -336,13 +336,13 @@ def session_show_cmd(ctx: click.Context, issue: int, history: bool) -> None:
         click.secho(f"Session History for Issue #{issue}", fg="cyan", bold=True)
         click.echo("")
 
-        for i, session in enumerate(reversed(sessions), 1):
-            click.echo(f"{i}. {session.timestamp}")
-            click.echo(f"   Summary: {session.summary}")
-            click.echo(f"   Progress: {session.progress}")
+        for i, sess in enumerate(reversed(sessions), 1):
+            click.echo(f"{i}. {sess.timestamp}")
+            click.echo(f"   Summary: {sess.summary}")
+            click.echo(f"   Progress: {sess.progress}")
             click.echo("")
     else:
-        session = memory.get_latest_session(issue)
+        session: Optional[SessionContext] = memory.get_latest_session(issue)
         if not session:
             click.echo(f"No session context for issue #{issue}")
             return

@@ -10,7 +10,7 @@ Usage:
 import json
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any, Dict, List
 
 import click
 
@@ -66,15 +66,15 @@ def _collect_status(repo_root: Path, state: State, config: Config) -> Dict[str, 
     branches = state.get_issue_branches()
 
     # Analyze worktrees
-    worktree_info = []
-    stuck_issues = []
+    worktree_info: List[Dict[str, Any]] = []
+    stuck_issues: List[Dict[str, Any]] = []
 
     for wt in worktrees:
         last_commit = state.get_last_commit_time(wt.branch)
         metadata = state.get_branch_note(wt.branch) or {}
 
         # Calculate hours since last activity
-        hours_inactive = 0
+        hours_inactive = 0.0
         if last_commit:
             delta = datetime.now(timezone.utc) - last_commit.replace(tzinfo=timezone.utc)
             hours_inactive = delta.total_seconds() / 3600
@@ -101,13 +101,13 @@ def _collect_status(repo_root: Path, state: State, config: Config) -> Dict[str, 
             stuck_issues.append(info)
 
     # Count by role
-    by_role = {}
+    by_role: Dict[str, int] = {}
     for wt in worktree_info:
         role = wt["role"]
         by_role[role] = by_role.get(role, 0) + 1
 
     # Count by status
-    by_status = {}
+    by_status: Dict[str, int] = {}
     for wt in worktree_info:
         status = wt["status"]
         by_status[status] = by_status.get(status, 0) + 1

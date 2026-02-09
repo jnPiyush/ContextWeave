@@ -115,7 +115,7 @@ class Config:
     @property
     def mode(self) -> str:
         """Get operating mode."""
-        return self._data.get("mode", "local")
+        return str(self._data.get("mode", "local"))
 
     @mode.setter
     def mode(self, value: str) -> None:
@@ -127,7 +127,7 @@ class Config:
     @property
     def worktree_base(self) -> str:
         """Get worktree base directory (relative to repo root)."""
-        return self._data.get("worktree_base", ".context-weave/worktrees")
+        return str(self._data.get("worktree_base", ".context-weave/worktrees"))
 
     def get_worktree_path(self, issue: int) -> Path:
         """Get full worktree path for an issue."""
@@ -156,22 +156,22 @@ class Config:
     @property
     def max_skill_tokens(self) -> int:
         """Max estimated tokens for skill content in generated context."""
-        return self._data.get("max_skill_tokens", 8000)
+        return int(self._data.get("max_skill_tokens", 8000))
 
     def get_stuck_threshold(self, issue_type: str) -> int:
         """Get stuck detection threshold in hours for an issue type."""
         thresholds = self._data.get("validation", {}).get("stuck_threshold_hours", {})
-        return thresholds.get(issue_type, 24)  # Default 24 hours
+        return int(thresholds.get(issue_type, 24))  # Default 24 hours
 
     def get_required_fields(self, issue_type: str) -> list:
         """Get required fields for an issue type."""
         fields = self._data.get("validation", {}).get("required_fields", {})
-        return fields.get(issue_type, [])
+        return list(fields.get(issue_type, []))
 
     def is_hook_enabled(self, hook_name: str) -> bool:
         """Check if a Git hook is enabled."""
         hooks = self._data.get("hooks", {})
-        return hooks.get(hook_name, True)
+        return bool(hooks.get(hook_name, True))
 
     def to_dict(self) -> Dict[str, Any]:
         """Get configuration as dictionary."""

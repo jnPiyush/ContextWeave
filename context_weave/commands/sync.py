@@ -13,7 +13,7 @@ import subprocess
 import time
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
@@ -435,7 +435,7 @@ def _github_request_with_retry(request: Request, timeout: int = 30) -> Dict[str,
     Returns a dict with 'data' (parsed JSON) and 'headers' (captured before
     the connection closes).
     """
-    last_error = None
+    last_error: Optional[Union[HTTPError, OSError]] = None
     for attempt in range(MAX_RETRIES):
         try:
             with urlopen(request, timeout=timeout) as response:
@@ -467,7 +467,7 @@ def _github_api_get(token: str, endpoint: str) -> Any:
     Automatically follows Link headers to fetch all pages.
     """
     all_results: List[Any] = []
-    url = f"{GITHUB_API_URL}{endpoint}"
+    url: Optional[str] = f"{GITHUB_API_URL}{endpoint}"
 
     while url:
         request = Request(
@@ -562,7 +562,7 @@ def _github_graphql(token: str, query: str, variables: Optional[Dict[str, Any]] 
     return result.get("data")
 
 
-def get_project_field_ids(token: str, owner: str, repo: str, project_number: int) -> Dict[str, str]:
+def get_project_field_ids(token: str, owner: str, repo: str, project_number: int) -> Dict[str, Dict[str, Any]]:
     """Get field IDs for a GitHub Projects V2 project.
 
     Retrieves the internal field IDs needed to update project fields like Status.
@@ -667,12 +667,12 @@ def update_project_status(
     if "Status" not in fields:
         raise ValueError("Status field not found in project")
 
-    status_field = fields["Status"]
+    status_field: Dict[str, Any] = fields["Status"]
     if status not in status_field.get("options", {}):
         available = ", ".join(status_field.get("options", {}).keys())
         raise ValueError(f"Invalid status '{status}'. Available: {available}")
 
-    status_option_id = status_field["options"][status]
+    status_option_id: str = status_field["options"][status]
 
     # Step 2: Get issue node ID
     issue_query = """

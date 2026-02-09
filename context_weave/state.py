@@ -130,7 +130,7 @@ class State:
     @property
     def mode(self) -> str:
         """Get current operating mode (local/github/hybrid)."""
-        return self._data.get("mode", "local")
+        return str(self._data.get("mode", "local"))
 
     @mode.setter
     def mode(self, value: str) -> None:
@@ -189,7 +189,8 @@ class State:
         """Get locally tracked issues."""
         if "local_issues" not in self._data:
             self._data["local_issues"] = {}
-        return self._data["local_issues"]
+        issues: Dict[str, Any] = self._data["local_issues"]
+        return issues
 
     @local_issues.setter
     def local_issues(self, issues: Dict[str, Any]) -> None:
@@ -255,7 +256,8 @@ class State:
     def github_token_created(self) -> Optional[str]:
         """Get timestamp when token was created."""
         auth = self._data.get("auth", {})
-        return auth.get("github_token_created")
+        value = auth.get("github_token_created")
+        return str(value) if value is not None else None
 
     @github_token_created.setter
     def github_token_created(self, timestamp: Optional[str]) -> None:
@@ -320,7 +322,7 @@ class State:
                 elif line.startswith("branch "):
                     current["branch"] = line[7:]
                 elif line == "bare":
-                    current["bare"] = True
+                    current["bare"] = "true"
             if current:
                 worktrees.append(current)
             return worktrees
@@ -337,7 +339,8 @@ class State:
                 text=True,
                 check=True
             )
-            return json.loads(result.stdout.strip())
+            parsed: Dict[str, Any] = json.loads(result.stdout.strip())
+            return parsed
         except (subprocess.CalledProcessError, json.JSONDecodeError):
             return None
 

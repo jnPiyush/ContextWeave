@@ -246,7 +246,7 @@ def status_cmd(ctx: click.Context, as_json: bool) -> None:
 
     state = State(repo_root)
 
-    status_data = {
+    status_data: Dict[str, Any] = {
         "authenticated": False,
         "method": None,
         "user": None,
@@ -288,17 +288,18 @@ def status_cmd(ctx: click.Context, as_json: bool) -> None:
 
     click.echo("")
     if status_data["authenticated"]:
-        user = status_data["user"]
+        user_data: Dict[str, Any] = status_data.get("user", {})
         method = "OAuth" if status_data["method"] == "oauth" else "GitHub CLI"
 
         click.secho("[OK] Authenticated with GitHub", fg="green")
         click.echo("")
         click.echo(f"  Method: {method}")
-        click.echo(f"  User: @{user['login']}")
-        if user.get("name"):
-            click.echo(f"  Name: {user['name']}")
+        click.echo(f"  User: @{user_data.get('login', 'unknown')}")
+        if user_data.get("name"):
+            click.echo(f"  Name: {user_data['name']}")
         if status_data.get("scopes"):
-            click.echo(f"  Scopes: {', '.join(status_data['scopes'])}")
+            scopes_list: List[str] = status_data.get("scopes", [])
+            click.echo(f"  Scopes: {', '.join(scopes_list)}")
         if status_data.get("token_created"):
             click.echo(f"  Since: {status_data['token_created']}")
     else:
@@ -377,7 +378,8 @@ def _request_device_code() -> Dict[str, Any]:
     )
 
     with urlopen(request, timeout=30) as response:
-        return json.loads(response.read().decode())
+        result: Dict[str, Any] = json.loads(response.read().decode())
+        return result
 
 
 def _poll_for_token(device_code: str) -> Dict[str, Any]:
@@ -398,7 +400,8 @@ def _poll_for_token(device_code: str) -> Dict[str, Any]:
     )
 
     with urlopen(request, timeout=30) as response:
-        return json.loads(response.read().decode())
+        result: Dict[str, Any] = json.loads(response.read().decode())
+        return result
 
 
 def _get_current_user(token: str) -> Optional[Dict[str, Any]]:
@@ -525,4 +528,5 @@ def github_api_request(
     request = Request(url, data=body, headers=headers, method=method)
 
     with urlopen(request, timeout=30) as response:
-        return json.loads(response.read().decode())
+        result: Dict[str, Any] = json.loads(response.read().decode())
+        return result
