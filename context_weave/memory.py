@@ -153,10 +153,31 @@ class Memory:
         }
 
     def save(self) -> None:
-        """Save memory to file."""
+        """Save memory to file atomically (prevents corruption from concurrent writes)."""
+        import os
+        import tempfile
+
         self.memory_dir.mkdir(parents=True, exist_ok=True)
-        with open(self.memory_file, "w", encoding="utf-8") as f:
-            json.dump(self._data, f, indent=2)
+
+        # Write to temp file first, then atomic replace
+        fd, temp_path = tempfile.mkstemp(
+            dir=self.memory_dir,
+            prefix=".memory_",
+            suffix=".json.tmp",
+            text=True
+        )
+        try:
+            with os.fdopen(fd, "w", encoding="utf-8") as f:
+                json.dump(self._data, f, indent=2)
+            # Atomic rename (POSIX-safe, Windows safe on same volume)
+            os.replace(temp_path, self.memory_file)
+        except Exception:
+            # Clean up temp file on error
+            try:
+                os.unlink(temp_path)
+            except OSError:
+                pass
+            raise
 
     # ============ Lessons Learned ============
 

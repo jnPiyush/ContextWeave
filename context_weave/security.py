@@ -6,6 +6,11 @@ Implements defense-in-depth security model for AgentX:
 - Level 2: Filesystem (path restrictions) - implemented here
 - Level 3: Allowlist (command validation) - implemented here
 - Level 4: Audit (command logging) - implemented here
+
+Design note: This module is integrated via the Agent Framework middleware
+(framework/middleware.py and framework/tools.py), NOT the CLI commands.
+CLI users have full terminal access and are trusted; this module guards
+automated framework agents that run sandboxed.
 """
 
 import json

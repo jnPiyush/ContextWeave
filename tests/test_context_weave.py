@@ -122,13 +122,13 @@ class TestConfig:
         config = Config(temp_git_repo)
 
         skills = config.get_skills_for_labels(["api", "security"])
-        assert "#04" in skills  # Security is in both
-        assert "#09" in skills  # API design
+        assert "security" in skills  # Security is in both
+        assert "api-design" in skills  # API design
 
         # Default skills when no match
         skills = config.get_skills_for_labels(["unknown-label"])
-        assert "#02" in skills  # Testing
-        assert "#04" in skills  # Security
+        assert "testing" in skills
+        assert "security" in skills
 
     def test_get_set(self, temp_git_repo):
         """Test get/set with dot notation."""
@@ -229,7 +229,7 @@ class TestContextHelpers:
         skill_file = skills_dir / "SKILL.md"
         skill_file.write_text("# Testing Skill", encoding="utf-8")
 
-        content = load_skills(tmp_path, ["#02", "#99"], verbose=True)
+        content = load_skills(tmp_path, ["testing", "nonexistent"], verbose=True)
 
         assert "Testing Skill" in content
         captured = capsys.readouterr()

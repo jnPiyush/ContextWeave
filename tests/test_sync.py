@@ -27,6 +27,25 @@ from context_weave.config import Config
 from context_weave.state import State
 
 
+def _setup_github_state(
+    state: State,
+    owner: str = "testuser",
+    repo: str = "testrepo",
+    enabled: bool = False,
+    project_number: int | None = None,
+) -> State:
+    """Configure GitHub on a State object using the correct setter pattern."""
+    github_config = state.github
+    github_config.owner = owner
+    github_config.repo = repo
+    github_config.enabled = enabled
+    if project_number is not None:
+        github_config.project_number = project_number
+    state.github = github_config
+    state.save()
+    return state
+
+
 @pytest.fixture
 def runner():
     """Create a CLI runner."""
@@ -37,10 +56,7 @@ def runner():
 def mock_state(tmp_path):
     """Create a mock state object with GitHub config."""
     state = State(tmp_path)
-    state.github.owner = "testuser"
-    state.github.repo = "testrepo"
-    state.save()
-    return state
+    return _setup_github_state(state)
 
 
 class TestSetupCommand:
@@ -93,6 +109,31 @@ class TestSetupCommand:
 
         assert result.exit_code == 0
 
+    @patch('subprocess.run')
+    def test_setup_persists_github_config(self, mock_run, runner, tmp_path):
+        """Test that setup_cmd actually persists github config to state."""
+        mock_run.return_value = MagicMock(returncode=0)
+        state = State(tmp_path)
+        # Ensure .context-weave dir exists for state.save()
+        (tmp_path / ".context-weave").mkdir(parents=True, exist_ok=True)
+
+        result = runner.invoke(
+            setup_cmd,
+            ["--owner", "persistuser", "--repo", "persistrepo", "--project", "42"],
+            obj={"repo_root": tmp_path, "state": state, "config": Config(tmp_path)},
+            catch_exceptions=False,
+        )
+
+        assert result.exit_code == 0
+
+        # Reload state from disk and verify persistence
+        reloaded = State(tmp_path)
+        gh = reloaded.github
+        assert gh.owner == "persistuser"
+        assert gh.repo == "persistrepo"
+        assert gh.enabled is True
+        assert gh.project_number == 42 or gh.project_number == "42"
+
 
 class TestSyncPull:
     """Test pulling issues from GitHub."""
@@ -105,9 +146,11 @@ class TestSyncPull:
 
         # Create state with GitHub config
         state = State(tmp_path)
-        state.github.owner = "testuser"
-        state.github.repo = "testrepo"
-        state.github.enabled = True
+        github_config = state.github
+        github_config.owner = "testuser"
+        github_config.repo = "testrepo"
+        github_config.enabled = True
+        state.github = github_config
         state.save()
 
         # Mock GitHub API response
@@ -144,8 +187,10 @@ class TestSyncPull:
         mock_token.return_value = None
 
         state = State(tmp_path)
-        state.github.owner = "testuser"
-        state.github.repo = "testrepo"
+        github_config = state.github
+        github_config.owner = "testuser"
+        github_config.repo = "testrepo"
+        state.github = github_config
         state.save()
 
         result = runner.invoke(
@@ -166,9 +211,7 @@ class TestSyncPull:
         mock_api.side_effect = Exception("API error")
 
         state = State(tmp_path)
-        state.github.owner = "testuser"
-        state.github.repo = "testrepo"
-        state.save()
+        _setup_github_state(state)
 
         result = runner.invoke(
             sync_cmd,
@@ -206,10 +249,7 @@ class TestIssuesCommand:
 
         state = State(tmp_path)
         state.mode = "hybrid"
-        state.github.owner = "testuser"
-        state.github.repo = "testrepo"
-        state.github.enabled = True
-        state.save()
+        _setup_github_state(state, enabled=True)
 
         result = runner.invoke(
             issues_cmd,
@@ -236,10 +276,7 @@ class TestIssuesCommand:
 
         state = State(tmp_path)
         state.mode = "hybrid"
-        state.github.owner = "testuser"
-        state.github.repo = "testrepo"
-        state.github.enabled = True
-        state.save()
+        _setup_github_state(state, enabled=True)
 
         result = runner.invoke(
             issues_cmd,
@@ -267,10 +304,7 @@ class TestIssuesCommand:
 
         state = State(tmp_path)
         state.mode = "hybrid"
-        state.github.owner = "testuser"
-        state.github.repo = "testrepo"
-        state.github.enabled = True
-        state.save()
+        _setup_github_state(state, enabled=True)
 
         result = runner.invoke(
             issues_cmd,
@@ -385,9 +419,7 @@ class TestHelpers:
     def test_sync_status_output(self, capsys, tmp_path):
         """Render sync status output with local branches/worktrees."""
         state = State(tmp_path)
-        state.github.owner = "owner"
-        state.github.repo = "repo"
-        state.save()
+        _setup_github_state(state, owner="owner", repo="repo")
         config = Config(tmp_path)
 
         _sync_status(state, config, verbose=False)
@@ -537,9 +569,7 @@ class TestSyncDryRun:
         ]
 
         state = State(tmp_path)
-        state.github.owner = "testuser"
-        state.github.repo = "testrepo"
-        state.save()
+        _setup_github_state(state)
 
         result = runner.invoke(
             sync_cmd,
@@ -582,14 +612,14 @@ class TestConflictResolution:
 
         # Setup local state with an issue
         state = State(tmp_path)
-        state.github.owner = "testuser"
-        state.github.repo = "testrepo"
-        state.github.enabled = True
-        state.github.issue_cache["1"] = {
+        _setup_github_state(state, enabled=True)
+        github_config = state.github
+        github_config.issue_cache["1"] = {
             "number": 1,
             "title": "Local issue",
             "state": "open"
         }
+        state.github = github_config
         state.save()
 
         # GitHub has different data

@@ -15,14 +15,35 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, Optional, Set
 
-import websockets
-from watchdog.events import FileSystemEventHandler
-from watchdog.observers import Observer
-
 from context_weave.config import Config
 from context_weave.state import State
 
 logger = logging.getLogger(__name__)
+
+
+def _import_websockets():
+    """Lazy import for websockets (optional dependency)."""
+    try:
+        import websockets
+        return websockets
+    except ImportError:
+        raise ImportError(
+            "websockets is required for the dashboard. "
+            "Install with: pip install context-weave[dashboard]"
+        ) from None
+
+
+def _import_watchdog():
+    """Lazy import for watchdog (optional dependency)."""
+    try:
+        from watchdog.events import FileSystemEventHandler
+        from watchdog.observers import Observer
+        return FileSystemEventHandler, Observer
+    except ImportError:
+        raise ImportError(
+            "watchdog is required for the dashboard. "
+            "Install with: pip install context-weave[dashboard]"
+        ) from None
 
 
 # HTTP Handler for static files
@@ -57,7 +78,7 @@ async def http_handler(path: str, _request_headers) -> tuple:
     return (404, [], b"Not Found")
 
 
-class StateChangeHandler(FileSystemEventHandler):
+class StateChangeHandler:
     """Monitors .context-weave directory for changes."""
 
     def __init__(self, callback):
@@ -98,12 +119,12 @@ class DashboardServer:
         self.repo_root = repo_root
         self.host = host
         self.port = port
-        self.clients: Set[websockets.ServerProtocol] = set()
-        self.observer: Optional[Observer] = None
+        self.clients: Set = set()
+        self.observer: Optional[Any] = None
         self.state = State(repo_root)
         self.config = Config(repo_root)
 
-    async def register(self, websocket: websockets.ServerProtocol):
+    async def register(self, websocket):
         """Register a new client connection."""
         self.clients.add(websocket)
         logger.info("Client connected. Total clients: %d", len(self.clients))
@@ -111,12 +132,12 @@ class DashboardServer:
         # Send initial status immediately
         await self.send_status_update(websocket)
 
-    async def unregister(self, websocket: websockets.ServerProtocol):
+    async def unregister(self, websocket):
         """Unregister a client connection."""
         self.clients.discard(websocket)
         logger.info("Client disconnected. Total clients: %d", len(self.clients))
 
-    async def send_status_update(self, websocket: Optional[websockets.ServerProtocol] = None):
+    async def send_status_update(self, websocket=None):
         """Send status update to client(s)."""
         # Reload state to get latest data
         self.state = State(self.repo_root)
@@ -146,7 +167,7 @@ class DashboardServer:
         from context_weave.commands.status import _collect_status
         return _collect_status(self.repo_root, self.state, self.config)
 
-    async def handle_client_message(self, websocket: websockets.ServerProtocol, message: str):
+    async def handle_client_message(self, websocket, message: str):
         """Handle incoming messages from clients."""
         try:
             data = json.loads(message)
@@ -169,8 +190,9 @@ class DashboardServer:
         except (KeyError, ValueError) as e:
             logger.error("Error handling message: %s", e)
 
-    async def ws_handler(self, websocket: websockets.ServerProtocol):
+    async def ws_handler(self, websocket):
         """WebSocket connection handler."""
+        websockets = _import_websockets()
         await self.register(websocket)
 
         try:
@@ -196,6 +218,7 @@ class DashboardServer:
 
     def start_file_watcher(self):
         """Start watching .context-weave directory for changes."""
+        FileSystemEventHandler, Observer = _import_watchdog()
         watch_dir = self.repo_root / ".context-weave"
 
         if not watch_dir.exists():
@@ -217,6 +240,7 @@ class DashboardServer:
 
     async def serve(self):
         """Start the WebSocket server with HTTP support."""
+        websockets = _import_websockets()
         # Start file watcher
         self.start_file_watcher()
 

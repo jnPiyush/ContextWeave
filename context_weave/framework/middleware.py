@@ -22,6 +22,10 @@ logger = logging.getLogger(__name__)
 class SecurityMiddleware:
     """Validates tool calls against ContextWeave's security policy.
 
+    This is the primary integration point for context_weave.security.
+    CLI commands bypass security validation by design -- only framework
+    agents are sandboxed via this middleware.
+
     Intercepts agent actions and validates commands using
     CommandValidator and PathValidator from context_weave.security.
     """

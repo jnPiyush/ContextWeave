@@ -388,10 +388,14 @@ def update_gitignore(repo_root: Path, verbose: bool, quiet: bool) -> None:
 
     entries = [
         "",
-        "# ContextWeave runtime state",
+        "# ContextWeave - runtime state (user-specific, not shared)",
+        "# Committed: config.json (shared settings)",
+        "# Ignored: state, context files, memory, worktrees, certificates",
         ".context-weave/state.json",
         ".context-weave/context-*.md",
         ".context-weave/worktrees/",
+        ".context-weave/memory.json",
+        ".context-weave/certificates/",
     ]
 
     existing_content = ""

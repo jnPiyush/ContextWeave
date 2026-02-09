@@ -266,7 +266,7 @@ class TestHandoffCommand:
         assert result.exit_code != 0
         assert "No next role" in result.output
 
-    @patch("context_weave.commands.start._generate_context")
+    @patch("context_weave.commands.context.generate_context_file")
     def test_handoff_updates_role(self, mock_gen, runner, temp_git_repo):
         """Handoff should update the worktree role in state."""
         state = State(temp_git_repo)
@@ -292,7 +292,7 @@ class TestHandoffCommand:
         wt = state_reloaded.get_worktree(11)
         assert wt.role == "engineer"
 
-    @patch("context_weave.commands.start._generate_context")
+    @patch("context_weave.commands.context.generate_context_file")
     def test_handoff_explicit_role(self, mock_gen, runner, temp_git_repo):
         """Handoff should accept explicit --to role."""
         state = State(temp_git_repo)

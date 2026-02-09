@@ -105,64 +105,41 @@ def context_cmd() -> None:
     """
 
 
-@context_cmd.command("generate")
-@click.argument("issue", type=int)
-@click.option("--output", "-o", type=click.Path(), help="Output path (default: .context-weave/context-{issue}.md)")
-@click.option("--role", type=click.Choice(["pm", "architect", "engineer", "reviewer", "ux"]),
-              help="Override role detection")
-@click.option("--dry-run", is_flag=True, help="Generate but don't write")
-@click.pass_context
-def generate_cmd(ctx: click.Context, issue: int, output: Optional[str],
-                 role: Optional[str], dry_run: bool) -> None:
-    """Generate context file for an issue.
+def generate_context_file(
+    issue: int,
+    repo_root: Path,
+    state: State,
+    config: Config,
+    role: str = None,
+    output: Path = None,
+    verbose: bool = False
+) -> tuple[Path, dict]:
+    """Generate context file for an issue (extracted for reuse).
 
-    This assembles:
-    - Role instructions from .github/agents/
-    - Issue details from Git branch/notes or GitHub
-    - Relevant skills based on labels
-    - Memory context (lessons learned, session history)
-    - Dependencies and references
+    Args:
+        issue: Issue number
+        repo_root: Repository root path
+        state: State object
+        config: Config object
+        role: Role to use (auto-detected if None)
+        output: Output file path (default: .context-weave/context-{issue}.md)
+        verbose: Verbose output for skill loading
 
-    Example:
-        context-weave context generate 456
-        context-weave context generate 456 --role engineer
+    Returns:
+        Tuple of (output_path, stats_dict) where stats includes:
+        - role, skills, prompt_quality, memory_size, content_size, estimated_tokens, warnings
     """
     from context_weave import __version__
+    from context_weave.prompt import PromptEngineer
 
-    repo_root = ctx.obj.get("repo_root")
-    if not repo_root:
-        raise click.ClickException("Not in a Git repository with ContextWeave initialized.")
-
-    state = ctx.obj.get("state", State(repo_root))
-    config = ctx.obj.get("config", Config(repo_root))
-    memory = Memory(repo_root)  # Initialize memory layer
-    verbose = ctx.obj.get("verbose", False)
-
-    click.echo(f"Generating context for issue #{issue}...")
-
-    # Get worktree info if exists
+    memory = Memory(repo_root)
     worktree = state.get_worktree(issue)
-    branch = worktree.branch if worktree else f"issue-{issue}-*"
+    branch = worktree.branch if worktree else f"issue-{issue}"
 
-    # Find the actual branch
-    if not worktree:
-        branches = state.get_issue_branches()
-        matching = [b for b in branches if b.startswith(f"issue-{issue}-")]
-        if matching:
-            branch = matching[0]
-        else:
-            branch = f"issue-{issue}"
-
-    # Get metadata from Git notes
-    metadata = state.get_branch_note(branch) if branch else {}
-    if metadata is None:
-        metadata = {}
-
-    # Fall back to local issue metadata if Git notes are empty
+    # Get metadata from Git notes or state
+    metadata = state.get_branch_note(branch) or {}
     if not metadata:
-        local_issue = state.local_issues.get(str(issue), {})
-        if local_issue:
-            metadata = local_issue
+        metadata = state.local_issues.get(str(issue), {})
 
     # Determine role
     if role:
@@ -177,7 +154,7 @@ def generate_cmd(ctx: click.Context, issue: int, output: Optional[str],
     # Load role instructions (Layer 1: System Context)
     role_instructions = load_role_instructions(repo_root, detected_role)
 
-    # Determine issue type and labels from branch name or metadata
+    # Determine issue type and labels
     issue_type = metadata.get("type", "story")
     labels = metadata.get("labels", [])
 
@@ -193,21 +170,17 @@ def generate_cmd(ctx: click.Context, issue: int, output: Optional[str],
             labels = ["type:story"]
 
     # Get relevant skills (Layer 4: Retrieval Context)
-    skill_numbers = config.get_skills_for_labels(labels)
-    skill_content = load_skills(repo_root, skill_numbers, verbose)
+    skill_names = config.get_skills_for_labels(labels)
+    skill_content = load_skills(repo_root, skill_names, verbose, config.max_skill_tokens)
 
     # Get memory context (Layer 3: Memory)
-    # Extract categories from labels for memory lookup
     categories = [label.replace("type:", "") for label in labels if ":" in label]
     if not categories:
         categories = [issue_type]
     memory_context = memory.get_memory_context(issue, issue_type, detected_role, categories)
 
-    # Enhanced User Prompt (Layer 2 with Prompt Engineering)
-    from context_weave.prompt import PromptEngineer
+    # Enhanced User Prompt (Layer 2)
     prompt_engineer = PromptEngineer()
-
-    # Build context for prompt enhancement
     prompt_context = {
         "dependencies": metadata.get("dependencies", []),
         "previous_session": memory.get_latest_session(issue),
@@ -221,7 +194,6 @@ def generate_cmd(ctx: click.Context, issue: int, output: Optional[str],
     if spec_path.exists():
         prompt_context["spec_path"] = f"docs/specs/SPEC-{issue}.md"
 
-    # Get raw description
     raw_description = metadata.get("description", f"Complete issue #{issue}")
 
     # Enhance the prompt
@@ -247,7 +219,7 @@ def generate_cmd(ctx: click.Context, issue: int, output: Optional[str],
         "issue_type": issue_type,
         "role": detected_role,
         "branch": branch,
-        "skills": ", ".join(skill_numbers) if skill_numbers else "Default (#02, #04, #11)",
+        "skills": ", ".join(skill_names) if skill_names else "Default (testing, security, documentation)",
         "prompt_quality": prompt_quality,
         "role_instructions": role_instructions,
         "enhanced_prompt": enhanced.to_markdown(),
@@ -260,14 +232,9 @@ def generate_cmd(ctx: click.Context, issue: int, output: Optional[str],
 
     content = CONTEXT_TEMPLATE.format(**context_data)
 
-    if dry_run:
-        click.echo("")
-        click.echo(content)
-        return
-
     # Determine output path
     if output:
-        output_path = Path(output)
+        output_path = output
     else:
         output_path = repo_root / ".context-weave" / f"context-{issue}.md"
 
@@ -275,25 +242,93 @@ def generate_cmd(ctx: click.Context, issue: int, output: Optional[str],
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(content, encoding="utf-8")
 
+    # Return stats
+    stats = {
+        "role": detected_role,
+        "skills": skill_names,
+        "prompt_quality": prompt_quality,
+        "memory_size": len(memory_context),
+        "content_size": len(content),
+        "estimated_tokens": len(content) // 4,
+        "warnings": validation["warnings"]
+    }
+
+    return output_path, stats
+
+
+@context_cmd.command("generate")
+@click.argument("issue", type=int)
+@click.option("--output", "-o", type=click.Path(), help="Output path (default: .context-weave/context-{issue}.md)")
+@click.option("--role", type=click.Choice(["pm", "architect", "engineer", "reviewer", "ux"]),
+              help="Override role detection")
+@click.option("--dry-run", is_flag=True, help="Generate but don't write")
+@click.pass_context
+def generate_cmd(ctx: click.Context, issue: int, output: Optional[str],
+                 role: Optional[str], dry_run: bool) -> None:
+    """Generate context file for an issue.
+
+    This assembles:
+    - Role instructions from .github/agents/
+    - Issue details from Git branch/notes or GitHub
+    - Relevant skills based on labels
+    - Memory context (lessons learned, session history)
+    - Dependencies and references
+
+    Example:
+        context-weave context generate 456
+        context-weave context generate 456 --role engineer
+    """
+    repo_root = ctx.obj.get("repo_root")
+    if not repo_root:
+        raise click.ClickException("Not in a Git repository with ContextWeave initialized.")
+
+    state = ctx.obj.get("state", State(repo_root))
+    config = ctx.obj.get("config", Config(repo_root))
+    verbose = ctx.obj.get("verbose", False)
+
+    click.echo(f"Generating context for issue #{issue}...")
+
+    # Handle dry-run mode (preview content without writing file)
+    if dry_run:
+        # Temporarily generate to get content, but don't write
+        import tempfile
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.md', delete=False) as temp:
+            temp_path = Path(temp.name)
+
+        try:
+            output_path, stats = generate_context_file(
+                issue, repo_root, state, config, role, temp_path, verbose
+            )
+            content = output_path.read_text(encoding="utf-8")
+            click.echo("")
+            click.echo(content)
+        finally:
+            temp_path.unlink(missing_ok=True)
+        return
+
+    # Normal mode: generate and write
+    output_path, stats = generate_context_file(
+        issue, repo_root, state, config, role,
+        Path(output) if output else None, verbose
+    )
+
     click.echo("")
     click.secho(f"[OK] Context generated: {output_path}", fg="green")
     click.echo("")
-    click.echo(f"   Role: {detected_role}")
-    click.echo(f"   Skills: {', '.join(skill_numbers)}")
-    click.echo(f"   Prompt Quality: {prompt_quality}")
-    click.echo(f"   Memory: {len(memory_context)} chars")
-    click.echo(f"   Size: {len(content):,} characters")
+    click.echo(f"   Role: {stats['role']}")
+    click.echo(f"   Skills: {', '.join(stats['skills'])}")
+    click.echo(f"   Prompt Quality: {stats['prompt_quality']}")
+    click.echo(f"   Memory: {stats['memory_size']} chars")
+    click.echo(f"   Size: {stats['content_size']:,} characters")
 
     # Show validation warnings
-    if validation["warnings"]:
+    if stats['warnings']:
         click.echo("")
         click.secho("   Prompt Warnings:", fg="yellow")
-        for warning in validation["warnings"][:3]:
+        for warning in stats['warnings'][:3]:
             click.echo(f"   [!] {warning}")
 
-    # Estimate tokens (rough: ~4 chars per token)
-    estimated_tokens = len(content) // 4
-    click.echo(f"   Est. tokens: ~{estimated_tokens:,}")
+    click.echo(f"   Est. tokens: ~{stats['estimated_tokens']:,}")
 
 
 @context_cmd.command("show")
@@ -371,58 +406,79 @@ Refer to AGENTS.md and Skills.md for detailed guidelines.
 """
 
 
-def load_skills(repo_root: Path, skill_numbers: List[str], verbose: bool) -> str:
-    """Load skill content from .github/skills/"""
+def _discover_skills(repo_root: Path) -> Dict[str, str]:
+    """Scan .github/skills/ and build name-to-path map.
+
+    The directory structure is:
+        .github/skills/{category}/{skill-name}/SKILL.md
+
+    Returns dict mapping skill name (e.g. "testing") to the relative
+    path from the skills base directory (e.g. "development/testing/SKILL.md").
+    """
     skills_base = repo_root / ".github" / "skills"
+    skill_map: Dict[str, str] = {}
+    if not skills_base.exists():
+        return skill_map
+    for skill_file in skills_base.rglob("SKILL.md"):
+        rel = skill_file.relative_to(skills_base)
+        skill_name = skill_file.parent.name
+        skill_map[skill_name] = str(rel)
+    return skill_map
 
-    # Skill number to path mapping
-    skill_paths = {
-        "#01": "architecture/core-principles/SKILL.md",
-        "#02": "development/testing/SKILL.md",
-        "#03": "development/error-handling/SKILL.md",
-        "#04": "architecture/security/SKILL.md",
-        "#05": "architecture/performance/SKILL.md",
-        "#06": "architecture/database/SKILL.md",
-        "#07": "architecture/scalability/SKILL.md",
-        "#08": "architecture/code-organization/SKILL.md",
-        "#09": "architecture/api-design/SKILL.md",
-        "#10": "development/configuration/SKILL.md",
-        "#11": "development/documentation/SKILL.md",
-        "#12": "development/version-control/SKILL.md",
-        "#13": "development/type-safety/SKILL.md",
-        "#14": "development/dependency-management/SKILL.md",
-        "#15": "development/logging-monitoring/SKILL.md",
-        "#16": "operations/remote-git-operations/SKILL.md",
-        "#17": "ai-systems/ai-agent-development/SKILL.md",
-        "#18": "development/code-review-and-audit/SKILL.md",
-        "#19": "development/csharp/SKILL.md",
-        "#20": "development/python/SKILL.md",
-        "#21": "development/frontend-ui/SKILL.md",
-        "#22": "development/react/SKILL.md",
-        "#23": "development/blazor/SKILL.md",
-        "#24": "development/postgresql/SKILL.md",
-        "#25": "development/sql-server/SKILL.md"
-    }
 
-    content_parts = []
+def load_skills(
+    repo_root: Path,
+    skill_names: List[str],
+    verbose: bool,
+    max_tokens: int = 8000,
+) -> str:
+    """Load skill content from .github/skills/ by name, respecting token budget.
 
-    for skill_num in skill_numbers:
-        skill_path = skill_paths.get(skill_num)
+    Args:
+        repo_root: Repository root path
+        skill_names: List of skill names (e.g. ["testing", "security"])
+        verbose: Whether to print loading details
+        max_tokens: Approximate token budget (~4 chars per token)
+    """
+    skills_base = repo_root / ".github" / "skills"
+    skill_map = _discover_skills(repo_root)
+
+    content_parts: List[str] = []
+    chars_used = 0
+    chars_limit = max_tokens * 4  # rough: ~4 chars per token
+    truncated = False
+
+    for skill_name in skill_names:
+        skill_path = skill_map.get(skill_name)
         if not skill_path:
             if verbose:
-                click.echo(f"  Warning: Unknown skill {skill_num}")
+                click.echo(f"  Warning: Unknown skill '{skill_name}'")
             continue
 
         full_path = skills_base / skill_path
         if full_path.exists():
             skill_content = full_path.read_text(encoding="utf-8")
-            skill_name = skill_path.split("/")[-2].replace("-", " ").title()
-            content_parts.append(f"### Skill {skill_num}: {skill_name}\n\n{skill_content}")
+
+            # Check budget
+            if chars_used + len(skill_content) > chars_limit and content_parts:
+                truncated = True
+                if verbose:
+                    click.echo(f"  Skill budget reached, skipping: {skill_name}")
+                continue
+
+            chars_used += len(skill_content)
+            display_name = skill_name.replace("-", " ").title()
+            content_parts.append(f"### Skill: {display_name}\n\n{skill_content}")
             if verbose:
-                click.echo(f"  Loaded skill: {skill_num}")
-        else:
-            if verbose:
-                click.echo(f"  Warning: Skill file not found: {full_path}")
+                click.echo(f"  Loaded skill: {skill_name}")
+        elif verbose:
+            click.echo(f"  Warning: Skill file not found: {full_path}")
+
+    if truncated:
+        content_parts.append(
+            "_Note: Some skills were omitted to stay within the token budget. "
+            "Adjust `max_skill_tokens` in config to change the limit._"
+        )
 
     return "\n\n---\n\n".join(content_parts) if content_parts else "No skills loaded."
 

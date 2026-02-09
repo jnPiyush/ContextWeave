@@ -9,7 +9,7 @@ Achieves >95% success rate in production code generation through:
 - Full traceability via Git's immutable history
 """
 
-__version__ = "0.1.0"
+__version__ = "2.0.0"
 __author__ = "ContextWeave Team"
 
 from context_weave.config import Config

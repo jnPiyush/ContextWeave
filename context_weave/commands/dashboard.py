@@ -23,7 +23,9 @@ logger = logging.getLogger(__name__)
 @click.option("--no-browser", is_flag=True, help="Don't open browser automatically")
 @click.pass_context
 def dashboard_cmd(ctx: click.Context, host: str, port: int, no_browser: bool) -> None:
-    """Start real-time web dashboard.
+    """Start real-time web dashboard (experimental).
+
+    Requires optional dependencies: pip install context-weave[dashboard]
 
     Opens a web-based dashboard showing:
     - Active agent status

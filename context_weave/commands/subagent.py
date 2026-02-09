@@ -128,7 +128,8 @@ def spawn_cmd(ctx: click.Context, issue: int, role: str, title: Optional[str]) -
             "last_activity": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
             "commits": 0
         }
-        state.set_branch_note(branch_name, metadata)
+        if not state.set_branch_note(branch_name, metadata):
+            click.secho("  [WARN] Failed to update Git notes. Run 'context-weave doctor' to check.", fg="yellow")
 
         click.echo("")
         click.secho("[OK] SubAgent spawned successfully!", fg="green")
@@ -284,8 +285,11 @@ def status_cmd(ctx: click.Context, issue: int, as_json: bool) -> None:
 @click.argument("issue", type=int)
 @click.option("--force", is_flag=True, help="Force completion without validation")
 @click.option("--keep-branch", is_flag=True, help="Keep the branch after removing worktree")
+@click.option("--push", is_flag=True, help="Push branch to remote before cleanup")
+@click.option("--create-pr", is_flag=True, help="Create a pull request (implies --push)")
 @click.pass_context
-def complete_cmd(ctx: click.Context, issue: int, force: bool, keep_branch: bool) -> None:
+def complete_cmd(ctx: click.Context, issue: int, force: bool, keep_branch: bool,
+                 push: bool, create_pr: bool) -> None:
     """Mark SubAgent work as complete and clean up.
 
     This:
@@ -303,6 +307,9 @@ def complete_cmd(ctx: click.Context, issue: int, force: bool, keep_branch: bool)
 
     if not worktree:
         raise click.ClickException(f"No SubAgent found for issue #{issue}")
+
+    # Capture role before any removal
+    role = worktree.role
 
     click.echo(f"Completing SubAgent for issue #{issue}...")
 
@@ -329,6 +336,48 @@ def complete_cmd(ctx: click.Context, issue: int, force: bool, keep_branch: bool)
             if not force:
                 raise
 
+    # Push branch if requested
+    if create_pr:
+        push = True
+
+    if push:
+        try:
+            subprocess.run(
+                ["git", "push", "-u", "origin", worktree.branch],
+                cwd=repo_root, check=True, capture_output=True, timeout=60
+            )
+            click.echo(f"  Pushed branch: {worktree.branch}")
+        except subprocess.CalledProcessError as e:
+            click.secho(f"  [WARN] Failed to push: {e}", fg="yellow")
+        except FileNotFoundError:
+            click.secho("  [WARN] git not found for push", fg="yellow")
+
+    if create_pr:
+        try:
+            pr_title = (
+                f"Issue #{issue}: "
+                f"{worktree.branch.replace(f'issue-{issue}-', '').replace('-', ' ').title()}"
+            )
+            result = subprocess.run(
+                ["gh", "pr", "create",
+                 "--title", pr_title,
+                 "--body", f"Closes #{issue}\n\nCreated by ContextWeave subagent ({worktree.role}).",
+                 "--head", worktree.branch],
+                cwd=repo_root, capture_output=True, text=True, timeout=30,
+                check=False
+            )
+            if result.returncode == 0:
+                pr_url = result.stdout.strip()
+                click.echo(f"  Created PR: {pr_url}")
+            else:
+                click.secho(f"  [WARN] PR creation failed: {result.stderr.strip()}", fg="yellow")
+                click.echo("  Create manually: gh pr create")
+        except FileNotFoundError:
+            click.secho(
+                "  [WARN] GitHub CLI (gh) not found. Install from https://cli.github.com/",
+                fg="yellow"
+            )
+
     # Remove worktree
     try:
         if worktree_path.exists():
@@ -346,12 +395,28 @@ def complete_cmd(ctx: click.Context, issue: int, force: bool, keep_branch: bool)
     metadata = state.get_branch_note(worktree.branch) or {}
     metadata["status"] = "completed"
     metadata["completed_at"] = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
-    state.set_branch_note(worktree.branch, metadata)
+    if not state.set_branch_note(worktree.branch, metadata):
+        click.secho("  [WARN] Failed to update Git notes. Run 'context-weave doctor' to check.", fg="yellow")
 
     # Remove from state
     state.remove_worktree(issue)
     state.save()
     click.echo("  Updated state tracking")
+
+    # Record completion to memory layer
+    try:
+        from context_weave.memory import ExecutionRecord, Memory
+        memory = Memory(repo_root)
+        outcome = "partial" if force else "success"
+        record = ExecutionRecord(
+            issue=issue,
+            role=role,
+            action="complete",
+            outcome=outcome,
+        )
+        memory.record_execution(record)
+    except Exception as e:  # noqa: BLE001
+        logger.warning("Failed to record completion to memory: %s", e)
 
     # Optionally delete branch
     if not keep_branch:
@@ -444,7 +509,6 @@ def recover_cmd(ctx: click.Context, issue: int) -> None:
         raise click.ClickException(f"Failed to recover worktree: {e}") from e
 
 
-ROLE_ORDER = ["pm", "architect", "engineer", "reviewer", "ux"]
 ROLE_NEXT = {
     "pm": "architect",
     "architect": "engineer",
@@ -522,14 +586,15 @@ def handoff_cmd(ctx: click.Context, issue: int, to_role: Optional[str],
     metadata["handoff_to"] = next_role
     metadata["handoff_at"] = now
     metadata["last_activity"] = now
-    state.set_branch_note(worktree.branch, metadata)
+    if not state.set_branch_note(worktree.branch, metadata):
+        click.secho("  [WARN] Failed to update Git notes. Run 'context-weave doctor' to check.", fg="yellow")
 
     # Generate fresh context for the next role
     click.echo(f"  Generating context for {next_role}...")
-    from context_weave.commands.start import _generate_context
-    _generate_context(
+    from context_weave.commands.context import generate_context_file
+    generate_context_file(
         issue=issue, repo_root=repo_root, state=state,
-        config=config, role=next_role
+        config=config, role=next_role, verbose=False
     )
 
     click.echo("")

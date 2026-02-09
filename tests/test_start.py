@@ -55,7 +55,7 @@ def temp_git_repo():
 class TestStartCommand:
 
     @patch("context_weave.commands.start.subprocess.run")
-    @patch("context_weave.commands.start._generate_context")
+    @patch("context_weave.commands.context.generate_context_file")
     def test_start_creates_issue_and_subagent(self, mock_gen_ctx, mock_run, runner, temp_git_repo):
         """Start command should create an issue, spawn subagent, and generate context."""
         mock_run.return_value = MagicMock(returncode=0, stdout="", stderr="")
@@ -78,7 +78,7 @@ class TestStartCommand:
         assert state_reloaded.local_issues["1"]["title"] == "Add login page"
 
     @patch("context_weave.commands.start.subprocess.run")
-    @patch("context_weave.commands.start._generate_context")
+    @patch("context_weave.commands.context.generate_context_file")
     def test_start_sanitizes_input(self, mock_gen_ctx, mock_run, runner, temp_git_repo):
         """Start command should sanitize title input."""
         mock_run.return_value = MagicMock(returncode=0, stdout="", stderr="")
@@ -99,7 +99,7 @@ class TestStartCommand:
         assert "\x01" not in issue["title"]
 
     @patch("context_weave.commands.start.subprocess.run")
-    @patch("context_weave.commands.start._generate_context")
+    @patch("context_weave.commands.context.generate_context_file")
     def test_start_branch_name_truncated(self, mock_gen_ctx, mock_run, runner, temp_git_repo):
         """Branch names should be truncated to stay under limit."""
         mock_run.return_value = MagicMock(returncode=0, stdout="", stderr="")
@@ -121,7 +121,7 @@ class TestStartCommand:
                 assert len(branch_name) <= 80, f"Branch too long: {len(branch_name)}"
 
     @patch("context_weave.commands.start.subprocess.run")
-    @patch("context_weave.commands.start._generate_context")
+    @patch("context_weave.commands.context.generate_context_file")
     def test_start_with_options(self, mock_gen_ctx, mock_run, runner, temp_git_repo):
         """Start command should accept type, role, and label options."""
         mock_run.return_value = MagicMock(returncode=0, stdout="", stderr="")

@@ -23,40 +23,11 @@ class Config:
 
     CONFIG_FILE = "config.json"
 
-    # Maps human-readable skill names to their numeric IDs.
-    # Users can use either form in config; names are resolved at lookup time.
-    SKILL_NAME_TO_NUMBER = {
-        "core-principles": "#01",
-        "testing": "#02",
-        "error-handling": "#03",
-        "security": "#04",
-        "performance": "#05",
-        "database": "#06",
-        "scalability": "#07",
-        "code-organization": "#08",
-        "api-design": "#09",
-        "configuration": "#10",
-        "documentation": "#11",
-        "version-control": "#12",
-        "type-safety": "#13",
-        "dependency-management": "#14",
-        "logging-monitoring": "#15",
-        "remote-git-operations": "#16",
-        "ai-agent-development": "#17",
-        "code-review-and-audit": "#18",
-        "csharp": "#19",
-        "python": "#20",
-        "frontend-ui": "#21",
-        "react": "#22",
-        "blazor": "#23",
-        "postgresql": "#24",
-        "sql-server": "#25",
-    }
-
     DEFAULT_CONFIG = {
         "version": "1.0",
         "mode": "local",
         "worktree_base": ".context-weave/worktrees",
+        "max_skill_tokens": 8000,
         "skill_routing": {
             "api": ["api-design", "security", "testing", "documentation"],
             "database": ["database", "security", "testing"],
@@ -163,20 +134,10 @@ class Config:
         base = self.repo_root / self.worktree_base
         return base / str(issue)
 
-    def _resolve_skill(self, skill: str) -> str:
-        """Resolve a skill name or number to its #XX number form.
-
-        Accepts both 'testing' (name) and '#02' (number) formats.
-        """
-        if skill.startswith("#"):
-            return skill  # Already a number
-        return self.SKILL_NAME_TO_NUMBER.get(skill, skill)
-
     def get_skills_for_labels(self, labels: list) -> list:
-        """Get skill numbers for a set of labels.
+        """Get skill names for a set of labels.
 
-        Skill routing values can be human-readable names (e.g. 'testing')
-        or legacy #XX numbers. Both are resolved to #XX for loading.
+        Returns human-readable skill names from skill_routing configuration.
         """
         routing = self._data.get("skill_routing", {})
         skills = set()
@@ -184,13 +145,18 @@ class Config:
         for label in labels:
             label_lower = label.lower()
             if label_lower in routing:
-                skills.update(self._resolve_skill(s) for s in routing[label_lower])
+                skills.update(routing[label_lower])
 
         # Add default skills if no specific matches
         if not skills:
-            skills.update(self._resolve_skill(s) for s in routing.get("default", []))
+            skills.update(routing.get("default", []))
 
         return sorted(skills)
+
+    @property
+    def max_skill_tokens(self) -> int:
+        """Max estimated tokens for skill content in generated context."""
+        return self._data.get("max_skill_tokens", 8000)
 
     def get_stuck_threshold(self, issue_type: str) -> int:
         """Get stuck detection threshold in hours for an issue type."""

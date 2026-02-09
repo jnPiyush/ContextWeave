@@ -134,11 +134,13 @@ def setup_cmd(ctx: click.Context, owner: Optional[str], repo: Optional[str],
         click.echo("GitHub sync configuration saved but will require gh CLI to work.")
         click.echo("")
 
-    # Update state
-    state.github.enabled = True
-    state.github.owner = owner
-    state.github.repo = repo
-    state.github.project_number = project
+    # Update state -- build config then assign via setter so _data is mutated
+    github_config = state.github
+    github_config.enabled = True
+    github_config.owner = owner
+    github_config.repo = repo
+    github_config.project_number = project
+    state.github = github_config
     state.save()
 
     # Update mode

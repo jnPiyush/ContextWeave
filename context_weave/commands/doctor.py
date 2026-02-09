@@ -161,6 +161,26 @@ def doctor_cmd(ctx: click.Context, fix: bool) -> None:
             click.echo("  [WARN] No GitHub token. Run: context-weave auth login")
             issues_found += 1
 
+    # Check 8: State vs Git notes consistency
+    for wt in state.worktrees:
+        note_data = state.get_branch_note(wt.branch)
+        if note_data is None:
+            click.echo(f"  [WARN] No Git note for worktree #{wt.issue} ({wt.branch})")
+            issues_found += 1
+        elif note_data.get("role") != wt.role:
+            click.echo(
+                f"  [WARN] Role mismatch for #{wt.issue}: "
+                f"state={wt.role}, note={note_data.get('role', 'missing')}"
+            )
+            issues_found += 1
+            if fix:
+                note_data["role"] = wt.role
+                if state.set_branch_note(wt.branch, note_data):
+                    click.echo("         Fixed: updated Git note role")
+                    issues_fixed += 1
+        else:
+            click.echo(f"  [OK] State/notes consistent: #{wt.issue}")
+
     # Summary
     click.echo("")
     if issues_found == 0:

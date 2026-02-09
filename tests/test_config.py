@@ -105,19 +105,19 @@ class TestConfigClass:
         """Test skill routing for labels."""
         config = Config(tmp_path)
 
-        # API labels should include API and security skills
+        # API labels should include API and security skills (returned as names)
         api_skills = config.get_skills_for_labels(["api"])
-        assert "#09" in api_skills  # API Design
-        assert "#04" in api_skills  # Security
+        assert "api-design" in api_skills
+        assert "security" in api_skills
 
         # Security labels
         security_skills = config.get_skills_for_labels(["security"])
-        assert "#04" in security_skills
+        assert "security" in security_skills
 
         # Unknown labels get default skills
         default_skills = config.get_skills_for_labels(["unknown-label"])
-        assert "#02" in default_skills  # Testing
-        assert "#04" in default_skills  # Security
+        assert "testing" in default_skills
+        assert "security" in default_skills
 
     def test_get_skills_for_multiple_labels(self, tmp_path):
         """Test skill routing with multiple labels."""
@@ -125,8 +125,8 @@ class TestConfigClass:
 
         skills = config.get_skills_for_labels(["api", "security"])
         # Should have union of both
-        assert "#04" in skills  # Common
-        assert "#09" in skills  # API specific
+        assert "security" in skills  # Common
+        assert "api-design" in skills  # API specific
 
     def test_get_stuck_threshold(self, tmp_path):
         """Test stuck threshold retrieval."""

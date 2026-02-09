@@ -349,8 +349,52 @@ def _run_dod_check(repo_root: Path, issue: int, _role: str, check_id: str, state
             logger.debug("ruff check returned non-zero: %s", e)
             return True, "Unable to verify linting - check manually"
 
+    elif check_id == "tests_written":
+        worktree = state.get_worktree(issue)
+        if not worktree:
+            return True, "[?] No worktree to check"
+        wt_path = Path(worktree.path)
+        if not wt_path.exists():
+            return True, "[?] Worktree not accessible"
+        test_files = list(wt_path.rglob("test_*.py")) + list(wt_path.rglob("*_test.py"))
+        test_files += list(wt_path.rglob("*.test.ts")) + list(wt_path.rglob("*.spec.ts"))
+        if test_files:
+            return True, ""
+        return False, "No test files found. Create test_*.py or *.test.ts files"
+
+    elif check_id == "child_issues":
+        local_issues = state.local_issues
+        children = [k for k, v in local_issues.items()
+                    if v.get("parent") == issue]
+        if children:
+            return True, ""
+        return True, "[?] Could not verify child issues automatically"
+
+    elif check_id == "acceptance_criteria":
+        worktree = state.get_worktree(issue)
+        branch = worktree.branch if worktree else None
+        if branch:
+            note_data = state.get_branch_note(branch) or {}
+            criteria = note_data.get("acceptance_criteria", [])
+            if criteria:
+                return True, ""
+        return True, "[?] Could not verify acceptance criteria automatically"
+
+    elif check_id == "security_scan":
+        try:
+            result = subprocess.run(
+                ["ruff", "check", "--select", "S", "."],
+                cwd=repo_root, capture_output=True, text=True, timeout=30,
+                check=False
+            )
+            if result.returncode == 0:
+                return True, ""
+            return False, "Security lint issues found. Run: ruff check --select S ."
+        except (subprocess.TimeoutExpired, FileNotFoundError):
+            return True, "[?] Security scan tool not available"
+
     # Default: manual check required
-    return True, "Manual verification required"
+    return True, "[?] Manual verification required"
 
 
 def _display_validation_results(results: List[Tuple[str, bool, str]], title: str, verbose: bool) -> None:
@@ -367,10 +411,19 @@ def _display_validation_results(results: List[Tuple[str, bool, str]], title: str
     click.echo("")
 
     for description, passed, remediation in results:
-        symbol = "[OK]" if passed else "[FAIL]"
-        click.echo(f"  {symbol} {description}")
-        if not passed and verbose and remediation:
-            click.echo(f"      -> {remediation}")
+        if passed and remediation and remediation.startswith("[?]"):
+            symbol = "[?]"
+            click.echo(f"  {symbol} {description}")
+            if verbose:
+                click.echo(f"      -> {remediation[4:]}")
+        elif passed:
+            symbol = "[OK]"
+            click.echo(f"  {symbol} {description}")
+        else:
+            symbol = "[FAIL]"
+            click.echo(f"  {symbol} {description}")
+            if verbose and remediation:
+                click.echo(f"      -> {remediation}")
 
     if not all_passed:
         click.echo("")

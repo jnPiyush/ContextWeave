@@ -92,16 +92,6 @@ class EnhancedPrompt:
             checklist_text = "\n".join(f"- [ ] {c}" for c in self.quality_checklist)
             sections.append(f"### Quality Checklist\n\n{checklist_text}")
 
-        # Approach Hints
-        if self.approach_hints:
-            hints_text = "\n".join(f"{i+1}. {h}" for i, h in enumerate(self.approach_hints))
-            sections.append(f"### Suggested Approach\n\n{hints_text}")
-
-        # Pitfalls
-        if self.pitfalls_to_avoid:
-            pitfalls_text = "\n".join(f"- [!] {p}" for p in self.pitfalls_to_avoid)
-            sections.append(f"### Pitfalls to Avoid\n\n{pitfalls_text}")
-
         # Handoff
         if self.next_role and self.handoff_requirements:
             handoff_text = "\n".join(f"- {r}" for r in self.handoff_requirements)
@@ -138,19 +128,6 @@ ROLE_TEMPLATES = {
             "Acceptance criteria are testable",
             "Child issues are standalone (no assumed context)"
         ],
-        "approach_hints": [
-            "Start by understanding the WHY behind the request",
-            "Research existing related issues and documentation",
-            "Define the problem before proposing solutions",
-            "Break epics into independently deliverable features",
-            "Each child issue should be completable in <1 day"
-        ],
-        "pitfalls": [
-            "Creating issues that assume the creator will execute them",
-            "Vague acceptance criteria like 'works correctly'",
-            "Missing dependencies or external requirements",
-            "Scope creep - trying to solve everything at once"
-        ],
         "next_role": "architect",
         "handoff_requirements": [
             "PRD document with complete context",
@@ -185,19 +162,6 @@ ROLE_TEMPLATES = {
             "Performance impact assessed",
             "Integration points clearly defined",
             "Rollback strategy documented"
-        ],
-        "approach_hints": [
-            "Review the PRD thoroughly before designing",
-            "Analyze existing code patterns with semantic search",
-            "Consider 2-3 alternative approaches before deciding",
-            "Draw diagrams to visualize data and control flow",
-            "Identify the riskiest assumptions early"
-        ],
-        "pitfalls": [
-            "Over-engineering for hypothetical future requirements",
-            "Ignoring existing patterns and conventions",
-            "Missing security or performance considerations",
-            "Writing code instead of specifications"
         ],
         "next_role": "engineer",
         "handoff_requirements": [
@@ -235,20 +199,6 @@ ROLE_TEMPLATES = {
             "Documentation is updated",
             "Code review guidelines followed"
         ],
-        "approach_hints": [
-            "Read the full specification before starting",
-            "Write tests first (TDD) for complex logic",
-            "Implement the happy path first, then edge cases",
-            "Commit frequently with meaningful messages",
-            "Run linters and formatters before committing"
-        ],
-        "pitfalls": [
-            "Starting to code before understanding requirements",
-            "Skipping tests for 'simple' code",
-            "Ignoring error handling and edge cases",
-            "Hardcoding values that should be configurable",
-            "Not updating documentation"
-        ],
         "next_role": "reviewer",
         "handoff_requirements": [
             "All tests passing",
@@ -284,20 +234,6 @@ ROLE_TEMPLATES = {
             "Code is readable and maintainable",
             "Documentation is accurate"
         ],
-        "approach_hints": [
-            "Start with the specification - understand what was asked",
-            "Run the tests locally to verify they pass",
-            "Check coverage report for gaps",
-            "Look for security issues (injection, auth, secrets)",
-            "Consider edge cases and error scenarios"
-        ],
-        "pitfalls": [
-            "Nitpicking style when it's subjective",
-            "Blocking on non-critical issues",
-            "Not testing the code locally",
-            "Missing security vulnerabilities",
-            "Providing feedback without explanation"
-        ],
         "next_role": None,  # End of workflow
         "handoff_requirements": []
     },
@@ -327,20 +263,6 @@ ROLE_TEMPLATES = {
             "Accessibility requirements met",
             "Consistent with design system",
             "Edge cases considered"
-        ],
-        "approach_hints": [
-            "Start with user goals from the PRD",
-            "Map the user journey before detailed design",
-            "Consider failure modes and error states",
-            "Test designs against accessibility checklist",
-            "Document design decisions and rationale"
-        ],
-        "pitfalls": [
-            "Designing only the happy path",
-            "Ignoring accessibility requirements",
-            "Inconsistent with existing patterns",
-            "Over-designing for edge cases",
-            "Not considering technical constraints"
         ],
         "next_role": "architect",
         "handoff_requirements": [
@@ -415,15 +337,6 @@ class PromptEngineer:
         # Quality checklist
         quality_checklist = template["quality_checklist"].copy()
 
-        # Approach hints
-        approach_hints = template["approach_hints"].copy()
-
-        # Add issue-specific hints based on labels
-        approach_hints.extend(self._get_label_specific_hints(labels))
-
-        # Pitfalls
-        pitfalls = template["pitfalls"].copy()
-
         # Handoff info
         next_role = template.get("next_role")
         handoff_requirements = template.get("handoff_requirements", [])
@@ -437,8 +350,8 @@ class PromptEngineer:
             constraints=constraints,
             success_criteria=success_criteria,
             quality_checklist=quality_checklist,
-            approach_hints=approach_hints,
-            pitfalls_to_avoid=pitfalls,
+            approach_hints=[],
+            pitfalls_to_avoid=[],
             next_role=next_role,
             handoff_requirements=handoff_requirements
         )
@@ -593,159 +506,6 @@ class PromptEngineer:
 
         return criteria
 
-    def _get_label_specific_hints(self, labels: List[str]) -> List[str]:
-        """Get hints specific to issue labels."""
-        hints = []
-
-        label_hints = {
-            "security": [
-                "Review OWASP Top 10 before implementation",
-                "Validate all inputs, sanitize all outputs",
-                "Consider authentication and authorization"
-            ],
-            "api": [
-                "Follow REST conventions consistently",
-                "Document all endpoints with OpenAPI",
-                "Consider rate limiting and versioning"
-            ],
-            "database": [
-                "Use parameterized queries only",
-                "Consider indexing strategy",
-                "Plan for migration rollback"
-            ],
-            "performance": [
-                "Establish baseline metrics first",
-                "Profile before optimizing",
-                "Consider caching strategies"
-            ],
-            "frontend": [
-                "Ensure accessibility (WCAG 2.1)",
-                "Test across browsers",
-                "Optimize for mobile"
-            ]
-        }
-
-        for label in labels:
-            label_lower = label.lower().replace("type:", "")
-            if label_lower in label_hints:
-                hints.extend(label_hints[label_lower][:2])  # Max 2 per label
-
-        return hints
-
-    def get_chain_of_thought_prompt(self, role: str, task: str) -> str:
-        """
-        Generate a chain-of-thought prompt to encourage step-by-step reasoning.
-
-        This is useful for complex tasks where we want the agent to
-        show their reasoning process.
-        """
-        cot_templates = {
-            "pm": """
-Let's approach this systematically:
-
-1. **Understand the Problem**
-   - What is the user trying to achieve?
-   - What pain points does this address?
-
-2. **Define the Scope**
-   - What's in scope for this effort?
-   - What's explicitly out of scope?
-
-3. **Identify Stakeholders**
-   - Who are the users?
-   - Who are the affected parties?
-
-4. **Define Success**
-   - How will we measure success?
-   - What are the acceptance criteria?
-
-5. **Plan the Breakdown**
-   - What features are needed?
-   - How do they depend on each other?
-
-Now, let me apply this to: {task}
-""",
-            "architect": """
-Let's design this systematically:
-
-1. **Understand Requirements**
-   - What does the PRD ask for?
-   - What are the constraints?
-
-2. **Analyze Current State**
-   - What exists today?
-   - What patterns are used?
-
-3. **Consider Options**
-   - Option A: [approach]
-   - Option B: [approach]
-   - Option C: [approach]
-
-4. **Evaluate Trade-offs**
-   - Performance vs. complexity
-   - Flexibility vs. simplicity
-
-5. **Make Decision**
-   - Chosen approach and rationale
-   - Risks and mitigations
-
-Now, let me apply this to: {task}
-""",
-            "engineer": """
-Let's implement this systematically:
-
-1. **Understand the Spec**
-   - What exactly needs to be built?
-   - What are the acceptance criteria?
-
-2. **Plan the Implementation**
-   - What components are needed?
-   - What's the order of implementation?
-
-3. **Consider Edge Cases**
-   - What could go wrong?
-   - How should errors be handled?
-
-4. **Write Tests First**
-   - What tests prove correctness?
-   - What edge cases need coverage?
-
-5. **Implement and Verify**
-   - Implement the solution
-   - Verify tests pass
-
-Now, let me apply this to: {task}
-""",
-            "reviewer": """
-Let's review this systematically:
-
-1. **Understand the Context**
-   - What was asked for?
-   - What was delivered?
-
-2. **Check Correctness**
-   - Does it meet requirements?
-   - Does it handle edge cases?
-
-3. **Check Quality**
-   - Is it readable?
-   - Is it maintainable?
-
-4. **Check Security**
-   - Are inputs validated?
-   - Are there vulnerabilities?
-
-5. **Check Tests**
-   - Is coverage adequate?
-   - Are tests meaningful?
-
-Now, let me apply this to: {task}
-"""
-        }
-
-        template = cot_templates.get(role, cot_templates["engineer"])
-        return template.format(task=task)
-
     def validate_prompt_completeness(self, prompt: EnhancedPrompt) -> Dict[str, Any]:
         """
         Validate that an enhanced prompt has all required elements.
@@ -768,12 +528,6 @@ Now, let me apply this to: {task}
         # Warnings for optional but recommended elements
         if not prompt.constraints:
             warnings.append("No constraints defined - consider adding boundaries")
-
-        if not prompt.approach_hints:
-            warnings.append("No approach hints - agent may take suboptimal path")
-
-        if not prompt.pitfalls_to_avoid:
-            warnings.append("No pitfalls listed - agent may repeat common mistakes")
 
         if prompt.next_role and not prompt.handoff_requirements:
             warnings.append(f"Handoff to {prompt.next_role} defined but no requirements specified")
@@ -800,8 +554,6 @@ Now, let me apply this to: {task}
             (len(prompt.constraints) > 0, 1.0),
             (len(prompt.success_criteria) > 0, 2.0),
             (len(prompt.quality_checklist) > 0, 1.0),
-            (len(prompt.approach_hints) > 0, 1.0),
-            (len(prompt.pitfalls_to_avoid) > 0, 1.0),
         ]
 
         for has_element, weight in elements:

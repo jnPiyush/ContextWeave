@@ -9,7 +9,6 @@ Usage:
 import re
 import subprocess
 from datetime import datetime, timezone
-from pathlib import Path
 from typing import Optional
 
 import click
@@ -148,9 +147,10 @@ def start_cmd(ctx: click.Context, title: str, issue_type: str, role: str,
 
     # --- Step 3: Generate context ---
     click.echo("Generating context...")
-    _generate_context(
+    from context_weave.commands.context import generate_context_file
+    generate_context_file(
         issue=issue_number, repo_root=repo_root,
-        state=state, config=config, role=role
+        state=state, config=config, role=role, verbose=False
     )
 
     # --- Summary ---
@@ -165,64 +165,3 @@ def start_cmd(ctx: click.Context, title: str, issue_type: str, role: str,
     click.echo("")
     click.echo(f"Start working: cd {worktree_path}")
 
-
-def _generate_context(issue: int, repo_root: Path, state: State,
-                      config: Config, role: str) -> None:
-    """Generate context file for the new issue (standalone, no Click context needed)."""
-    from context_weave import __version__
-    from context_weave.commands.context import (
-        CONTEXT_TEMPLATE,
-        format_references,
-        load_role_instructions,
-        load_skills,
-    )
-    from context_weave.memory import Memory
-    from context_weave.prompt import PromptEngineer
-
-    memory = Memory(repo_root)
-    worktree = state.get_worktree(issue)
-    branch = worktree.branch if worktree else f"issue-{issue}"
-
-    metadata = state.get_branch_note(branch) or {}
-    if not metadata:
-        metadata = state.local_issues.get(str(issue), {})
-
-    issue_type = metadata.get("type", "story")
-    labels = metadata.get("labels", [])
-    raw_description = metadata.get("description", f"Complete issue #{issue}")
-
-    role_instructions = load_role_instructions(repo_root, role)
-    skill_numbers = config.get_skills_for_labels(labels)
-    skill_content = load_skills(repo_root, skill_numbers, False)
-
-    categories = [label.replace("type:", "") for label in labels if ":" in label] or [issue_type]
-    memory_context = memory.get_memory_context(issue, issue_type, role, categories)
-
-    prompt_engineer = PromptEngineer()
-    prompt_context = {"dependencies": metadata.get("dependencies", [])}
-    enhanced = prompt_engineer.enhance_prompt(
-        raw_prompt=raw_description, role=role, issue_number=issue,
-        issue_type=issue_type, labels=labels, context=prompt_context
-    )
-    validation = prompt_engineer.validate_prompt_completeness(enhanced)
-    prompt_quality = f"{validation['completeness_score']:.0%}"
-
-    context_data = {
-        "issue": issue,
-        "timestamp": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
-        "issue_type": issue_type, "role": role, "branch": branch,
-        "skills": ", ".join(skill_numbers) if skill_numbers else "Default (#02, #04, #11)",
-        "prompt_quality": prompt_quality,
-        "role_instructions": role_instructions,
-        "enhanced_prompt": enhanced.to_markdown(),
-        "description": raw_description,
-        "memory_context": memory_context,
-        "skill_content": skill_content,
-        "references": format_references(metadata.get("references", [])),
-        "version": __version__,
-    }
-
-    content = CONTEXT_TEMPLATE.format(**context_data)
-    output_path = repo_root / ".context-weave" / f"context-{issue}.md"
-    output_path.parent.mkdir(parents=True, exist_ok=True)
-    output_path.write_text(content, encoding="utf-8")

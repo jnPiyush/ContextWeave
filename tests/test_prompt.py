@@ -73,8 +73,6 @@ class TestEnhancedPrompt:
             constraints=["No breaking changes"],
             success_criteria=["Tests pass"],
             quality_checklist=["Lint clean"],
-            approach_hints=["Start with tests"],
-            pitfalls_to_avoid=["Don't skip tests"],
             next_role="reviewer",
             handoff_requirements=["PR ready"]
         )
@@ -86,9 +84,10 @@ class TestEnhancedPrompt:
         assert "### Constraints" in markdown
         assert "### Success Criteria" in markdown
         assert "### Quality Checklist" in markdown
-        assert "### Suggested Approach" in markdown
-        assert "### Pitfalls to Avoid" in markdown
         assert "### Handoff to Reviewer" in markdown
+        # approach_hints and pitfalls sections are no longer rendered
+        assert "### Suggested Approach" not in markdown
+        assert "### Pitfalls to Avoid" not in markdown
 
 
 class TestRoleTemplates:
@@ -108,8 +107,6 @@ class TestRoleTemplates:
             "default_outputs",
             "default_constraints",
             "quality_checklist",
-            "approach_hints",
-            "pitfalls"
         ]
 
         for role, template in ROLE_TEMPLATES.items():
@@ -188,8 +185,6 @@ class TestPromptEngineer:
 
         assert "Architect" in enhanced.role_primer
         assert any("ADR" in o for o in enhanced.outputs)
-        # Should have API-specific hints from labels
-        assert any("REST" in h or "API" in h for h in enhanced.approach_hints)
 
     def test_enhance_prompt_for_bug(self, engineer):
         """Test prompt enhancement for bug fix."""
@@ -219,8 +214,6 @@ class TestPromptEngineer:
         )
 
         assert "spec" in enhanced.context_summary.lower() or "dependencies" in enhanced.context_summary.lower()
-        # Security label should add security hints
-        assert any("security" in h.lower() or "validate" in h.lower() for h in enhanced.approach_hints)
 
     def test_enhance_prompt_extracts_constraints(self, engineer):
         """Test that constraints are extracted from prompt."""
@@ -235,25 +228,6 @@ class TestPromptEngineer:
         # Should have extracted constraints
         assert len(enhanced.constraints) > len(ROLE_TEMPLATES["engineer"]["default_constraints"])
 
-    def test_get_chain_of_thought_prompt(self, engineer):
-        """Test chain-of-thought prompt generation."""
-        cot = engineer.get_chain_of_thought_prompt(
-            role="engineer",
-            task="Implement user authentication"
-        )
-
-        assert "systematically" in cot.lower()
-        assert "user authentication" in cot.lower()
-        assert "1." in cot  # Numbered steps
-
-    def test_cot_prompt_for_different_roles(self, engineer):
-        """Test CoT prompts are different per role."""
-        pm_cot = engineer.get_chain_of_thought_prompt("pm", "Define feature")
-        eng_cot = engineer.get_chain_of_thought_prompt("engineer", "Build feature")
-
-        assert "Problem" in pm_cot  # PM focuses on problem
-        assert "Implement" in eng_cot or "Tests" in eng_cot  # Engineer focuses on implementation
-
     def test_validate_prompt_completeness_valid(self, engineer):
         """Test validation of complete prompt."""
         prompt = EnhancedPrompt(
@@ -265,8 +239,6 @@ class TestPromptEngineer:
             constraints=["Use existing patterns"],
             success_criteria=["Tests pass", "Security review approved"],
             quality_checklist=["Lint clean"],
-            approach_hints=["TDD approach"],
-            pitfalls_to_avoid=["Don't skip validation"]
         )
 
         validation = engineer.validate_prompt_completeness(prompt)
@@ -297,7 +269,7 @@ class TestPromptEngineer:
             context_summary="Working on auth",
             outputs=["Code"],
             success_criteria=["Works correctly"]
-            # Missing: constraints, approach_hints, pitfalls
+            # Missing: constraints
         )
 
         validation = engineer.validate_prompt_completeness(prompt)
@@ -324,8 +296,6 @@ class TestPromptEngineer:
             constraints=["Constraint"],
             success_criteria=["Criterion"],
             quality_checklist=["Check"],
-            approach_hints=["Hint"],
-            pitfalls_to_avoid=["Pitfall"]
         )
 
         minimal_validation = engineer.validate_prompt_completeness(minimal)
@@ -333,68 +303,6 @@ class TestPromptEngineer:
 
         assert full_validation["completeness_score"] > minimal_validation["completeness_score"]
         assert full_validation["completeness_score"] == 1.0
-
-
-class TestLabelSpecificEnhancements:
-    """Test label-specific prompt enhancements."""
-
-    @pytest.fixture
-    def engineer(self):
-        return PromptEngineer()
-
-    def test_security_label_adds_hints(self, engineer):
-        """Test security label adds security-specific hints."""
-        enhanced = engineer.enhance_prompt(
-            raw_prompt="Add authentication",
-            role="engineer",
-            issue_number=100,
-            issue_type="story",
-            labels=["type:story", "security"]
-        )
-
-        # Should have security hints
-        hints_text = " ".join(enhanced.approach_hints).lower()
-        assert "owasp" in hints_text or "validate" in hints_text or "auth" in hints_text
-
-    def test_api_label_adds_hints(self, engineer):
-        """Test api label adds API-specific hints."""
-        enhanced = engineer.enhance_prompt(
-            raw_prompt="Create REST endpoint",
-            role="engineer",
-            issue_number=100,
-            issue_type="story",
-            labels=["type:story", "api"]
-        )
-
-        hints_text = " ".join(enhanced.approach_hints).lower()
-        assert "rest" in hints_text or "endpoint" in hints_text or "api" in hints_text
-
-    def test_database_label_adds_hints(self, engineer):
-        """Test database label adds DB-specific hints."""
-        enhanced = engineer.enhance_prompt(
-            raw_prompt="Add user table",
-            role="engineer",
-            issue_number=100,
-            issue_type="story",
-            labels=["type:story", "database"]
-        )
-
-        hints_text = " ".join(enhanced.approach_hints).lower()
-        assert "query" in hints_text or "index" in hints_text or "migration" in hints_text
-
-    def test_multiple_labels_combine_hints(self, engineer):
-        """Test multiple labels combine their hints."""
-        enhanced = engineer.enhance_prompt(
-            raw_prompt="Add secure API endpoint",
-            role="engineer",
-            issue_number=100,
-            issue_type="story",
-            labels=["type:story", "api", "security"]
-        )
-
-        # Should have hints from both labels
-        base_hints_count = len(ROLE_TEMPLATES["engineer"]["approach_hints"])
-        assert len(enhanced.approach_hints) > base_hints_count
 
 
 class TestHandoffIntegration:
